@@ -1,0 +1,54 @@
+{% extends "catalog/base.html" %}
+{% load catalog_tags %}
+{% load mptt_tags %}
+{% load format_tags %}{% load basket_tags %}{% load emailauth_tags %}
+
+{% block title %}{% if item.tree.seo_title %}{{ item.tree.seo_title }}{% else %}{{ item.tree.name }}{% endif %}{% endblock %}
+
+{% block meta_keywords %}{{ item.tree.seo_keywords }}{% endblock %}
+{% block meta_description %}{{ item.tree.seo_description }}{% endblock %}
+
+{% block script %}
+    $(document).ready(function(){
+        expand('{{ item.tree.parent.slug }}-{{ item.tree.parent.id }}');
+    });
+{% endblock script %}
+
+{% block center %}
+    <!-- Описание товара -->
+	<h3>{{ item.tree.name }}</h3>
+    <div class="about">
+    <table>
+        <tbody>
+            <tr>
+                <td><img src="{{ item.images.all.0.image.url }}">
+                <span>Цена: <span id="price">2000 рублей</span>.</span><br/>
+                <input type="submit" id="item-{{ item.id }}" value="Добавить в корзину" class="submit basket" />
+                </td>
+                <td> {{ item.description|safe }} </td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+	{% if relative %}
+    <h4>Обратите внимание:</h4>
+    <div class="item">
+    <table>
+        <tr>
+        {% for rel_item in relative %}
+        
+            <td>
+                <img src="{{ rel_item.item.image.image.url }}" alt="Изображение товара" title="">
+                
+                <p><a href="{{ rel_item.get_absolute_url }}" title="">{{ rel_item.name }}</a><br>
+                <span>Цена: {{ rel_item.item.price }} рублей</span></p>
+            </td>
+            {% cycle ' ' ' ' '</tr><tr>' %}
+        
+        {% endfor %}
+        </tr>
+    </table>
+    </div>
+	{% endif %}
+{% endblock center %}

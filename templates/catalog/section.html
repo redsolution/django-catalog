@@ -1,0 +1,68 @@
+{% extends "base.html" %} {% load pagination_tags %} {% load sorting_tags %}
+{% load catalog_tags %}
+{% load mptt_tags %}
+{% load format_tags %}
+
+{% block title %}{% if section.tree.seo_title %}{{section.tree.seo_title}}{% else %}{{section.tree.name}}{% endif %}{% endblock %}
+{% block meta_keywords %}{{section.tree.seo_keywords}}{% endblock %}
+{% block meta_description %}{{section.tree.seo_description}}{% endblock %}
+
+{% block script %}
+    $(document).ready(function(){
+        expand('{{ section.tree.slug }}-{{ section.tree.id }}');
+    });
+{% endblock script %}
+
+{% block center %}
+<!-- Перечень разделов -->
+<h3>{{ section.tree.name }}</h3>
+
+{% autosort items %}
+{% autopaginate items 10 %}
+<table class="number">
+    <tbody>
+        <tr>
+            <th>Сортировать:</th>
+            <td>{% anchor name 'по наименованию' %}</td>
+            <td>{% anchor item__price 'по цене' %}</td>
+        </tr>
+    </tbody>
+</table>
+<table class="category">
+    <tbody>
+        <tr>
+
+    {% for item in items %}
+        <td>
+        {% if item.images.all %}
+        <img src="{{ item.images.all.0.image.url }}" alt="Изображение товара" title="Изображение товара">
+        {% else %}
+        <img src="/media/img/default_item_image.jpg" alt="Изображение товара" title="Изображение товара">
+        {% endif %}
+            <p><a href="{{ item.get_absolute_url }}" title="{{ item.name }}">{{ item.name }}</a><br>
+            {% if item.item %}
+                <span>Цена: {{ item.item.price }} рублей</span></p>
+            {% else %}
+                <span>&nbsp;</span></p>
+            {% endif %}
+        </td>
+        {% cycle ' ' ' ' '</tr><tr>' %}
+    {% endfor %}
+        </tr>
+    </tbody>
+</table>
+{% paginate %}
+
+<br>
+<table class="number">
+    <tbody>
+        <tr>
+            <th>Товаров на странице:</th>
+            <td><a href="#">10</a></td>
+            <td>30</td>
+            <td><a href="#">50</a></td>
+            <td><a href="#">100</a></td>
+        </tr>
+    </tbody>
+</table>
+{% endblock center %}

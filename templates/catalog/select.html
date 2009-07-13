@@ -1,0 +1,18 @@
+<table>
+    <tr>
+    {% for section in sections %}
+        <td><input type="radio"  {% spaceless %}
+            {% if selected_id %}
+                {% ifequal selected_id section.tree.id %}
+                    checked="checked"
+                {% endifequal %}
+            {% else %}
+                {% if forloop.first %}
+                    checked="checked"
+                {% endif %}
+            {% endif %}
+        {% endspaceless %} name="radio_menu" class="radio" id="radio_{{ section.tree.id }}" /></td>
+        <td><label for="radio_{{ section.tree.id }}">{{ section.tree.name }}</label></td>
+    {% endfor %}
+    </tr>
+</table>

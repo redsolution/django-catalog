@@ -1,0 +1,59 @@
+{% extends "catalog/base.html" %}
+{% load catalog_tags %}
+{% load mptt_tags %}
+{% load format_tags %}
+{% load basket_tags %}
+{% load emailauth_tags %}
+
+{% block title %}{% if item.tree.seo_title %}{{ item.tree.seo_title }}{% else %}{{ item.tree.name }}{% endif %}{% endblock %}
+
+{% block meta_keywords %}{{ item.tree.seo_keywords }}{% endblock %}
+{% block meta_description %}{{ item.tree.seo_description }}{% endblock %}
+
+{% block script %}
+    $(document).ready(function(){
+        expand('{{ section.tree.parent.slug }}-{{ section.tree.parent.id }}');
+    });
+{% endblock script %}
+
+{% block center %}
+    <!-- Описание товара -->
+    <h3>{{ section.tree.name }}</h3>
+        <div class="about">
+            <table>
+                <tr>
+                    <td><img src="{{ section.images.all.0.image.url }}" />
+                    <span>Цена: <span id="price">2000 рублей</span>.</span><br/>
+                    <select class="metaitem">
+                        {% for item in items %}
+                        <option  value="{{ item.id }}">{{ item.tree.short_description }}</option>
+                        {% endfor %}
+                    </select><br/>
+                    <input type="submit" id="item-{{ items.0.id }}" value="Добавить в корзину" class="submit basket" />
+                    </td>
+                    <td>{{ section.description }}</td>
+                </tr>
+            </table>
+        </div>
+
+    {% if relative %}
+    <h4>Обратите внимание:</h4>
+    <div class="item">
+    <table>
+        <tr>
+        {% for rel_item in relative %}
+        
+            <td>
+                <img src="{{ rel_item.item.image.image.url }}" alt="Изображение товара" title="">
+                
+                <p><a href="{{ rel_item.get_absolute_url }}" title="">{{ rel_item.name }}</a><br>
+                <span>Цена: {{ rel_item.item.price }} рублей</span></p>
+            </td>
+            {% cycle ' ' ' ' '</tr><tr>' %}
+        
+        {% endfor %}
+        </tr>
+    </table>
+    </div>
+    {% endif %}
+{% endblock center %}
