@@ -31,6 +31,7 @@ def section(request, tree_item):
     items = tree_item.children.filter(Q(show=True, item__isnull=False) | 
             Q(show=True, section__is_meta_item=True))
     return {
+        'tree_item': tree_item,
         'section': section,
         'subsections': sub_sections,
         'items': items,
@@ -43,6 +44,7 @@ def metaitem(request, tree_item):
     items = [tree_item.item for tree_item in
         tree_item.children.filter(show=True, item__isnull=False)]
     return {
+        'tree_item': tree_item,
         'section': section,
         'items': items,
         'images': section.images.all(),
@@ -52,6 +54,7 @@ def metaitem(request, tree_item):
 def item(request, tree_item):
     item = tree_item.item
     return {
+        'tree_item': tree_item,
         'item': item,
         'relative': item.relative.all(),
         'images': item.images.all(),
