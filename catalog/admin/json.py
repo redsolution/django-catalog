@@ -3,14 +3,25 @@ from catalog.models import Section, Item, TreeItem
 from django.contrib.auth.decorators import permission_required
 from django.utils import simplejson
 
+def get_content(parent):
+    if parent == 'root':
+        parent = None
+
+    all_sections = Section.objects.filter(tree__parent=parent)
+    sections = all_sections.filter(is_meta_item=False)
+    metaitems = all_sections.filter(is_meta_item=True)
+    items = Item.objects.filter(tree__parent=parent)
+    return {'sections': sections, 'metaitems': metaitems, 'items': items}
+
 
 @permission_required('catalog.add_section', login_url='/admin/')
 def tree(request):
     tree = []
-    if request.method == 'POST':
+#    if request.method == 'POST':
+    if True:
         parent = request.REQUEST.get('node', 'root')
         content = get_content(parent)
-        
+
         for section in content['sections']:
             tree.append({'text': section.tree.name,
                          'id': '%d' % section.tree.id,
@@ -72,30 +83,6 @@ def get_tree_item(node):
             item = None
     return item
 
-def get_target_and_position(parent, this, index):
-    '''
-    Returns target and positions for mptt
-    (target, position) = get_target_and_position(parent_section, index)
-    '''
-    if parent:
-        siblings = parent.get_children().exclude(id=this.id)
-    else:
-        siblings = TreeItem.objects.filter(
-            parent=None).exclude(id=this.id)
-
-    if siblings:
-        try:
-            target = siblings[index]
-            position = 'left'
-        except IndexError:
-            target = siblings.order_by('-lft')[0]  # last element
-            position = 'right'
-    else:
-        # if section is empty - insert first_child
-        target = parent
-        position = 'first-child'
-    return (target, position)
-
 def may_move(node, parent):
     move_matrix = {
         'item': ['section', 'metaitem'],
@@ -110,14 +97,30 @@ def may_move(node, parent):
         return False
 
 def move_node(request):
-    if request.method == 'POST':
-        this_section = get_tree_item(request.REQUEST.get('node', None))
-        new_parent = get_tree_item(request.REQUEST.get('to', None))
-        index = int(request.REQUEST.get('index', 0))
-    
-        if may_move(this_section, new_parent):
-            (target, position) = get_target_and_position(new_parent, this_section, index)
-            this_section.move_to(target, position)
+#    if request.method == 'POST':
+    if True:
+        sources = request.REQUEST.get('source', '').split(',')
+        target_id = int(request.REQUEST.get('target', ''))
+        point = request.REQUEST.get('point', '')
+        if point == 'above':
+            position = 'left'
+        elif point == 'below':
+            position = 'right'
+        else:
+            position = 'last-child'
+
+        new_parent = get_tree_item(target_id)
+        # python 2.4 workaround
+        move = True
+        for source in sources:
+            this_section = get_tree_item(source)
+#            if may_move(this_section, new_parent):
+#                move = move and True
+#            else:
+#                move = move and False
+
+        if move:
+            this_section.move_to(new_parent, position)
             return HttpResponse('OK')
         else:
             return HttpResponseServerError('Can not move')
