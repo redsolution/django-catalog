@@ -54,6 +54,7 @@ def list(request):
                          'cls': 'folder',
                          'type': 'section',
                          'itemid': section.id,
+                         'show': section.tree.show,
                          })
         for metaitem in content['metaitems']:
             grid.append({'name': metaitem.tree.name,
@@ -61,6 +62,7 @@ def list(request):
                          'cls': 'folder',
                          'type': 'metaitem',
                          'itemid': metaitem.id,
+                         'show': metaitem.tree.show,
                          })
         for item in content['items']:
             grid.append({'name': item.tree.name,
@@ -68,6 +70,7 @@ def list(request):
                          'cls': 'leaf',
                          'type': 'item',
                          'itemid': item.id,
+                         'show': item.tree.show,
                          })
     return HttpResponse(simplejson.encode({'items': grid}))
 
@@ -124,3 +127,12 @@ def move_node(request):
             return HttpResponse('OK')
         else:
             return HttpResponseServerError('Can not move')
+
+def visible(request):
+    try:
+        items_list = request.REQUEST.get('items', '').split(',')
+        show = bool(int(request.REQUEST.get('visible', '1')))
+        TreeItem.objects.filter(id__in=items_list).update(show=show)
+        return HttpResponse('OK')
+    except ValueError:
+        return HttpResponseServerError('Bad arguments')
