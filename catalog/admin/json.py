@@ -113,17 +113,18 @@ def move_node(request):
             position = 'last-child'
 
         new_parent = get_tree_item(target_id)
-        # python 2.4 workaround
-        move = True
+        move = []
         for source in sources:
             this_section = get_tree_item(source)
-#            if may_move(this_section, new_parent):
-#                move = move and True
-#            else:
-#                move = move and False
+            if may_move(this_section, new_parent):
+                move.append(True)
+            else:
+                move.append(False)
 
-        if move:
-            this_section.move_to(new_parent, position)
+        if all(move):
+            for source in sources:
+                this_section = get_tree_item(source)
+                this_section.move_to(new_parent, position)
             return HttpResponse('OK')
         else:
             return HttpResponseServerError('Can not move')
