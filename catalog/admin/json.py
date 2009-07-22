@@ -17,8 +17,7 @@ def get_content(parent):
 @permission_required('catalog.add_section', login_url='/admin/')
 def tree(request):
     tree = []
-#    if request.method == 'POST':
-    if True:
+    if request.method == 'POST':
         parent = request.REQUEST.get('node', 'root')
         content = get_content(parent)
 
@@ -97,8 +96,7 @@ def may_move(node, parent):
         return False
 
 def move_node(request):
-#    if request.method == 'POST':
-    if True:
+    if request.method == 'POST':
         sources = request.REQUEST.get('source', '').split(',')
         target_id = int(request.REQUEST.get('target', ''))
         point = request.REQUEST.get('point', '')
@@ -131,6 +129,16 @@ def visible(request):
         items_list = request.REQUEST.get('items', '').split(',')
         show = bool(int(request.REQUEST.get('visible', '1')))
         TreeItem.objects.filter(id__in=items_list).update(show=show)
+        return HttpResponse('OK')
+    except ValueError:
+        return HttpResponseServerError('Bad arguments')
+
+def delete_items(request):
+    try:
+        items_list = request.REQUEST.get('items', '').split(',')
+        items_to_delete = TreeItem.objects.filter(id__in=items_list)
+        for item in items_to_delete:
+            item.delete()
         return HttpResponse('OK')
     except ValueError:
         return HttpResponseServerError('Bad arguments')

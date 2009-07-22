@@ -84,7 +84,16 @@ class TreeItem(models.Model):
                 return 'item'
             except Item.DoesNotExist:
                 return None
-    
+
+    def delete(self, *args, **kwds):
+        if self.get_type() == 'item':
+            self.item.delete()
+        else:
+            self.section.delete()
+        super(TreeItem, self).delete(*args, **kwds)
+    # template security
+    delete.alters_data = True
+
     def __unicode__(self):
         return self.name
 
