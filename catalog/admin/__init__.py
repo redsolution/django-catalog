@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from django.db import models
 from django.contrib import admin
 from django.contrib.contenttypes import generic
 from utils.register import register_model
@@ -7,7 +7,7 @@ from catalog.models import TreeItem, Section, Item, ItemImage
 from django.forms.models import inlineformset_factory
 from django.http import Http404, HttpResponse
 from django.utils.html import escape
-
+from django.contrib.admin.widgets import FilteredSelectMultiple
 
 # Inlines
 
@@ -30,8 +30,9 @@ class TreeItemForItemInline(admin.StackedInline):
 
 class ItemOptions(admin.ModelAdmin):
     model = Item
+    filter_horizontal = ('relative', 'sections')
     inlines = [TreeItemForItemInline, ItemImageInline]
-
+    
     def response_change(self, request, obj):
         """
         Wrapper around Django ModelAdmin method to provide
