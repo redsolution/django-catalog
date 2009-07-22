@@ -36,7 +36,7 @@ class Command(BaseCommand):
         for item in reader:
             try:
                 self.make_item(item)
-            except:
+            except ValueError:
                 if self.options['verbose'] >= 2:
                     print 'Error importing record:', item
             count = count + 1
