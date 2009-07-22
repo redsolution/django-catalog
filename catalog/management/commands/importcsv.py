@@ -4,6 +4,7 @@ from sys import argv
 from optparse import make_option
 from catalog.models import TreeItem, Section, Item
 import csv
+from urlify import urlify
 
 class Command(BaseCommand):
     help = '''Export items from CommerceML format
@@ -47,6 +48,7 @@ class Command(BaseCommand):
         section_tree_item, created = TreeItem.objects.get_or_create(name=name,
             parent=parent)
         if created:
+            section_tree_item.slug = urlify(name)
             section = Section()
             section.save()
             section_tree_item.section = section
@@ -61,6 +63,7 @@ class Command(BaseCommand):
         tree_item, created = TreeItem.objects.get_or_create(name=kwds['name'],
             parent=kwds['parent'])
         if created:
+            tree_item.slug = urlify(tree_item.name)
             tree_item.save()
             item = Item(price=kwds['price'], identifier=kwds['identifier'],
                 quantity=kwds['quantity'])
