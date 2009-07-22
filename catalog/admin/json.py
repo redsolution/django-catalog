@@ -48,30 +48,27 @@ def list(request):
         parent = request.REQUEST.get('node', 'root')
         content = get_content(parent)
 
+        def object2dict(obj):
+            return {
+                'name': obj.tree.name,
+                'id': '%d' % obj.tree.id,
+                'cls': 'folder' if obj.tree.get_type() == 'section' else 'leaf',
+                'type': obj.tree.get_type(),
+                'itemid': obj.id,
+                'show': obj.tree.show,
+                'price': float(obj.price) if obj.tree.get_type() == 'item' else 0,
+                'quantity': int(obj.quantity) if obj.tree.get_type() == 'item' else 0,
+                }
+
         for section in content['sections']:
-            grid.append({'name': section.tree.name,
-                         'id': '%d' % section.tree.id,
-                         'cls': 'folder',
-                         'type': 'section',
-                         'itemid': section.id,
-                         'show': section.tree.show,
-                         })
+            grid.append(object2dict(section))
+
         for metaitem in content['metaitems']:
-            grid.append({'name': metaitem.tree.name,
-                         'id': '%d' % metaitem.tree.id,
-                         'cls': 'folder',
-                         'type': 'metaitem',
-                         'itemid': metaitem.id,
-                         'show': metaitem.tree.show,
-                         })
+            grid.append(object2dict(metaitem))
+
         for item in content['items']:
-            grid.append({'name': item.tree.name,
-                         'id': '%d' % item.tree.id,
-                         'cls': 'leaf',
-                         'type': 'item',
-                         'itemid': item.id,
-                         'show': item.tree.show,
-                         })
+            grid.append(object2dict(item))
+
     return HttpResponse(simplejson.encode({'items': grid}))
 
 # moving tree items
