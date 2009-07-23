@@ -8,7 +8,7 @@ from urlify import urlify
 
 class Command(BaseCommand):
     help = '''Export items from CommerceML format
-    Usage: manage.py importcml filename.xml 
+    Usage: manage.py importcml filename.xml
     '''
     option_list = BaseCommand.option_list + (
         make_option('--verbose', default=None, dest='verbose', type='int',
@@ -17,14 +17,21 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.options = options
-        
+
         print self.options['verbose']
-        
+
         if len(args) == 0:
             raise CommandError("You should specify file to import")
         filename = args[0]
 
-        reader = csv.reader(open(filename, 'r'))
+        class csv_format(csv.Dialect):
+            delimiter = ';'
+            quotechar = '"'
+            doublequote = True
+            lineterminator = '\r\n'
+            quoting = csv.QUOTE_MINIMAL
+
+        reader = csv.reader(open(filename, 'r'), dialect=csv_format)
         count = 0
         if self.options['verbose'] >= 1:
             print 'Importing items'
@@ -87,9 +94,9 @@ class Command(BaseCommand):
         options = {}
         options['identifier'] = param_list[0]
         options['quantity'] = param_list[1]
-        options['price'] = param_list[3]
-        options['name'] = param_list[2].decode('cp1251')
-        section_name = param_list[2].split(' ')[0].decode('cp1251')
+        options['price'] = param_list[4]
+        options['name'] = param_list[3].decode('cp1251')
+        section_name = param_list[2].decode('cp1251')
         section = self._get_or_create_section(section_name, self.import_section.tree)
         options['parent'] = section.tree
 
