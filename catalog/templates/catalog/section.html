@@ -1,7 +1,5 @@
-{% extends "base.html" %} {% load pagination_tags %} {% load sorting_tags %}
-{% load catalog_tags %}
-{% load mptt_tags %}
-{% load format_tags %}
+{% extends "base.html" %}
+{% load pagination_tags sorting_tags %}
 
 {% block title %}{% if section.tree.seo_title %}{{section.tree.seo_title}}{% else %}{{section.tree.name}}{% endif %}{% endblock %}
 {% block meta_keywords %}{{section.tree.seo_keywords}}{% endblock %}

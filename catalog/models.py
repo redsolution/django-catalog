@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from django.db import models
-from files.models import SmartFileModel
-from utils.register import register_mptt
+from smartfiles.models import SmartFileModel
 from tinymce.models import HTMLField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
-
+import mptt
 
 THUMB_SIZE = (170, 200)
 
@@ -97,7 +96,10 @@ class TreeItem(models.Model):
     def __unicode__(self):
         return self.name
 
-register_mptt(TreeItem, tree_manager_attr='objects')
+try:
+    mptt.register(TreeItem, tree_manager_attr='objects')
+except mptt.AlreadyRegistered:
+    pass
 
 
 class Section(models.Model):

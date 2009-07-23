@@ -2,7 +2,6 @@
 from django.db import models
 from django.contrib import admin
 from django.contrib.contenttypes import generic
-from utils.register import register_model
 from catalog.models import TreeItem, Section, Item, ItemImage
 from django.forms.models import inlineformset_factory
 from django.http import Http404, HttpResponse
@@ -44,7 +43,10 @@ class ItemOptions(admin.ModelAdmin):
                 (escape(pk_value), escape(obj))) # escape() calls force_unicode.
         return super(ItemOptions, self).response_change(request, obj)
 
-register_model(Item, ItemOptions)
+try:
+    admin.site.register(Item, ItemOptions)
+except AlreadyRegistered:
+    pass
 
 
 class SectionOptions(admin.ModelAdmin):
@@ -63,10 +65,16 @@ class SectionOptions(admin.ModelAdmin):
                 (escape(pk_value), escape(obj))) # escape() calls force_unicode.
         return super(SectionOptions, self).response_change(request, obj)
 
-register_model(Section, SectionOptions)
+try:
+    admin.site.register(Section, SectionOptions)
+except AlreadyRegistered:
+    pass
 
 
 class TreeItemOptions(admin.ModelAdmin):
     model = TreeItem
 
-register_model(TreeItem, TreeItemOptions)
+try:
+    admin.site.register(TreeItem, TreeItemOptions)
+except AlreadyRegistered:
+    pass

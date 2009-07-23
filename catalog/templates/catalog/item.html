@@ -1,7 +1,4 @@
 {% extends "catalog/base.html" %}
-{% load catalog_tags %}
-{% load mptt_tags %}
-{% load format_tags %}{% load basket_tags %}{% load emailauth_tags %}
 
 {% block title %}{% if item.tree.seo_title %}{{ item.tree.seo_title }}{% else %}{{ item.tree.name }}{% endif %}{% endblock %}
 
@@ -32,23 +29,23 @@
     </div>
 
 	{% if relative %}
-    <h4>Обратите внимание:</h4>
-    <div class="item">
-    <table>
-        <tr>
-        {% for rel_item in relative %}
-        
-            <td>
-                <img src="{{ rel_item.item.image.image.url }}" alt="Изображение товара" title="">
-                
-                <p><a href="{{ rel_item.get_absolute_url }}" title="">{{ rel_item.name }}</a><br>
-                <span>Цена: {{ rel_item.item.price }} рублей</span></p>
-            </td>
-            {% cycle ' ' ' ' '</tr><tr>' %}
-        
-        {% endfor %}
-        </tr>
-    </table>
-    </div>
+	    <h4>Обратите внимание:</h4>
+	    <div class="item">
+	    <table>
+	        <tr>
+	        {% for rel_item in relative %}
+	        
+	            <td>
+	                <img src="{{ rel_item.item.image.image.url }}" alt="Изображение товара" title="">
+	                
+	                <p><a href="{{ rel_item.get_absolute_url }}" title="">{{ rel_item.name }}</a><br>
+	                <span>Цена: {{ rel_item.item.price }} рублей</span></p>
+	            </td>
+	            {% cycle ' ' ' ' '</tr><tr>' %}
+	        
+	        {% endfor %}
+	        </tr>
+	    </table>
+	    </div>
 	{% endif %}
 {% endblock center %}
