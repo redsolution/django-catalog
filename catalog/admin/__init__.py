@@ -31,6 +31,7 @@ class ItemOptions(admin.ModelAdmin):
     model = Item
     filter_horizontal = ('relative', 'sections')
     inlines = [TreeItemForItemInline, ItemImageInline]
+    search_fields = ('tree__name', 'tree__short_description')
     
     def response_change(self, request, obj):
         """
@@ -53,6 +54,7 @@ class SectionOptions(admin.ModelAdmin):
     model = Section
     inlines = [TreeItemForSectionInline, ItemImageInline]
     list_display = ('__unicode__', 'is_meta_item')
+    search_fields = ('tree__name', 'tree__short_description')
     
     def response_change(self, request, obj):
         """
@@ -73,6 +75,7 @@ except AlreadyRegistered:
 
 class TreeItemOptions(admin.ModelAdmin):
     model = TreeItem
+    search_fields = ('name',)
 
 try:
     admin.site.register(TreeItem, TreeItemOptions)

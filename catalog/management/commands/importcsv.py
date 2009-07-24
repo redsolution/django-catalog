@@ -67,21 +67,31 @@ class Command(BaseCommand):
         return section
 
     def _update_or_create_item(self, **kwds):
-        tree_item, created = TreeItem.objects.get_or_create(name=kwds['name'],
-            parent=kwds['parent'])
+        item, created = Item.objects.get_or_create(identifier=kwds['identifier'])
         if created:
+            tree_item = TreeItem(name=kwds['name'], parent=kwds['parent'])
             tree_item.slug = urlify(tree_item.name)
-            tree_item.save()
-            item = Item(price=kwds['price'], identifier=kwds['identifier'],
-                quantity=kwds['quantity'])
+                        
+            item.price =  kwds['price']
+            item.quantity =  kwds['quantity']
+            item.barcode =  kwds['barcode']
             item.save()
+            
             tree_item.item = item
+            
             tree_item.save()
+
             if self.options['verbose'] >= 2:
                 print '[S]', item.tree.name
         else:
-            Item.objects.filter(tree=tree_item).update(price=kwds['price'],
-                identifier=kwds['identifier'], quantity=kwds['quantity'])
+            item.price =  kwds['price']
+            item.quantity =  kwds['quantity']
+            item.barcode =  kwds['barcode']
+            item.tree.name = kwds['name']
+            
+            item.save()
+            item.tree.save()
+
             if self.options['verbose'] >= 2:
                 print '[U]', kwds['name']
         return created
@@ -95,7 +105,11 @@ class Command(BaseCommand):
         options['identifier'] = param_list[0]
         options['quantity'] = param_list[1]
         options['price'] = param_list[4]
-        options['name'] = param_list[3].decode('cp1251')
+        if len(param_list) == 6:
+            options['barcode'] = param_list[5]
+        else:
+            options['barcode'] = None
+        options['name'] = param_list[3].decode('cp1251').replace('""', '"')
         section_name = param_list[2].decode('cp1251')
         section = self._get_or_create_section(section_name, self.import_section.tree)
         options['parent'] = section.tree

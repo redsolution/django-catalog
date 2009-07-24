@@ -23,8 +23,10 @@ class ItemImage(SmartFileModel):
         'height': THUMB_SIZE[1],
     } ]
 
-    image = models.ImageField(verbose_name=u'Изображение', upload_to='upload/catalog/itemimages/%Y/%m/%d')
-    thumb = models.ImageField(verbose_name=u'Превью', upload_to='upload/catalog/itemthumbs/%Y/%m/%d')
+    image = models.ImageField(verbose_name=u'Изображение',
+        upload_to='upload/catalog/itemimages/%Y/%m/%d')
+    thumb = models.ImageField(verbose_name=u'Превью',
+        upload_to='upload/catalog/itemthumbs/%Y/%m/%d', editable=False)
     
     # Generic FK used because we want to make TreeItem editable in 
     # admin interface as inline, and include ItemImage too.     
@@ -44,7 +46,8 @@ class ItemImage(SmartFileModel):
 
 class TreeItem(models.Model):
     class Meta:
-        pass
+        verbose_name = u'Элемент каталога'
+        verbose_name_plural = u'Элементы каталога'
 
     parent = models.ForeignKey('self', related_name='children',
         verbose_name=u'Родительский', null=True, blank=True)
@@ -131,8 +134,12 @@ class Item(models.Model):
     images = generic.GenericRelation(ItemImage)
 
     # Sale options
-    price = models.DecimalField(verbose_name=u'Цена', null=True, blank=True, max_digits=12, decimal_places=2)
-    identifier = models.CharField(verbose_name=u'Артикул', max_length=50, blank=True, default='')
+    price = models.DecimalField(verbose_name=u'Цена', null=True, blank=True,
+        max_digits=12, decimal_places=2)
+    identifier = models.CharField(verbose_name=u'Артикул', max_length=50,
+        blank=True, default='')
+    barcode = models.CharField(verbose_name=u'Штрих-код', max_length=50,
+        null=True, editable=False)
     quantity = models.IntegerField(verbose_name=u'Остаток на складе',
         help_text=u'Введите 0 если на складе нет товара',
         null=True, blank=True)
