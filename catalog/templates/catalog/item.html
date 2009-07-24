@@ -19,7 +19,7 @@
         <tbody>
             <tr>
                 <td><img src="{{ item.images.all.0.image.url }}">
-                <span>Цена: <span id="price">2000 рублей</span>.</span><br/>
+                <span>Цена: <span id="price">{{ item.price }} рублей</span>.</span><br/>
                 <input type="submit" id="item-{{ item.id }}" value="Добавить в корзину" class="submit basket" />
                 </td>
                 <td> {{ item.description|safe }} </td>

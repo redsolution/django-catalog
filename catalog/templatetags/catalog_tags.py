@@ -9,7 +9,6 @@ def get_selected_from_cookies(context):
         request = context['request']
         cookies = request.COOKIES
         if 'section' in cookies:
-            print 'SECTION:', cookies['section']
             return int(cookies['section'])
 
 @register.inclusion_tag('catalog/menu.html', takes_context=True)
