@@ -95,6 +95,12 @@ class TreeItem(models.Model):
         super(TreeItem, self).delete(*args, **kwds)
     # template security
     delete.alters_data = True
+    
+    def get_image(self):
+        if self.get_type() == 'item':
+            return self.item.images
+        else:
+            return self.section.images
 
     def __unicode__(self):
         return self.name
