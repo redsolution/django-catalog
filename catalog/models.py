@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 import mptt
 
-THUMB_SIZE = (170, 200)
+THUMB_SIZE = (120, 120)
 
 
 class ItemImage(SmartFileModel):
@@ -15,6 +15,9 @@ class ItemImage(SmartFileModel):
         'name': 'image',
         'image_check': True,
         'copy': 'thumb',
+        'resize': True,
+        'width': 200,
+        'height': 200,
     }, {
         'name': 'thumb',
         'resize': True,
@@ -96,11 +99,15 @@ class TreeItem(models.Model):
     # template security
     delete.alters_data = True
     
-    def get_image(self):
+    def get_images(self):
         if self.get_type() == 'item':
-            return self.item.images
+            images = self.item.images
         else:
-            return self.section.images
+            images = self.section.images
+        if images.count() == 0:
+            return False
+        else:
+            return images
 
     def __unicode__(self):
         return self.name
@@ -150,8 +157,5 @@ class Item(models.Model):
         help_text=u'Введите 0 если на складе нет товара',
         null=True, blank=True)
     
-    def get_images(self):
-        return self.images.all()
-
     def __unicode__(self):
         return self.tree.name
