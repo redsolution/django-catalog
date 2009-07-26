@@ -5,9 +5,11 @@ from optparse import make_option
 from catalog.models import TreeItem, Section, Item
 import csv
 from urlify import urlify
+from time import time
+from django.db import transaction
 
 class Command(BaseCommand):
-    help = '''Export items from CommerceML format
+    help = '''Import items from CommerceML format
     Usage: manage.py importcml filename.xml
     '''
     option_list = BaseCommand.option_list + (
@@ -16,9 +18,8 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        start_time = time()
         self.options = options
-
-        print self.options['verbose']
 
         if len(args) == 0:
             raise CommandError("You should specify file to import")
@@ -48,8 +49,9 @@ class Command(BaseCommand):
                     print 'Error importing record:', item
             count = count + 1
 
+        work_time = time() - start_time
         if self.options['verbose'] >= 1:
-            print count, 'items imported'
+            print count, 'items imported in %s s' % work_time
 
     def _get_or_create_section(self, name, parent):
         section_tree_item, created = TreeItem.objects.get_or_create(name=name,
@@ -61,7 +63,7 @@ class Command(BaseCommand):
             section_tree_item.section = section
             section_tree_item.save()
             if self.options['verbose'] >= 2:
-                print '[S]', section
+                print '[S]', '=== %s ===' % section
         else:
             section = Section.objects.get(tree=section_tree_item)
         return section
@@ -95,7 +97,8 @@ class Command(BaseCommand):
             if self.options['verbose'] >= 2:
                 print '[U]', kwds['name']
         return created
-
+    
+    @transaction.commit_on_success
     def make_item(self, param_list):
         '''
         Makes a new item in catalog

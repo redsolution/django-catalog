@@ -24,9 +24,9 @@ class ItemImage(SmartFileModel):
     } ]
 
     image = models.ImageField(verbose_name=u'Изображение',
-        upload_to='upload/catalog/itemimages/%Y/%m/%d')
+        upload_to='upload/catalog/itemimages/%Y-%m-%d')
     thumb = models.ImageField(verbose_name=u'Превью',
-        upload_to='upload/catalog/itemthumbs/%Y/%m/%d', editable=False)
+        upload_to='upload/catalog/itemthumbs/%Y-%m-%d', editable=False)
     
     # Generic FK used because we want to make TreeItem editable in 
     # admin interface as inline, and include ItemImage too.     
