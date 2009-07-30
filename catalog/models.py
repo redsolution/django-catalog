@@ -5,26 +5,32 @@ from smartfiles.models import SmartFileModel
 from tinymce.models import HTMLField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+from django.conf import settings
 import mptt
 
-THUMB_SIZE = (120, 120)
+CATALOG_IMAGE_SETTINGS = getattr(settings, 'CATALOG_IMAGE_SETTINGS', {
+    'width': 200,
+    'height': 200,
+    'resize': True,
+})
+CATALOG_THUMB_SETTINGS = getattr(settings, 'CATALOG_THUMB_SETTINGS', {
+    'width': 120,
+    'height': 120,
+    'resize': True,
+    'enlarge': True,
+})
 
+CATALOG_IMAGE_SETTINGS.update({
+    'name': 'image',
+    'image_check': True,
+    'copy': 'thumb',
+})
+CATALOG_THUMB_SETTINGS.update({
+    'name': 'thumb',
+})
 
 class ItemImage(SmartFileModel):
-    file_rules = [ {
-        'name': 'image',
-        'image_check': True,
-        'copy': 'thumb',
-        'resize': True,
-        'width': 200,
-        'height': 200,
-    }, {
-        'name': 'thumb',
-        'resize': True,
-        'enlarge': True,
-        'width': THUMB_SIZE[0],
-        'height': THUMB_SIZE[1],
-    } ]
+    file_rules = [CATALOG_IMAGE_SETTINGS, CATALOG_THUMB_SETTINGS]
 
     image = models.ImageField(verbose_name=u'Изображение',
         upload_to='upload/catalog/itemimages/%Y-%m-%d')
