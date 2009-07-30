@@ -130,6 +130,9 @@ class Section(models.Model):
         return bool(len(self.tree.children.filter(section__isnull=False,
             section__is_meta_item=False)))
 
+    def min_price(self):
+        return min([child.item.price for child in self.tree.children.all()])
+
     def __unicode__(self):
         return self.tree.name
 
