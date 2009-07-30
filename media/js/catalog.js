@@ -160,7 +160,7 @@ var gridBar = new Ext.Toolbar({
     	cls: 'x-btn-text-icon',
     	icon: '/media/catalog/extjs/resources/images/default/grid/refresh.gif',
     	handler: function(){
-    		grid_store.reload();
+    		catalog_store.reload();
     	}
     	
     },{
@@ -262,7 +262,7 @@ grid_panel.on('rowdblclick', function(grid, rowIndex, e){
 
 
 grid_panel.reload = function(){
-    catalog_store.reload();
+	catalog_store.reload();
 //    var wasExpanded = tree_panel.selModel.selNode ? tree_panel.selModel.selNode.expanded : 'root' ;
 //    tree_panel.loader.load(tree_panel.selModel.selNode);
 //    if (wasExpanded) {
