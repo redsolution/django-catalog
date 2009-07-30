@@ -57,6 +57,7 @@ class TreeItem(models.Model):
     class Meta:
         verbose_name = u'Элемент каталога'
         verbose_name_plural = u'Элементы каталога'
+        ordering = ['tree_id', 'lft']
 
     parent = models.ForeignKey('self', related_name='children',
         verbose_name=u'Родительский', null=True, blank=True)
