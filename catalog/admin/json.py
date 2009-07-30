@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.http import HttpResponse, HttpResponseServerError
 from catalog.models import Section, Item, TreeItem
 from django.contrib.auth.decorators import permission_required
@@ -55,8 +56,8 @@ def list(request):
                 'type': obj.tree.get_type(),
                 'itemid': obj.id,
                 'show': obj.tree.show,
-                'price': float(obj.price) if obj.tree.get_type() == 'item' else 0,
-                'quantity': int(obj.quantity) if obj.tree.get_type() == 'item' else 0,
+                'price': float(0 if obj.price is None else obj.price) if obj.tree.get_type() == 'item' else 0,
+                'quantity': int(0 if obj.quantity is None else obj.quantity) if obj.tree.get_type() == 'item' else 0,
                 'has_image': False if obj.images.count() == 0 else True,
                 'has_description': True if obj.tree.short_description  else False,
                 }
