@@ -7,6 +7,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.conf import settings
 import mptt
+from catalog.fields import RelatedField
+
 
 CATALOG_IMAGE_SETTINGS = getattr(settings, 'CATALOG_IMAGE_SETTINGS', {
     'width': 200,
@@ -60,7 +62,7 @@ class TreeItem(models.Model):
         ordering = ['tree_id', 'lft']
 
     parent = models.ForeignKey('self', related_name='children',
-        verbose_name=u'Родительский', null=True, blank=True)
+        verbose_name=u'Родительский', null=True, blank=True, editable=False)
 
     # Display options
     show = models.BooleanField(verbose_name=u'Отображать', default=True)
@@ -69,7 +71,7 @@ class TreeItem(models.Model):
     slug = models.SlugField(verbose_name=u'Slug', max_length=200, null=True, blank=True)
     name = models.CharField(verbose_name=u'Наименование', max_length=200, default='')
     short_description = models.TextField(verbose_name=u'Краткое описание', null=True, blank=True)
-    description = HTMLField(verbose_name=u'Описание', null=True, blank=True)
+    description = models.TextField(verbose_name=u'Описание', null=True, blank=True)
 
     # fields required for SEO
     seo_title = models.CharField(verbose_name=u'SEO заголовок', max_length=200, null=True, blank=True)
@@ -150,10 +152,10 @@ class Item(models.Model):
         verbose_name_plural = u'Продукты каталога'
 
     # Relation options
-    relative = models.ManyToManyField(TreeItem, verbose_name=u'Сопутствующие товары',
-                                 null=True, blank=True, related_name='relative')
+    relative = RelatedField(TreeItem, verbose_name=u'Сопутствующие товары',
+        null=True, blank=True, related_name='relative', editable=True)
     sections = models.ManyToManyField(Section, related_name='items',
-        verbose_name=u'Разделы', blank=True)
+        verbose_name=u'Разделы', blank=True, editable=False)
     images = generic.GenericRelation(ItemImage)
 
     # Sale options
