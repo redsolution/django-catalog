@@ -69,6 +69,7 @@ class BarcodeImagesParser(BarcodeTextParser):
         f = open(filename, 'r')
         barcode, suffix, extension = groups
         upload = SimpleUploadedFile('%s%s.%s' % (barcode, suffix, extension), f.read())
+        f.close()
         if barcode in self.data:
             self.data[barcode].append(upload)
         else:
