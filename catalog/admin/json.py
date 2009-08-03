@@ -8,10 +8,11 @@ def get_content(parent):
     if parent == 'root':
         parent = None
 
-    all_sections = Section.objects.filter(tree__parent=parent)
-    sections = all_sections.filter(is_meta_item=False)
-    metaitems = all_sections.filter(is_meta_item=True)
-    items = Item.objects.filter(tree__parent=parent)
+    tree_items = TreeItem.objects.filter(parent=parent)
+    all_sections = tree_items.filter(section__isnull=False)
+    sections = [treeitem.section for treeitem in all_sections.filter(section__is_meta_item=False)]
+    metaitems = [treeitem.section for treeitem in all_sections.filter(section__is_meta_item=True)]
+    items = [treitem.item for treeitem in tree_items.filter(item__isnull=False)]
     return {'sections': sections, 'metaitems': metaitems, 'items': items}
 
 
