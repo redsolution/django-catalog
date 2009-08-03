@@ -15,7 +15,7 @@ def get_content(parent):
         tree_items.filter(section__isnull=False, section__is_meta_item=False)]
     metaitems = [treeitem.section for treeitem in 
         tree_items.filter(section__isnull=False, section__is_meta_item=True)]
-    items = [treitem.item for treeitem in tree_items.filter(item__isnull=False)]
+    items = [treeitem.item for treeitem in tree_items.filter(item__isnull=False)]
     return {'sections': sections, 'metaitems': metaitems, 'items': items}
 
 
