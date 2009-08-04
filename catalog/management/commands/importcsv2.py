@@ -142,7 +142,7 @@ class Command(BaseCommand):
             
             tree_item = TreeItem(
                 name=kwds['name'], parent=kwds['parent'], slug=urlify(kwds['name']),
-                item=item
+                short_description=kwds['short_description'], item=item
             )
             tree_item.save()
 
@@ -165,6 +165,7 @@ class Command(BaseCommand):
         else:
             options['barcode'] = None
         options['name'] = param_list[3].decode('cp1251').replace('""', '"')
+        options['short_description'] = options['name'].split(' ').pop()
         section_name = param_list[2].decode('cp1251')
         section = self._get_or_create_section(section_name, self.import_section.tree)
         options['parent'] = section.tree

@@ -1,0 +1,31 @@
+{% load format_tags %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Прайс-лист на {% now "Y-m-d" %}</title>
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    </head>
+<body>
+    <table>
+        <tr><th colspan="4">Прайс-лист на {% now "Y-m-d" %}</th></tr>
+        <tr>
+            <th>Артикул</th>
+            <th>Наименование</th>
+            <td>Описание</td>
+            <th>Цена, руб</th>
+        </tr>
+        {% for section, items in sections.iteritems %}
+            <tr><th colspan="4">{{ section }}</th></tr>
+            {% for item in items %}
+                <tr>
+                    <td>{{ item.identifier }}</td>
+                    <td>{{ item.name|itemname }}</td>
+                    <td>{{ item.short_description }}</td>
+                    <td>{{ item.price }}</td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </table>
+    
+</body>
+</html>
