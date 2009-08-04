@@ -29,7 +29,7 @@ class TreeItemForItemInline(admin.StackedInline):
 
 class ItemOptions(admin.ModelAdmin):
     model = Item
-#    filter_horizontal = ('relative', 'sections')
+    raw_id_fields = ('relative', 'sections')
     inlines = [TreeItemForItemInline, ItemImageInline]
     search_fields = ('tree__name', 'tree__short_description')
     

@@ -33,3 +33,9 @@ def add_section(request):
     
     return HttpResponseRedirect('/admin/catalog/section/%d/?_popup=1'
         % new_section.id)
+
+def edit_related(request, obj_id):
+    item = get_object_or_404(Item, id=obj_id)
+    
+    return render_to_response('admin/catalog/edit_related.html', {'item': item},
+        context_instance=RequestContext(request))

@@ -3,6 +3,8 @@ from django.http import HttpResponse, HttpResponseServerError
 from catalog.models import Section, Item, TreeItem
 from django.contrib.auth.decorators import permission_required
 from django.utils import simplejson
+from django.shortcuts import render_to_response, get_object_or_404
+
 
 def get_content(parent):
     if parent == 'root':
@@ -39,7 +41,7 @@ def tree(request):
         for item in content['items']:
             tree.append({'text': item.tree.name,
                          'id': '%d' % item.tree.id,
-                         'leaf': 'true',
+                         'leaf': True,
                          'cls': 'leaf',
                          })
     return HttpResponse(simplejson.encode(tree))
@@ -149,3 +151,50 @@ def delete_items(request):
         return HttpResponse('OK')
     except ValueError:
         return HttpResponseServerError('Bad arguments')
+
+class RelativeTree(object):
+
+    def save(self, request, obj_id):
+        current_item = get_object_or_404(Item, id=obj_id)
+        relative_list = request.REQUEST.get('relative', '').split(',')
+        # add
+        ids_to_add = [obj_id for obj_id in relative_list 
+            if int(obj_id) not in current_item.relative.values_list('id', flat=True)]
+        # remove
+        objs_to_remove = [obj for obj in current_item.relative.all()
+            if str(obj.id) not in relative_list]
+        
+        for new_obj_id in ids_to_add:
+            object = get_object_or_404(TreeItem, id=new_obj_id)
+            current_item.relative.add(object)
+        
+        for obj in objs_to_remove:
+            current_item.relative.remove(obj)
+        return HttpResponse('OK')
+
+    def tree(self, request, obj_id):
+        current_item = get_object_or_404(Item, id=obj_id)
+        
+        tree = []
+        if request.method == 'POST':
+            parent = request.REQUEST.get('node', 'root')
+            content = get_content(parent)
+    
+            for section in content['sections']:
+                tree.append({'text': section.tree.name,
+                             'id': '%d' % section.tree.id,
+                             'cls': 'folder',
+                             })
+            for metaitem in content['metaitems']:
+                tree.append({'text': metaitem.tree.name,
+                             'id': '%d' % metaitem.tree.id,
+                             'cls': 'folder',
+                             })
+            for item in content['items']:
+                tree.append({'text': item.tree.name,
+                             'id': '%d' % item.tree.id,
+                             'cls': 'leaf',
+                             'leaf': True,
+                             'checked': item.tree.id in current_item.relative.values_list('id', flat=True),
+                             })
+        return HttpResponse(simplejson.encode(tree))

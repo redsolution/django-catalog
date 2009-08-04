@@ -13,40 +13,45 @@ function grid_to_treenode(item) {
 }
 
 /********* tree title bar **********/
-var treeBar = new Ext.Toolbar({
-	items: [{
-		text: 'Обновить'
-	}]
-})
+var treeBar = [{ 
+	text: 'Обновить',
+	cls: 'x-btn-text-icon',
+	icon: '/media/catalog/extjs/resources/images/default/grid/refresh.gif',
+	handler: function(){
+		tree_panel.selModel.selNode.reload();
+	}
+}];
 
 
 /******* remembering tree state *********/
-new Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+new Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
+	path: "/",
+    expires: new Date(new Date().getTime()+(1000*60*60*24*30)), //30 days
+}));
 
 var tree_events = {
-	panelClick: function(n) {
-				    var sn = this.selModel.selNode ||
-				    {}; // selNode is null on initial selection
-				    if (n.id != sn.id) { // ignore clicks on currently selected node
-				        if (n.id != 'root') {
+	panelClick: function(node, event) {
+				    var sn = this.selModel.selNode || {}; // selNode is null on initial selection
+				    if (node.id != sn.id) { // ignore clicks on currently selected node
+				        if (node.id != 'root') {
 				            Ext.getCmp('catalog-admin-statusbar').showBusy();
 				            catalog_store.load({
 				                params: {
-				                    'node': n.id
+				                    'node': node.id
 				                },
 				                callback: function(r, options, success){
-				                    Ext.getCmp('catalog-admin-statusbar').clearStatus();
+				                	Ext.getCmp('catalog-admin-statusbar').clearStatus();
+				                	Ext.getCmp('catalog-admin-statusbar').setText(node.attributes.text);
 				                }
 				            });
+				            Ext.state.Manager.set('treestate', node.getPath());
 				        }
 				    }
 				},
 	expandNode: function(node) {
-					console.log('expand', node);
-					Ext.state.Manager.set('treestate', node.getPath());
+					
 				},
 	moveNode: function(tree, node, oldParent, newParent, index) {
-					console.log('move node');
 				    var post_data = {
 				        node: node.id,
 				        from: oldParent.id,
@@ -55,8 +60,6 @@ var tree_events = {
 				    }
 				},
 	beforeDrop: function(dropEvent) {
-					console.log('before drop', dropEvent);
-					
 					if (dropEvent.source['grid']) {
 						// drag from grid
 						var selections = dropEvent.data.selections;
@@ -69,15 +72,12 @@ var tree_events = {
 					}
 				},
     nodeDrop: function (dropEvent) {
-//					console.log('node drop', dropEvent);
-					
 					var source = dropEvent.source.dragData['grid'] ? dropEvent.source.dragData.selections : [dropEvent.source.dragData.node];
 					var source_list = [];
 					for (var i=0; i < source.length; i++) {
 						if (source[i]['data']) {
 							source_list.push(source[i].data.id);
 						} else {
-							console.log('source[i]:', source[i]);
 							source_list.push(source[i].attributes.id);
 						}
 					}
@@ -126,7 +126,7 @@ var tree_panel = new Ext.tree.TreePanel({
         draggable: false,
         id: 'root'
     },
-    tbar: treeBar, 
+    tbar: treeBar,
 	listeners: {
 //		render: treeDropZoneInit,
     	movenode: tree_events.moveNode,
@@ -137,6 +137,19 @@ var tree_panel = new Ext.tree.TreePanel({
 	}
 
 });
+
+tree_panel.reload = function() {
+    // expand the tree and grid to saved state
+    var treestate = Ext.state.Manager.get('treestate');
+    if (treestate) {
+    	tree_panel.selectPath(treestate);
+    	var treestate = Ext.state.Manager.get('treestate');
+    	catalog_store.load({
+    		params: {node: treestate.split('/').reverse()[0]} 
+    	});
+    } else
+    	tree_panel.getRootNode().expand();	
+}
 
 /********** menu panel *************/
 
@@ -162,7 +175,6 @@ var gridBar = new Ext.Toolbar({
     	handler: function(){
     		catalog_store.reload();
     	}
-    	
     },{
         text: 'Добавить раздел',
     	cls: 'x-btn-text-icon',
@@ -179,63 +191,218 @@ var gridBar = new Ext.Toolbar({
                 "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
             win.focus();
         }
+    },{
+    	text: 'Отображать',
+    	icon: '/media/catalog/images/eye--plus.png',
+    	menu: [{
+    		text: 'Да',
+    		icon: '/media/catalog/images/show-yes.png',
+    		handler: function(){
+    			var selections = grid_panel.selModel.getSelections();
+				var r = [];
+				for (var i=0; i < selections.length; i++) {
+					r.push(selections[i].data.id);
+					}
+			    Ext.Ajax.request({
+			        url: '/admin/catalog/json/visible',
+			        success: function(response, options){
+						grid_panel.reload();
+			        },
+			        failure: function(response, options){
+						grid_panel.reload();
+			        },
+			        params: {
+			        	items: r.join(','),
+			        	visible: 1
+			        }
+			    });
+			}
+    	},{
+    		text: 'Нет',
+    		icon: '/media/catalog/images/show-no.png',
+    		handler: function(){
+				var selections = grid_panel.selModel.getSelections();
+				var r = [];
+				for (var i=0; i < selections.length; i++) {
+					r.push(selections[i].data.id);
+					}
+			    Ext.Ajax.request({
+			        url: '/admin/catalog/json/visible',
+			        success: function(response, options){
+						grid_panel.reload();
+			        },
+			        failure: function(response, options){
+						grid_panel.reload();
+			        },
+			        params: {
+			        	items: r.join(','),
+			        	visible: 0
+			        }
+			    });
+		}
+    	}]
+    },{
+		xtype: 'tbfill'
+	},{
+		text: 'Удалить',
+		icon: '/media/catalog/images/show-no.png',
+		handler: function(){
+			var selections = grid_panel.selModel.getSelections();
+			var r = [];
+			for (var i=0; i < selections.length; i++) {
+				r.push(selections[i].data.id);
+				}
+			Ext.Msg.confirm('Внимание!', 'Вы действиетльно хотите удалить ' + 
+					selections.length + 'записей?', 
+					function(btn, text){
+						if (btn == 'yes') {
+						    Ext.Ajax.request({
+						        url: '/admin/catalog/json/delete',
+						        success: function(response, options){
+									grid_panel.reload();
+						        },
+						        failure: function(response, options){
+									grid_panel.reload();
+						        },
+						        params: {
+						        	items: r.join(','),
+						        }
+						    });
+						}
+					})
+		}
     }]
 });
 
-var gridStatus = new Ext.StatusBar({
+var gridStatus = new Ext.ux.StatusBar({
 	defaultText: 'Готово',
     id: 'catalog-admin-statusbar'
 });
 
 /********** items grid panel *************/
 
-function renderShown(value){
+function renderYesNo(value){
     if (value) 
         return '<div class="show-yes"></div>'
     else 
         return '<div class="show-no"></div>'
 }
 
+function renderType(value){
+	if (value == 'section')
+		return '<div class="section"></div>'
+	if (value == 'metaitem')
+		return '<div class="metaitem"></div>'		
+	if (value == 'item')
+		return '<div class="item"></div>'
+}
+
+function renderItemOnly(value, metaData, record) {
+	if (record.data.type == 'item') 
+		return value;
+	else 
+		return '&nbsp;'
+}
+
 var catalog_store = new Ext.data.JsonStore({
     url: '/admin/catalog/json/list',
     root: 'items',
     fields: ['type', 'itemid', 'id', 'name', 'type',
-             'seo_title', 
     {
+    	name: 'seo_title',
+    	type: 'boolean'
+    }, {
+        name: 'price',
+        type: 'int'
+    }, {
+        name: 'quantity',
+        type: 'int'
+    }, {
         name: 'seo_keywords',
         type: 'boolean'
     }, {
+        name: 'seo_description',
+        type: 'boolean'
+    }, {
         name: 'show',
+        type: 'boolean'
+    }, {
+        name: 'has_image',
+        type: 'boolean'
+    }, {
+        name: 'has_description',
         type: 'boolean'
     }]
 });
 
 var catalog_col_model = new Ext.grid.ColumnModel([{
+	id: 'type',
+	dataIndex: 'type',
+	width: 50,
+	renderer: renderType
+},{
     id: 'name',
     header: 'Наименование',
     dataIndex: 'name',
-    width: 220
+    width: 400
 }, {
-    id: 'show',
-    header: 'Отображать',
+    name: 'price',
+    dataIndex: 'price',
+    header: 'Цена',
+    type: 'int',
+    renderer: renderItemOnly
+}, {
+    name: 'quantity',
+    dataIndex: 'quantity',
+    header: 'Остаток',
+    type: 'int',
+    renderer: renderItemOnly
+}, {
+	id: 'seo_title',
+	header: '&nbsp;',
+	dataIndex: 'seo_title',
+	width: 50,
+    renderer: renderYesNo
+}, {
+	id: 'seo_keywords',
+	header: '&nbsp;',
+	dataIndex: 'seo_keywords',
+	width: 50,
+    renderer: renderYesNo
+}, {
+	id: 'seo_description',
+	header: '&nbsp;',
+	dataIndex: 'seo_description',
+	width: 50,
+    renderer: renderYesNo
+}, {
+	id: 'has_image',
+	header: 'IMG',
+	dataIndex: 'has_image',
+	width: 50,
+    renderer: renderYesNo
+}, {
+	id: 'has_description',
+	header: 'DSC',
+	dataIndex: 'has_description',
+	width: 50,
+    renderer: renderYesNo
+}, {
+	id: 'show',
+    header: '&nbsp;',
     dataIndex: 'show',
     width: 50,
-    renderer: renderShown
+    renderer: renderYesNo
 }]);
 
 var grid_panel = new Ext.grid.GridPanel({
     //  look
-    height: 500,
     title: 'Содержимое',
     selModel: new Ext.grid.RowSelectionModel(),
     fields: ['name', 'show'],
+//    viewConfig: {forceFit: true},
     //  data
-//    cm: catalog_col_model,
-    columns: [
-              {header: 'Name', dataIndex: 'name'},
-              {header: 'Show', dataIndex: 'show'},
-              {header: 'Type', dataIndex: 'type'}        
-    ],
+    cm: catalog_col_model,
     ds: catalog_store,
     ddGroup: 'tree',
     tbar: gridBar,
@@ -262,12 +429,7 @@ grid_panel.on('rowdblclick', function(grid, rowIndex, e){
 
 
 grid_panel.reload = function(){
-	catalog_store.reload();
-//    var wasExpanded = tree_panel.selModel.selNode ? tree_panel.selModel.selNode.expanded : 'root' ;
-//    tree_panel.loader.load(tree_panel.selModel.selNode);
-//    if (wasExpanded) {
-//        tree_panel.selModel.selNode.expand();
-//    }
+    catalog_store.reload();
 }
 
 /********** binding *************/
@@ -282,19 +444,14 @@ Ext.onReady(function(){
             border: 0,
         }, tree_panel, {
             region: 'center',
-            layout: 'anchor',
+            layout: 'fit',
             border: false,
             margins: '5 5 5 5',
-            items: [grid_panel]
+            items: grid_panel
         }]
     });
-	
-    // expand the tree
-    var treestate = Ext.state.Manager.get('treestate');
-    if (treestate)
-    	tree_panel.expandPath(treestate);
-    else
-    	tree_panel.getRootNode().expand();
+	tree_panel.reload();
+
 });
 
 
