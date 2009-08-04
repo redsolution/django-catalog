@@ -154,8 +154,8 @@ class Item(models.Model):
     # Relation options
     relative = RelatedField(TreeItem, verbose_name=u'Сопутствующие товары',
         null=True, blank=True, related_name='relative', editable=True)
-    sections = models.ManyToManyField(Section, related_name='items',
-        verbose_name=u'Разделы', blank=True, editable=False)
+    sections = RelatedField(Section, related_name='items',
+        verbose_name=u'Разделы', blank=True, editable=True)
     images = generic.GenericRelation(ItemImage)
 
     # Sale options

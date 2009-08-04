@@ -153,27 +153,43 @@ def delete_items(request):
         return HttpResponseServerError('Bad arguments')
 
 class RelativeTree(object):
-
+    # the model, which involves FK
+    base_model = Item
+    # FK model
+    rel_model = TreeItem
+    fk_attr = 'relative'
+    
+    def _get_rel_object(self, obj_id):
+        # we want to override this behavior
+        return get_object_or_404(self.rel_model, id=obj_id)
+    
     def save(self, request, obj_id):
-        current_item = get_object_or_404(Item, id=obj_id)
-        relative_list = request.REQUEST.get('relative', '').split(',')
+        current_item = get_object_or_404(self.base_model, id=obj_id)
+        relative_list = request.REQUEST.get(self.fk_attr, u'').split(',')
+        related_manager = getattr(current_item, self.fk_attr)
+        
+        # workaround for empty request
+        if u'' in relative_list:
+            relative_list.remove(u'')
+        
         # add
         ids_to_add = [obj_id for obj_id in relative_list 
-            if int(obj_id) not in current_item.relative.values_list('id', flat=True)]
+            if int(obj_id) not in related_manager.values_list('id', flat=True)]
         # remove
-        objs_to_remove = [obj for obj in current_item.relative.all()
+        objs_to_remove = [obj for obj in related_manager.all()
             if str(obj.id) not in relative_list]
         
         for new_obj_id in ids_to_add:
-            object = get_object_or_404(TreeItem, id=new_obj_id)
-            current_item.relative.add(object)
+            object = self._get_rel_object(new_obj_id)
+            related_manager.add(object)
         
         for obj in objs_to_remove:
-            current_item.relative.remove(obj)
+            related_manager.remove(obj)
         return HttpResponse('OK')
 
     def tree(self, request, obj_id):
-        current_item = get_object_or_404(Item, id=obj_id)
+        current_item = get_object_or_404(self.base_model, id=obj_id)
+        related_manager = getattr(current_item, self.fk_attr)
         
         tree = []
         if request.method == 'POST':
@@ -195,6 +211,40 @@ class RelativeTree(object):
                              'id': '%d' % item.tree.id,
                              'cls': 'leaf',
                              'leaf': True,
-                             'checked': item.tree.id in current_item.relative.values_list('id', flat=True),
+                             'checked': item.tree.id in related_manager.values_list('id', flat=True),
+                             })
+        return HttpResponse(simplejson.encode(tree))
+
+
+class SectionsTree(RelativeTree):
+    # the model, which involves FK
+    base_model = Item
+    # FK model
+    rel_model = Section
+    fk_attr = 'sections'
+    
+    def _get_rel_object(self, obj_id):
+        return get_object_or_404(self.rel_model, tree__id=obj_id)
+
+    def tree(self, request, obj_id):
+        current_item = get_object_or_404(self.base_model, id=obj_id)
+        related_manager = getattr(current_item, self.fk_attr)
+        
+        tree = []
+        if request.method == 'POST':
+            parent = request.REQUEST.get('node', 'root')
+            content = get_content(parent)
+    
+            for section in content['sections']:
+                tree.append({'text': section.tree.name,
+                             'id': '%d' % section.tree.id,
+                             'cls': 'folder',
+                             'checked': section.tree.id in related_manager.values_list('id', flat=True),
+                             })
+            for metaitem in content['metaitems']:
+                tree.append({'text': metaitem.tree.name,
+                             'id': '%d' % metaitem.tree.id,
+                             'cls': 'folder',
+                             'checked': metaitem.tree.id in related_manager.values_list('id', flat=True),
                              })
         return HttpResponse(simplejson.encode(tree))
