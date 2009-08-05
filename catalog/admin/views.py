@@ -5,6 +5,8 @@ from django.forms.models import ModelForm, modelformset_factory
 from catalog.models import Section, Item, ItemImage, TreeItem
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import permission_required
+from urllib import urlencode
+
 
 @permission_required('catalog.add_section', login_url='/admin/')
 def catalog_index(request):
@@ -39,3 +41,12 @@ def edit_related(request, obj_id):
     
     return render_to_response('admin/catalog/edit_related.html', {'item': item},
         context_instance=RequestContext(request))
+
+def editor_redirect(request, obj_id):
+    treeitem = get_object_or_404(TreeItem, id=obj_id)
+    get_str = urlencode(request.GET)
+    if treeitem.get_type() == 'item':
+        return HttpResponseRedirect('/admin/catalog/item/%s/?%s' % (treeitem.item.id, get_str))
+    else:
+        return HttpResponseRedirect('/admin/catalog/section/%s/?%s' % (treeitem.section.id, get_str))
+

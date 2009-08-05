@@ -31,8 +31,33 @@ function deleteItems(id_list){
             items: id_list.join(','),
         }
     });
-
 }
+
+function editItem(id){
+    var win = window.open("/admin/catalog/edititem/" + id +
+            "/?_popup=1", "EditTreeItemWindow", "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
+    win.focus();
+}
+
+/********** tree context menu ******/
+var contextMenu = new Ext.menu.Menu ({
+    items: [{
+        text: 'Редактировать',
+        icon: '/media/catalog/images/edit.png',
+        handler: function(){
+                node = tree_panel.getSelectionModel().getSelectedNode();
+                editItem(node.id);
+            }
+    },{
+        text: 'Удалить',
+        icon: '/media/catalog/images/show-no.png',
+        handler: function(){
+                node = tree_panel.getSelectionModel().getSelectedNode();
+                deleteItems([node.id]);
+                tree_panel.reload();
+            }
+    }]
+});
 
 /********** tree panel *************/
 function grid_to_treenode(item) {
@@ -127,7 +152,11 @@ var tree_events = {
 				        	point: dropEvent.point
 				        }
 			    	});
-				}
+				},
+    contextMenuHandler: function(node){
+                    node.select();
+                    contextMenu.show(node.ui.getAnchor());
+                }
 }
 
 var tree_panel = new Ext.tree.TreePanel({
@@ -164,7 +193,8 @@ var tree_panel = new Ext.tree.TreePanel({
     	beforenodedrop: tree_events.beforeDrop,
     	nodedrop: tree_events.nodeDrop,
 		click: tree_events.panelClick,
-		expandnode: tree_events.expandNode
+		expandnode: tree_events.expandNode,
+        contextmenu: tree_events.contextMenuHandler
 	}
 
 });
@@ -428,16 +458,7 @@ var grid_panel = new Ext.grid.GridPanel({
 
 grid_panel.on('rowdblclick', function(grid, rowIndex, e){
 	var item = grid.store.getAt(rowIndex);
-	if (item.get('type') == 'item') { 
-		var win = window.open("/admin/catalog/item/" +
-				grid.store.getAt(rowIndex).get('itemid') +
-				"/?_popup=1", "EditTreeItemWindow", "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
-	} else {
-		var win = window.open("/admin/catalog/section/" + 
-				grid.store.getAt(rowIndex).get('itemid') +
-				"/?_popup=1", "EditTreeItemWindow", "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
-	}
-    win.focus();
+    editItem(grid.store.getAt(rowIndex).get('id'));
     return false;
 });
 
@@ -467,7 +488,6 @@ Ext.onReady(function(){
 	tree_panel.reload();
 
 });
-
 
 function dismissAddAnotherPopup(win, newId, newRepr) {
     win.close();
