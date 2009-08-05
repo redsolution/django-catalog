@@ -142,14 +142,30 @@ def visible(request):
     except ValueError:
         return HttpResponseServerError('Bad arguments')
 
+def delete_count(request):
+    try:
+        items_list = request.REQUEST.get('items', '').split(',')
+        items_to_delete = TreeItem.objects.filter(id__in=items_list)
+        children_to_delete = 0
+        for item in items_to_delete:
+            children_to_delete += item.get_descendant_count()
+        return HttpResponse(simplejson.encode({
+            'items': len(items_to_delete),
+            'all': len(items_to_delete) + children_to_delete,
+        }))
+    except ValueError, TreeItem.DoesNotExist:
+        return HttpResponseServerError('Bad arguments')
+
 def delete_items(request):
     try:
         items_list = request.REQUEST.get('items', '').split(',')
         items_to_delete = TreeItem.objects.filter(id__in=items_list)
         for item in items_to_delete:
+            for descendant in item.get_descendants():
+                descendant.delete()
             item.delete()
         return HttpResponse('OK')
-    except ValueError:
+    except ValueError, TreeItem.DoesNotExist:
         return HttpResponseServerError('Bad arguments')
 
 class RelativeTree(object):

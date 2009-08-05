@@ -2,6 +2,37 @@ Ext.BLANK_IMAGE_URL = '/media/catalog/extjs/resources/images/default/s.gif';
 Ext.MessageBox.buttonText.yes = "Да";
 Ext.MessageBox.buttonText.no = "Нет";
 
+/****** delte items *******/
+function deleteItems(id_list){
+    Ext.Ajax.request({
+        url: '/admin/catalog/json/count/delete',
+        success: function(response, options){
+            var data = Ext.util.JSON.decode(response.responseText);
+            Ext.Msg.confirm('Внимание!', 'Удаление ' + data.items + 
+            ' элементов повлечет удаление ' + data.all + ' дочерних элементов. Удалить?',
+                function(btn, text){
+                    if (btn == 'yes') {
+                        Ext.Ajax.request({
+                            url: '/admin/catalog/json/delete',
+                            success: function(response, options){
+                                grid_panel.reload();
+                            },
+                            failure: function(response, options){
+                                grid_panel.reload();
+                            },
+                            params: {
+                                items: id_list.join(','),
+                            }
+                        });
+                    }
+            });
+        },
+        params: {
+            items: id_list.join(','),
+        }
+    });
+
+}
 
 /********** tree panel *************/
 function grid_to_treenode(item) {
@@ -252,24 +283,7 @@ var gridBar = new Ext.Toolbar({
 			for (var i=0; i < selections.length; i++) {
 				r.push(selections[i].data.id);
 				}
-			Ext.Msg.confirm('Внимание!', 'Вы действиетльно хотите удалить ' + 
-					selections.length + 'записей?', 
-					function(btn, text){
-						if (btn == 'yes') {
-						    Ext.Ajax.request({
-						        url: '/admin/catalog/json/delete',
-						        success: function(response, options){
-									grid_panel.reload();
-						        },
-						        failure: function(response, options){
-									grid_panel.reload();
-						        },
-						        params: {
-						        	items: r.join(','),
-						        }
-						    });
-						}
-					})
+            deleteItems(r);
 		}
     }]
 });
