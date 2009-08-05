@@ -246,8 +246,26 @@ var gridBar = new Ext.Toolbar({
             }
             var parentSectionId = tree_panel.selModel.selNode.id;
             
-            var win = window.open("/admin/catalog/new?parent=" + 
+            var win = window.open("/admin/catalog/newsection?parent=" + 
                     tree_panel.selModel.selNode.id + 
+                    "&_popup=1", "EditTreeItemWindow", 
+                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
+            win.focus();
+        }
+    },{
+        text: 'Добавить товаp',
+    	cls: 'x-btn-text-icon',
+    	icon: '/media/catalog/extjs/resources/images/default/tree/drop-add.gif',
+    	handler: function(){
+            if (tree_panel.selModel.selNode == null) {
+                return;
+            }
+            if (tree_panel.selModel.selNode.leaf)
+                selectedNode = tree_panel.selModel.selNode.parentNode;
+            else
+                selectedNode = tree_panel.selModel.selNode;
+            var win = window.open("/admin/catalog/newitem?parent=" + 
+                    selectedNode.id + 
                     "&_popup=1", "EditTreeItemWindow", 
                 "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
             win.focus();
@@ -492,9 +510,11 @@ Ext.onReady(function(){
 function dismissAddAnotherPopup(win, newId, newRepr) {
     win.close();
 	grid_panel.reload();
+    tree_panel.reload();
 }
 
 function dismissRelatedLookupPopup(win, chosenId) {
     win.close();
 	grid_panel.reload();
+    tree_panel.reload();
 }

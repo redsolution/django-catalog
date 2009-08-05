@@ -18,6 +18,23 @@ def close_popup(request):
     return render_to_response('admin/catalog/closepopup.html',
                               context_instance=RequestContext(request))
 
+@permission_required('catalog.add_item', login_url='/admin/')
+def add_item(request):
+    parent_id = request.GET.get('parent', None)
+    if parent_id == 'root':
+        parent_tree_item = None
+    else:
+        parent_tree_item = TreeItem.objects.get(id=parent_id)
+
+    new_item = Item()
+    new_item.save()
+    new_tree_item = TreeItem(parent=parent_tree_item,
+        name=u'Новый товар', item=new_item)
+    new_tree_item.save()
+    
+    return HttpResponseRedirect('/admin/catalog/item/%d/?_popup=1'
+        % new_item.id)
+
 @permission_required('catalog.add_section', login_url='/admin/')
 def add_section(request):
     parent_id = request.GET.get('parent', None)
@@ -26,11 +43,10 @@ def add_section(request):
     else:
         parent_tree_item = TreeItem.objects.get(id=parent_id)
 
-    new_tree_item = TreeItem(parent=parent_tree_item, name=u'Новый раздел')
-    new_tree_item.save()
     new_section = Section()
     new_section.save()
-    new_tree_item.section = new_section
+    new_tree_item = TreeItem(parent=parent_tree_item,
+        name=u'Новый раздел', section=new_section)
     new_tree_item.save()
     
     return HttpResponseRedirect('/admin/catalog/section/%d/?_popup=1'

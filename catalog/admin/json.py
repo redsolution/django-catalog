@@ -31,11 +31,13 @@ def tree(request):
         for section in content['sections']:
             tree.append({'text': section.tree.name,
                          'id': '%d' % section.tree.id,
+                         'leaf': False,
                          'cls': 'folder',
                          })
         for metaitem in content['metaitems']:
             tree.append({'text': metaitem.tree.name,
                          'id': '%d' % metaitem.tree.id,
+                         'leaf': False,
                          'cls': 'folder',
                          })
         for item in content['items']:
