@@ -19,7 +19,7 @@ def catalog_menu(context, section=None):
     if section is None:
         children = [tree_item.section for tree_item in 
             TreeItem.objects.filter(parent__isnull=True, section__isnull=False,
-            section__is_meta_item=False)]
+            section__is_meta_item=False)[:2]]
     else:
         children = [tree_item.section for tree_item in 
             section.tree.children.filter(section__isnull=False,

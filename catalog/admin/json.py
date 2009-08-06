@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.http import HttpResponse, HttpResponseServerError
+from django.db import transaction
 from catalog.models import Section, Item, TreeItem
 from django.contrib.auth.decorators import permission_required
 from django.utils import simplejson
@@ -106,6 +107,7 @@ def may_move(node, parent):
     else:
         return False
 
+@transaction.commit_on_success
 def move_node(request):
     if request.method == 'POST':
         sources = request.REQUEST.get('source', '').split(',')
@@ -158,6 +160,7 @@ def delete_count(request):
     except ValueError, TreeItem.DoesNotExist:
         return HttpResponseServerError('Bad arguments')
 
+@transaction.commit_on_success
 def delete_items(request):
     try:
         items_list = request.REQUEST.get('items', '').split(',')
@@ -181,6 +184,7 @@ class RelativeTree(object):
         # we want to override this behavior
         return get_object_or_404(self.rel_model, id=obj_id)
     
+    @transaction.commit_on_success
     def save(self, request, obj_id):
         current_item = get_object_or_404(self.base_model, id=obj_id)
         relative_list = request.REQUEST.get(self.fk_attr, u'').split(',')
