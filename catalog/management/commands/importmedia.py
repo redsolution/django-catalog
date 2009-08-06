@@ -78,6 +78,7 @@ class Command(BaseCommand):
                 FormClass = get_model_form_class(ItemImage)
 
                 content_type = ContentType.objects.get_for_model(Item)
+                post_data = FormClass(instance=instance).initial
                 post_data.update({
                     'content_type': content_type.id,
                     'object_id': instance.id

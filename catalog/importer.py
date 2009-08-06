@@ -31,7 +31,8 @@ class DirectoryParser(object):
             for filename in files:
                 match = self.regexp.match(filename)
                 if match is not None:
-                    yield self.pk, self.process_match(match.groups(), os.path.join(root, filename))
+                    result = self.process_match(match.groups(), os.path.join(root, filename))
+                    yield self.pk, result
 
     def process_match(self, groups, filename):
         '''
