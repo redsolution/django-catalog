@@ -2,10 +2,12 @@
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 from django.forms.models import ModelForm, modelformset_factory
-from catalog.models import Section, Item, ItemImage, TreeItem
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import permission_required
 from urllib import urlencode
+
+from catalog.models import Section, Item, ItemImage, TreeItem
 
 
 @permission_required('catalog.add_section', login_url='/admin/')
@@ -18,6 +20,7 @@ def close_popup(request):
     return render_to_response('admin/catalog/closepopup.html',
                               context_instance=RequestContext(request))
 
+@transaction.commit_on_success
 @permission_required('catalog.add_item', login_url='/admin/')
 def add_item(request):
     parent_id = request.GET.get('parent', None)
@@ -35,6 +38,7 @@ def add_item(request):
     return HttpResponseRedirect('/admin/catalog/item/%d/?_popup=1'
         % new_item.id)
 
+@transaction.commit_on_success
 @permission_required('catalog.add_section', login_url='/admin/')
 def add_section(request):
     parent_id = request.GET.get('parent', None)
