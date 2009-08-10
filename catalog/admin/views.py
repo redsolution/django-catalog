@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import permission_required
 from urllib import urlencode
 
-from catalog.models import Section, Item, ItemImage, TreeItem
+from catalog.models import Section, Item, TreeItemImage, TreeItem
 
 
 @permission_required('catalog.add_section', login_url='/admin/')
