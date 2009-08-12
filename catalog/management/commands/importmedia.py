@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from sys import argv
 from optparse import make_option
-from catalog.models import TreeItem, Section, Item, ItemImage
+from catalog.models import TreeItem, Section, Item, TreeItemImage
 from catalog.importer import BarcodeTextParser, BarcodeImagesParser
 from time import time
 from django.forms import ModelForm
@@ -39,7 +39,7 @@ class Command(BaseCommand):
         text_parser = BarcodeTextParser(path)
         for key, value in text_parser:
             try:
-                instance = TreeItem.objects.get(item__barcode=key)
+                instance = Item.objects.get(barcode=key)
 
                 if self.options['verbose'] >= 2:
                     print 'going to update', instance, 'with', value[:50].replace('\r\n', ' ')
@@ -67,21 +67,20 @@ class Command(BaseCommand):
         image_parser = BarcodeImagesParser(path)
         for key, image in image_parser:
             try:
-                instance = Item.objects.get(barcode=key)
+                instance = TreeItem.objects.get(item__barcode=key)
 
                 if self.options['rewrite']:
-                    instance.images.all().delete()
+                    instance.image_set.all().delete()
 
                 if self.options['verbose'] >= 2:
                     print 'going to update', instance, 'with image', image
 
-                FormClass = get_model_form_class(ItemImage)
+                FormClass = get_model_form_class(TreeItemImage)
 
-                content_type = ContentType.objects.get_for_model(Item)
+                content_type = ContentType.objects.get_for_model(TreeItem)
                 post_data = FormClass(instance=instance).initial
                 post_data.update({
-                    'content_type': content_type.id,
-                    'object_id': instance.id
+                    'tree_id': instance.id
                     })
                 # see http://docs.djangoproject.com/en/dev/ref/forms/api/#binding-uploaded-files-to-a-form
                 file_data = {'image': image}

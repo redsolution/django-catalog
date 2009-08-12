@@ -29,13 +29,14 @@ def add_item(request):
     else:
         parent_tree_item = TreeItem.objects.get(id=parent_id)
 
-    new_item = Item()
+    new_tree_item = TreeItem(parent=parent_tree_item)
+    new_tree_item.save()
+    new_item = Item(name=u'Новый товар', tree=new_tree_item)
     new_item.save()
-    new_tree_item = TreeItem(parent=parent_tree_item,
-        name=u'Новый товар', item=new_item)
+    # save type
     new_tree_item.save()
     
-    return HttpResponseRedirect('/admin/catalog/item/%d/?_popup=1'
+    return HttpResponseRedirect('/admin/catalog/treeitem/%d/?_popup=1'
         % new_item.id)
 
 @transaction.commit_on_success
@@ -47,13 +48,15 @@ def add_section(request):
     else:
         parent_tree_item = TreeItem.objects.get(id=parent_id)
 
-    new_section = Section()
+    new_tree_item = TreeItem(parent=parent_tree_item)
+    new_tree_item.save()
+    new_section = Section(
+        name=u'Новый раздел', tree=new_tree_item)
     new_section.save()
-    new_tree_item = TreeItem(parent=parent_tree_item,
-        name=u'Новый раздел', section=new_section)
+    # save type
     new_tree_item.save()
     
-    return HttpResponseRedirect('/admin/catalog/section/%d/?_popup=1'
+    return HttpResponseRedirect('/admin/catalog/treeitem/%d/?_popup=1'
         % new_section.id)
 
 def edit_related(request, obj_id):

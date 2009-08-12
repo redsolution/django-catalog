@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-from catalog.models import TreeItem, ItemImage, Item, Section
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.forms import ModelForm
 from django.contrib.contenttypes.models import ContentType

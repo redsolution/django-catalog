@@ -100,20 +100,24 @@ class Command(BaseCommand):
         self.data = {}
         self.data['treeitem_by_id'] = load_from_queryset(TreeItem.objects.all(), 'id')
         self.data['item_by_identifier'] = load_from_queryset(Item.objects.all(), 'identifier')
-        self.data['section_by_name'] = load_from_queryset(Section.objects.all(), 'tree__name') 
+        self.data['section_by_name'] = load_from_queryset(Section.objects.all(), 'name') 
 
     def _get_or_create_section(self, name, parent):
         if name in self.data['section_by_name']:
             return self.data['section_by_name'][name]
         else:
-            section = Section()
-            section.save()
-            section_tree_item  = TreeItem(
-                name=name, parent=parent, slug = urlify(name), section=section
-            )
+            section_tree_item  = TreeItem(parent=parent)
             section_tree_item.save()
             
-            self.data['section_by_name'].update({section_tree_item.name: section})
+            section = Section(
+                name=name, slug = urlify(name), tree=section_tree_item
+            )
+            section.save()
+
+            # update type
+            section_tree_item.save()
+            
+            self.data['section_by_name'].update({section.name: section})
             
             if self.options['verbose'] >= 2:
                 print '[S]', '=== %s ===' % section
@@ -125,29 +129,33 @@ class Command(BaseCommand):
         item_options['quantity'] =  kwds['quantity']
         item_options['barcode'] =  kwds['barcode']
         item_options['identifier'] =  kwds['identifier']
+        item_options['name'] =  kwds['name']
+        item_options['slug'] = urlify(kwds['name'])
         
         if kwds['identifier'] in self.data['item_by_identifier']:
             item = self.data['item_by_identifier'][kwds['identifier']]
             item.price = item_options['price']
             item.quantity = item_options['quantity']
             item.barcode = item_options['barcode']
+            item.name = item_options['name']
+            item.slug = item_options['slug']
             # WARNING! Treeitem related names are not updated!
             if self.options['verbose'] >= 2:
                 print '[U]', kwds['name']
             # True if created
             return False
         else:
+            tree_item = TreeItem(parent=kwds['parent'])
+            tree_item.save()
+            item_options['tree'] = tree_item
+
             item = Item(**item_options)
             item.save()
-            
-            tree_item = TreeItem(
-                name=kwds['name'], parent=kwds['parent'], slug=urlify(kwds['name']),
-                short_description=kwds['short_description'], item=item
-            )
+            # update type
             tree_item.save()
 
             if self.options['verbose'] >= 2:
-                print '[S]', tree_item.name
+                print '[S]', item.name
             # True if created
             return True
 

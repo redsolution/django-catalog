@@ -6,19 +6,13 @@ from utils.decorators import render_to
 
 
 def tree(request, item_id, slug=None):
-    tree_item = get_object_or_404(TreeItem, pk=item_id)
-    if not tree_item.show:
-        raise Http404
-    item_type = tree_item.get_type()
-
-    if item_type == 'section':
-        return section(request, tree_item)
-    elif item_type == 'metaitem':
-        return metaitem(request, tree_item)
-    elif item_type == 'item':
-        return item(request, tree_item)
-    else:
-        raise Http404
+    '''TreeItem view, slug in url ignored'''
+    treeitem = get_object_or_404(TreeItem, pk=item_id)
+    #TODO: Add type filter
+    return {
+        'treeitem': treeitem,
+        'children': treeitem.children().all(), 
+    }
 
 @render_to('catalog/section.html')
 def section(request, tree_item):

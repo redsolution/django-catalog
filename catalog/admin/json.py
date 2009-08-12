@@ -7,19 +7,11 @@ from django.utils import simplejson
 from django.shortcuts import render_to_response, get_object_or_404
 
 
-def get_content(parent):
+def get_catalog(parent):
     if parent == 'root':
         parent = None
 
-    tree_items = TreeItem.objects.filter(parent=parent)
-    all_sections = [treeitem.section for treeitem in 
-        tree_items.filter(section__isnull=False)]
-    sections = [treeitem.section for treeitem in 
-        tree_items.filter(section__isnull=False, section__is_meta_item=False)]
-    metaitems = [treeitem.section for treeitem in 
-        tree_items.filter(section__isnull=False, section__is_meta_item=True)]
-    items = [treeitem.item for treeitem in tree_items.filter(item__isnull=False)]
-    return {'sections': sections, 'metaitems': metaitems, 'items': items}
+    return TreeItem.objects.filter(parent=parent)
 
 
 @permission_required('catalog.add_section', login_url='/admin/')
@@ -27,26 +19,11 @@ def tree(request):
     tree = []
     if request.method == 'POST':
         parent = request.REQUEST.get('node', 'root')
-        content = get_content(parent)
+        catalog = get_catalog(parent)
 
-        for section in content['sections']:
-            tree.append({'text': section.tree.name,
-                         'id': '%d' % section.tree.id,
-                         'leaf': False,
-                         'cls': 'folder',
-                         })
-        for metaitem in content['metaitems']:
-            tree.append({'text': metaitem.tree.name,
-                         'id': '%d' % metaitem.tree.id,
-                         'leaf': False,
-                         'cls': 'folder',
-                         })
-        for item in content['items']:
-            tree.append({'text': item.tree.name,
-                         'id': '%d' % item.tree.id,
-                         'leaf': True,
-                         'cls': 'leaf',
-                         })
+        for treeitem in catalog:
+            tree.append(treeitem.data().ext_tree())
+    
     return HttpResponse(simplejson.encode(tree))
 
 
@@ -55,32 +32,13 @@ def list(request):
     grid = []
     if request.method == 'POST':
         parent = request.REQUEST.get('node', 'root')
-        content = get_content(parent)
+        catalog = get_catalog(parent)
 
-        def object2dict(obj):
-            return {
-                'name': obj.tree.name,
-                'id': '%d' % obj.tree.id,
-                'cls': 'folder' if obj.tree.get_type() == 'section' else 'leaf',
-                'type': obj.tree.get_type(),
-                'itemid': obj.id,
-                'show': obj.tree.show,
-                'price': float(0 if obj.price is None else obj.price) if obj.tree.get_type() == 'item' else 0,
-                'quantity': int(0 if obj.quantity is None else obj.quantity) if obj.tree.get_type() == 'item' else 0,
-                'has_image': False if obj.images.count() == 0 else True,
-                'has_description': True if obj.tree.short_description  else False,
-                }
-
-        for section in content['sections']:
-            grid.append(object2dict(section))
-
-        for metaitem in content['metaitems']:
-            grid.append(object2dict(metaitem))
-
-        for item in content['items']:
-            grid.append(object2dict(item))
-
+        for treeitem in catalog:
+            grid.append(treeitem.data().ext_grid())
+    
     return HttpResponse(simplejson.encode({'items': grid}))
+
 
 # moving tree items
 
