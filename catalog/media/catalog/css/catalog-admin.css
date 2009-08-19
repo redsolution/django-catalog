@@ -1,0 +1,68 @@
+.x-border-layout-ct td, th {
+    border-style: none;
+}
+
+.save-btn {
+    background-image: url('../img/disk-black.png') !important;
+}
+
+.add-btn {
+    background-image: url('../img/plus.png') !important;
+}
+
+.delete-btn {
+    background-image: url('../img/cross.png') !important;
+}
+
+.show-btn {
+    background-image: url('../img/eye--plus.png') !important;
+}
+
+.hide-btn {
+    background-image: url('../img/eye--minus.png') !important;
+}
+
+.show-yes {
+    background: url('../img/show-yes.png') no-repeat 50% 50%;
+    height: 13px;
+}
+
+.show-no {
+    background: url('../img/show-no.png') no-repeat 50% 50%;
+    height: 13px;
+}
+
+.section {
+    background: url('../img/folder.png') no-repeat 50% 50%;
+    height: 13px;
+}
+
+.metaitem {
+    background: url('../img/folder_full.png') no-repeat 50% 50%;
+    height: 13px;
+}
+
+.item {
+    background: url('../img/full_page.png') no-repeat 50% 50%;
+    height: 13px;
+}
+
+/*** grid headers **/
+
+.x-grid3-hd-show {
+    background: url(../img/eye--plus.png) no-repeat 50% 50% !important;
+}
+
+
+.x-grid3-hd-seo_title {
+    background: url(../img/seo_title.gif) no-repeat 50% 50% !important;
+}
+
+
+.x-grid3-hd-seo_keywords {
+    background: url(../img/seo_keywords.gif) no-repeat 50% 50% !important;
+}
+
+.x-grid3-hd-seo_description {
+    background: url(../img/seo_description.gif) no-repeat 50% 50% !important;
+}
