@@ -6,7 +6,7 @@ from catalog.models import TreeItem, Section, Item
 import csv
 from urlify import urlify
 from time import time
-from django.db import transaction
+from django.db import transaction, connection
 
 
 class Command(BaseCommand):
@@ -59,7 +59,14 @@ class Command(BaseCommand):
         
         for item in reader:
 #            try:
+            start_make = time()
             self.make_item(item)
+            make_time = time() - start_make
+            if make_time > 0.5:
+                if self.options['verbose'] >= 2:
+                    print '[*] reindexing table...'
+                self.reindex_db()
+                
 #            except ValueError:
 #                if self.options['verbose'] >= 2:
 #                    print 'Error importing record:', item
@@ -177,3 +184,9 @@ class Command(BaseCommand):
         options['parent'] = section_tree_item
 
         return self._update_or_create_item(**options)
+    
+    def reindex_db(self):
+        cursor = connection.cursor()
+        cursor.execute('''
+        REINDEX TABLE catalog_treeitem FORCE;
+        ''')
