@@ -29,6 +29,15 @@ def get_connected_models():
     return model_list
 
 
+class TreeItemManager(models.Manager):
+
+    def json(self, parent):
+        if parent == 'root':
+            parent = None
+            
+        return TreeItem.objects.filter(parent=parent)
+    
+
 class TreeItem(models.Model):
     class Meta:
         verbose_name = u'Элемент каталога'
@@ -37,62 +46,19 @@ class TreeItem(models.Model):
 
     parent = models.ForeignKey('self', related_name='children',
         verbose_name=u'Родительский', null=True, blank=True, editable=False)
-    # для утилизации запросов к БД сохраним тип
-    type = models.CharField(max_length=50, verbose_name=u'Тип данных', null=True, editable=False)
 
-    def _get_one_to_one_models(self):
-        one_to_ones = []
-        connected = get_connected_models()
-        for model in connected:
-            tree_field = model._meta.get_field_by_name('tree')[0]
-            # check it by the way
-            if tree_field.rel.to is not TreeItem:
-                raise ImproperlyConfigured('tree attribute must point to TreeItem')
-            if isinstance(tree_field, models.OneToOneField):
-                one_to_ones.append(model)
-        return one_to_ones
-
-    def get_one_to_one_modulenames(self):
-        modulenames = []
-        for one_to_one in self._get_one_to_one_models():
-            modulenames.append(one_to_one.__name__.lower())
-        return modulenames
-
-    def set_type(self):
-        for one_to_one in self._get_one_to_one_models():
-            try:
-                tree_data = getattr(self, one_to_one.__name__.lower(), None)
-                if (tree_data is not None):
-                    if (self.type is None or
-                        self.type == one_to_one.__name__.lower()):
-                        self.type = one_to_one.__name__.lower()
-                    else:
-                        raise ValueError('TreeItem has already OneToOne relation')
-            except ObjectDoesNotExist:
-                pass
-
-    def get_type(self):
-        if self.type is None:
-            self.set_type()
-        return self.type
-
-    def save(self, *args, **kwds):
-        # Автоматическое выставление type при сохранении
-        self.set_type()
-        return super(TreeItem, self).save(*args, **kwds)
-
-    def data(self):
-        if self.type is not None:
-            return getattr(self, self.type)
-        else:
-            # TODO: Добавить заглушку
-            return None
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    
+    manager = TreeItemManager()
 
     @models.permalink
     def get_absolute_url(self):
         return ('catalog.views.tree', (), {'item_id': self.id, 'slug': self.get_slug()})
     
     def get_slug(self):
+        # TODO: slug
         return u'slug'
 
 try:
@@ -107,7 +73,7 @@ class Section(models.Model):
         verbose_name = u"Раздел каталога"
         verbose_name_plural = u'Разделы каталога'
 
-    tree = models.OneToOneField('TreeItem')
+    tree = generic.GenericRelation(TreeItem)
     
     # Display options
     show = models.BooleanField(verbose_name=u'Отображать', default=True)
@@ -129,7 +95,7 @@ class Section(models.Model):
     def ext_tree(self):
         return {
             'text': self.name,
-            'id': '%d' % self.tree.id,
+            'id': '%d' % self.tree.get().id,
             'leaf': False,
             'cls': 'folder',
          }
@@ -137,7 +103,7 @@ class Section(models.Model):
     def ext_grid(self):
         return {
             'name': self.name,
-            'id': '%d' % self.tree.id,
+            'id': '%d' % self.tree.get().id,
             'cls': 'folder',
             'type': 'section',
             'itemid': self.id,
@@ -150,6 +116,7 @@ class Section(models.Model):
         }
     
     def has_nested_sections(self):
+        # TODO: check
         return bool(len(self.tree.children.filter(section__isnull=False,
             section__is_meta_item=False)))
 
@@ -166,7 +133,7 @@ class Item(models.Model):
         verbose_name = u"Продукт каталога"
         verbose_name_plural = u'Продукты каталога'
         
-    tree = models.OneToOneField('TreeItem')
+    tree = generic.GenericRelation(TreeItem)
 
     # Display options
     show = models.BooleanField(verbose_name=u'Отображать', default=True)
@@ -197,7 +164,7 @@ class Item(models.Model):
     def ext_tree(self):
         return {
             'text': self.name,
-            'id': '%d' % self.tree.id,
+            'id': '%d' % self.tree.get().id,
             'leaf': True,
             'cls': 'leaf',
          }
@@ -205,7 +172,7 @@ class Item(models.Model):
     def ext_grid(self):
         return {
             'name': self.name,
-            'id': '%d' % self.tree.id,
+            'id': '%d' % self.tree.get().id,
             'type': 'item',
             'itemid': self.id,
             'show': self.show,
@@ -223,9 +190,15 @@ class Item(models.Model):
 class TreeItemImage(ImageModel):
     image = models.ImageField(verbose_name=u'Изображение',
         upload_to='upload/catalog/itemimages/%Y-%m-%d')
-
-    tree = models.ForeignKey('TreeItem', blank=True, null=True)
     
+    pallete = models.BooleanField(default=False, verbose_name=u'Палитра',
+        help_text=u'Картинка будет отображаться в полном размере после описания')
+
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+
+
     class IKOptions:
         cache_dir = 'upload/cache'
         # other by default

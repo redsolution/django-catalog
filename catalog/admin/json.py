@@ -7,22 +7,14 @@ from django.utils import simplejson
 from django.shortcuts import render_to_response, get_object_or_404
 
 
-def get_catalog(parent):
-    if parent == 'root':
-        parent = None
-
-    return TreeItem.objects.filter(parent=parent)
-
-
 @permission_required('catalog.add_section', login_url='/admin/')
 def tree(request):
     tree = []
     if request.method == 'POST':
         parent = request.REQUEST.get('node', 'root')
-        catalog = get_catalog(parent)
-
-        for treeitem in catalog:
-            tree.append(treeitem.data().ext_tree())
+        
+        for treeitem in TreeItem.manager.json(parent):
+            tree.append(treeitem.content_object.ext_tree())
     
     return HttpResponse(simplejson.encode(tree))
 
@@ -32,10 +24,9 @@ def list(request):
     grid = []
     if request.method == 'POST':
         parent = request.REQUEST.get('node', 'root')
-        catalog = get_catalog(parent)
 
-        for treeitem in catalog:
-            grid.append(treeitem.data().ext_grid())
+        for treeitem in TreeItem.manager.json(parent):
+            grid.append(treeitem.content_object.ext_grid())
     
     return HttpResponse(simplejson.encode({'items': grid}))
 

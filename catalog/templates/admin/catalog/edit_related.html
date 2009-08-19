@@ -5,13 +5,13 @@
 <link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% load adminmedia %}{% admin_media_prefix %}css/base.css{% endblock %}" />
 {% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% admin_media_prefix %}css/rtl.css{% endblock %}" />{% endif %}
 {% block extrastyle %}{% endblock %}
-<link rel="stylesheet" type="text/css" href="{{ CATALOG_MEDIA_URL }}css/catalog-admin.css" />
-<link rel="stylesheet" type="text/css" href="{{ CATALOG_MEDIA_URL }}extjs/resources/css/ext-all.css" />
-<script type="text/javascript" src="{{ CATALOG_MEDIA_URL }}extjs/ext-base.js"></script>
-<script type="text/javascript" src="{{ CATALOG_MEDIA_URL }}extjs/ext-all-debug.js"></script>
+<link rel="stylesheet" type="text/css" href="/media/catalog/css/catalog-admin.css" />
+<link rel="stylesheet" type="text/css" href="/media/extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="/media/extjs/ext-base.js"></script>
+<script type="text/javascript" src="/media/extjs/ext-all-debug.js"></script>
 <script type="text/javascript" src="/media/admin/js/core.js"></script>
 <script type="text/javascript" src="/media/admin/js/admin/RelatedObjectLookups.js"></script>
-<script type="text/javascript" src="{{ CATALOG_MEDIA_URL }}javascripts/edit_related.js"></script>
+<script type="text/javascript" src="/media/catalog/js/edit_related.js"></script>
 <meta name="robots" content="NONE,NOARCHIVE" />
 </head>
 
