@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 from django.contrib import admin
-from catalog.models import TreeItem, Section, Item, TreeItemImage
+from catalog.models import TreeItem, Section, Item, TreeItemImage, MetaItem
 from django.http import Http404, HttpResponse
 from django.utils.html import escape
 from django.contrib.admin.widgets import FilteredSelectMultiple
@@ -78,5 +78,10 @@ except admin.sites.AlreadyRegistered:
 
 try:
     admin.site.register(Item)
+except admin.sites.AlreadyRegistered:
+    pass
+
+try:
+    admin.site.register(MetaItem)
 except admin.sites.AlreadyRegistered:
     pass

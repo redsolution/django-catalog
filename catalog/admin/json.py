@@ -45,13 +45,13 @@ def get_tree_item(node):
 
 def may_move(node, parent):
     move_matrix = {
-        'item': ['section', 'metaitem'],
-        'metaitem': ['section'],
-        'section': ['section'],
+        u'item': [u'section', u'metaitem'],
+        u'metaitem': [u'section'],
+        u'section': [u'section'],
         }
     if parent is None:
         return True
-    elif parent.get_type() in move_matrix[node.get_type()]:
+    elif parent.content_type.model in move_matrix[node.content_type.model]:
         return True
     else:
         return False

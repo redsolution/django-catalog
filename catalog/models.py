@@ -55,11 +55,13 @@ class TreeItem(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('catalog.views.tree', (), {'item_id': self.id, 'slug': self.get_slug()})
+        return ('catalog.views.tree', (), {'item_id': self.id, 'slug': self.slug()})
     
-    def get_slug(self):
-        # TODO: slug
-        return u'slug'
+    def slug(self):
+        try:
+            return self.content_object.slug
+        except:
+            return u'slug'
 
 try:
     mptt.register(TreeItem, tree_manager_attr='objects')
@@ -83,14 +85,6 @@ class Section(models.Model):
     name = models.CharField(verbose_name=u'Наименование', max_length=200, default='')
     short_description = models.TextField(verbose_name=u'Краткое описание', null=True, blank=True)
     description = models.TextField(verbose_name=u'Описание', null=True, blank=True)
-
-   # fields required for SEO
-    seo_title = models.CharField(verbose_name=u'SEO заголовок', max_length=200, null=True, blank=True)
-    seo_description = models.TextField(verbose_name=u'SEO описание', null=True, blank=True)
-    seo_keywords = models.CharField(verbose_name=u'SEO ключевые слова', max_length=200, null=True, blank=True)
-
-    # Section fields
-    is_meta_item = models.BooleanField(verbose_name=u'Мета товар', default=False)
 
     def ext_tree(self):
         return {
@@ -116,9 +110,8 @@ class Section(models.Model):
         }
     
     def has_nested_sections(self):
-        # TODO: check
-        return bool(len(self.tree.children.filter(section__isnull=False,
-            section__is_meta_item=False)))
+        section_ct = ContentType.objects.get_for_model(Section)
+        return bool(len(self.tree.get().children.filter(content_type=section_ct)))
 
     def min_price(self):
         # FIXME: If children are not Item instances?
@@ -128,12 +121,19 @@ class Section(models.Model):
         return self.name
 
 
+class MetaItem(Section):
+    class Meta:
+        verbose_name = u"Метатовар"
+        verbose_name_plural = u'Метатовары'
+
+
 class Item(models.Model):
     class Meta:
         verbose_name = u"Продукт каталога"
         verbose_name_plural = u'Продукты каталога'
         
-    tree = generic.GenericRelation(TreeItem)
+    tree = generic.GenericRelation('TreeItem')
+    images = generic.GenericRelation('TreeItemImage')
 
     # Display options
     show = models.BooleanField(verbose_name=u'Отображать', default=True)
@@ -144,11 +144,6 @@ class Item(models.Model):
     short_description = models.TextField(verbose_name=u'Краткое описание', null=True, blank=True)
     description = models.TextField(verbose_name=u'Описание', null=True, blank=True)
 
-    # fields required for SEO
-    seo_title = models.CharField(verbose_name=u'SEO заголовок', max_length=200, null=True, blank=True)
-    seo_description = models.TextField(verbose_name=u'SEO описание', null=True, blank=True)
-    seo_keywords = models.CharField(verbose_name=u'SEO ключевые слова', max_length=200, null=True, blank=True)
-    
     # Item fields
     # Relation options
     relative = RelatedField('Item', verbose_name=u'Сопутствующие товары', null=True, blank=True, related_name='relative')
