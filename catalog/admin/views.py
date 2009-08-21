@@ -28,16 +28,14 @@ def add_item(request):
         parent_tree_item = None
     else:
         parent_tree_item = TreeItem.objects.get(id=parent_id)
+    item = Item(name=u'Новый товар')
+    item.save()
 
-    new_tree_item = TreeItem(parent=parent_tree_item)
-    new_tree_item.save()
-    new_item = Item(name=u'Новый товар', tree=new_tree_item)
-    new_item.save()
-    # save type
-    new_tree_item.save()
+    tree_item = TreeItem(parent=parent_tree_item, content_object=item)
+    tree_item.save()
     
-    return HttpResponseRedirect('/admin/catalog/treeitem/%d/?_popup=1'
-        % new_item.id)
+    return HttpResponseRedirect('/admin/catalog/item/%d/?_popup=1'
+        % item.id)
 
 @transaction.commit_on_success
 @permission_required('catalog.add_section', login_url='/admin/')
@@ -47,17 +45,14 @@ def add_section(request):
         parent_tree_item = None
     else:
         parent_tree_item = TreeItem.objects.get(id=parent_id)
+    section = Section(name=u'Новый раздел')
+    section.save()
 
-    new_tree_item = TreeItem(parent=parent_tree_item)
-    new_tree_item.save()
-    new_section = Section(
-        name=u'Новый раздел', tree=new_tree_item)
-    new_section.save()
-    # save type
-    new_tree_item.save()
+    tree_item = TreeItem(parent=parent_tree_item, content_object=section)
+    tree_item.save()
     
-    return HttpResponseRedirect('/admin/catalog/treeitem/%d/?_popup=1'
-        % new_section.id)
+    return HttpResponseRedirect('/admin/catalog/section/%d/?_popup=1'
+        % section.id)
 
 def edit_related(request, obj_id):
     item = get_object_or_404(Item, id=obj_id)
@@ -68,8 +63,4 @@ def edit_related(request, obj_id):
 def editor_redirect(request, obj_id):
     treeitem = get_object_or_404(TreeItem, id=obj_id)
     get_str = urlencode(request.GET)
-    if treeitem.get_type() == 'item':
-        return HttpResponseRedirect('/admin/catalog/item/%s/?%s' % (treeitem.item.id, get_str))
-    else:
-        return HttpResponseRedirect('/admin/catalog/section/%s/?%s' % (treeitem.section.id, get_str))
-
+    return HttpResponseRedirect('/admin/catalog/%s/%s/?%s' % (treeitem.content_type.model, treeitem.content_object.id, get_str))

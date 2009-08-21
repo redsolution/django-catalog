@@ -20,23 +20,33 @@ class Command(BaseCommand):
             help='Should I delete old images, when find new one for instance?'),
     )
 
+    def get_model_form_class(self, model_class):
+        class MyModelForm(ModelForm):
+            class Meta:
+                model = model_class
+        return MyModelForm
+
     def handle(self, *args, **options):
         self.options = options
         start_time = time()
         
-        def get_model_form_class(model_class):
-            class MyModelForm(ModelForm):
-                class Meta:
-                    model = model_class
-            return MyModelForm
         
         if len(args) == 0:
             raise CommandError("You should specify directory to import")
-        path = args[0]
+        self.path = args[0]
 
+        self.import_descriptions()
+        self.import_images()
+
+
+        work_time = time() - start_time
+        if self.options['verbose'] >= 1:
+            print 'media updated in %s s' % work_time
+
+    def import_descriptions(self):
         if self.options['verbose'] >= 1:
             print '=== Importing descriptions ==='
-        text_parser = BarcodeTextParser(path)
+        text_parser = BarcodeTextParser(self.path)
         for key, value in text_parser:
             try:
                 instance = Item.objects.get(barcode=key)
@@ -44,7 +54,7 @@ class Command(BaseCommand):
                 if self.options['verbose'] >= 2:
                     print 'going to update', instance, 'with', value[:50].replace('\r\n', ' ')
 
-                FormClass = get_model_form_class(TreeItem)
+                FormClass = self.get_model_form_class(Item)
                 post_data = FormClass(instance=instance).initial
                 post_data.update({'description': value})
                 form = FormClass(post_data, instance=instance)
@@ -62,12 +72,13 @@ class Command(BaseCommand):
                 if self.options['verbose'] >= 2:
                     print 'error: %s', e
 
+    def import_images(self):
         if self.options['verbose'] >= 1:
             print '=== Importing images ==='
-        image_parser = BarcodeImagesParser(path)
+        image_parser = BarcodeImagesParser(self.path)
         for key, image in image_parser:
             try:
-                instance = TreeItem.objects.get(item__barcode=key)
+                instance = Item.objects.get(barcode=key)
 
                 if self.options['rewrite']:
                     instance.image_set.all().delete()
@@ -75,13 +86,14 @@ class Command(BaseCommand):
                 if self.options['verbose'] >= 2:
                     print 'going to update', instance, 'with image', image
 
-                FormClass = get_model_form_class(TreeItemImage)
-
-                content_type = ContentType.objects.get_for_model(TreeItem)
+                FormClass = self.get_model_form_class(TreeItemImage)
                 post_data = FormClass(instance=instance).initial
+                content_type = ContentType.objects.get_for_model(Item)
                 post_data.update({
-                    'tree_id': instance.id
-                    })
+                    'tree_id': instance.id,
+                    'content_type': content_type.id,
+                    'object_id': instance.id,
+                })
                 # see http://docs.djangoproject.com/en/dev/ref/forms/api/#binding-uploaded-files-to-a-form
                 file_data = {'image': image}
                 form = FormClass(post_data, file_data)
@@ -98,7 +110,3 @@ class Command(BaseCommand):
             except Exception, e:
                 if self.options['verbose'] >= 2:
                     print 'error: %s', e
-
-        work_time = time() - start_time
-        if self.options['verbose'] >= 1:
-            print 'media updated in %s s' % work_time

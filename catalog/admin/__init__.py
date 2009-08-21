@@ -70,3 +70,13 @@ try:
     admin.site.register(TreeItem, TreeItemAdmin)
 except admin.sites.AlreadyRegistered:
     pass
+
+try:
+    admin.site.register(Section)
+except admin.sites.AlreadyRegistered:
+    pass
+
+try:
+    admin.site.register(Item)
+except admin.sites.AlreadyRegistered:
+    pass
