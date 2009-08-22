@@ -18,6 +18,8 @@ class Command(BaseCommand):
             help='Verbose level 0, 1 or 2 (0 by default)'),
         make_option('--rewrite-images', default=None, dest='rewrite', type='string',
             help='Should I delete old images, when find new one for instance?'),
+        make_option('--pallete', default=None, dest='pallete', type='string',
+            help='Import palletes'),
     )
 
     def get_model_form_class(self, model_class):
@@ -94,6 +96,9 @@ class Command(BaseCommand):
                     'content_type': content_type.id,
                     'object_id': instance.id,
                 })
+                if self.options['pallete']:
+                    post_data.update({'pallete': True})
+
                 # see http://docs.djangoproject.com/en/dev/ref/forms/api/#binding-uploaded-files-to-a-form
                 file_data = {'image': image}
                 form = FormClass(post_data, file_data)

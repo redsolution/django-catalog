@@ -117,6 +117,12 @@ class MetaItem(Section):
     @models.permalink
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url()
+    
+    def palletes(self):
+        palletes = []
+        for child in self.tree.get().children.all():
+            palletes += child.content_object.images.filter(pallete=True)
+        return palletes
 
     def price(self):
         return min([child.content_object.price for child in self.tree.get().children.all()])
