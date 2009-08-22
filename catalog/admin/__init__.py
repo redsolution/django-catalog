@@ -5,56 +5,28 @@ from catalog.models import TreeItem, Section, Item, TreeItemImage, MetaItem
 from django.http import Http404, HttpResponse
 from django.utils.html import escape
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from catalog.admin.utils import get_connected, make_inline_admin
+from catalog.admin.utils import get_connected_models
+from django.contrib.contenttypes import generic
 
 
-# Inlines for default models
-class ImageInline(admin.StackedInline):
+class ImageInline(generic.GenericTabularInline):
+    extra = 2
     model = TreeItemImage
 
-class SectionInline(admin.StackedInline):
-    model = Section
-    prepopulated_fields = {'slug': ('name',)}
-
-class ItemInline(admin.StackedInline):
-    model = Item
+class ItemAdmin(admin.ModelAdmin):
+    inlines = [ImageInline]
     raw_id_fields = ('relative', 'sections')
     prepopulated_fields = {'slug': ('name',)}
+    model = Item
 
-class TreeItemAdmin(admin.ModelAdmin):
-    model = TreeItem
-    inlines = []
-    inline_instances = []
-    
-    def __init__(self, *args, **kwds):
-        # add inlines
-        for model, modeladmin in get_connected():
-            if not modeladmin:
-                self.inlines.append(make_inline_admin(model))
-            else:
-                self.inlines.append(modeladmin)
-        return super(TreeItemAdmin, self).__init__(*args, **kwds)    
-    
-    def __call__(self, request, url):
-        # remove OneToOne unnessesary inline_instances
-        instance = TreeItem.objects.get(id=url)
-        # first, add all inline_instances
-        self.inline_instances = []
-        for inline_class in self.inlines:
-            inline_instance = inline_class(self.model, self.admin_site)
-            self.inline_instances.append(inline_instance)
-        # then, remove unnessesary
-        new_inline_instances = []
-        for inline_instance in self.inline_instances:
-            if (instance.type == inline_instance.opts.module_name and
-                inline_instance not in new_inline_instances):
-                new_inline_instances.append(inline_instance)
-            if (inline_instance.opts.module_name not in instance.get_one_to_one_modulenames() and
-                inline_instance not in new_inline_instances):
-                new_inline_instances.append(inline_instance)
-        self.inline_instances = new_inline_instances
-        return super(TreeItemAdmin, self).__call__(request, url)
-    
+
+class SectionAdmin(admin.ModelAdmin):
+    inlines = [ImageInline]
+    prepopulated_fields = {'slug': ('name',)}
+    model = Section
+
+
+class CatalogAdminMix(admin.ModelAdmin):
     def response_change(self, request, obj):
         """
         Wrapper around Django ModelAdmin method to provide
@@ -66,22 +38,11 @@ class TreeItemAdmin(admin.ModelAdmin):
                 (escape(pk_value), escape(obj))) # escape() calls force_unicode.
         return super(TreeItemAdmin, self).response_change(request, obj)
 
-try:
-    admin.site.register(TreeItem, TreeItemAdmin)
-except admin.sites.AlreadyRegistered:
-    pass
-
-try:
-    admin.site.register(Section)
-except admin.sites.AlreadyRegistered:
-    pass
-
-try:
-    admin.site.register(Item)
-except admin.sites.AlreadyRegistered:
-    pass
-
-try:
-    admin.site.register(MetaItem)
-except admin.sites.AlreadyRegistered:
-    pass
+# register models
+for model_class, admin_class in get_connected_models():
+    class CatalogModelAdmin(admin_class, CatalogAdminMix):
+        pass
+    try:
+        admin.site.register(model_class, CatalogModelAdmin)
+    except admin.sites.AlreadyRegistered:
+        pass

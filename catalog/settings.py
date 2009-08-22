@@ -5,9 +5,9 @@ import os.path
 CATALOG_MEDIA_URL = getattr(settings, 'CATALOG_MEDIA_URL', os.path.join(settings.MEDIA_URL, 'catalog/'))
 
 DEFAULT_CATALOG_CONNECTED_MODELS = [
-    ('catalog.models.Item', 'catalog.admin.ItemInline'),
-    ('catalog.models.Section', 'catalog.admin.SectionInline'),
-    ('catalog.models.TreeItemImage', 'catalog.admin.ImageInline'),
+    ('catalog.models.Item', 'catalog.admin.ItemAdmin'),
+    ('catalog.models.Section', 'catalog.admin.SectionAdmin'),
+    ('catalog.models.MetaItem', None),
 ]
 
 CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)

@@ -136,6 +136,7 @@ class Command(BaseCommand):
         item_options['quantity'] =  kwds['quantity']
         item_options['barcode'] =  kwds['barcode']
         item_options['identifier'] =  kwds['identifier']
+        item_options['short_description'] =  kwds['short_description']
         item_options['name'] =  kwds['name']
         item_options['slug'] = urlify(kwds['name'])
         

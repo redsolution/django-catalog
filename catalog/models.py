@@ -13,22 +13,6 @@ import mptt
 from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
 
 
-def import_item(path, error_text):
-    u"""Импортирует по указанному пути. В случае ошибки генерируется исключение с указанным текстом"""
-    i = path.rfind('.')
-    module, attr = path[:i], path[i+1:]
-    try:
-        return getattr(__import__(module, {}, {}, ['']), attr)
-    except ImportError, e:
-        raise ImproperlyConfigured('Error importing %s %s: "%s"' % (error_text, path, e))
-
-def get_connected_models():
-    model_list = []
-    for model_str, admin_str in catalog_settings.CATALOG_CONNECTED_MODELS:
-        model_list.append(import_item(model_str, ''))
-    return model_list
-
-
 class TreeItemManager(models.Manager):
 
     def json(self, parent):
@@ -76,6 +60,7 @@ class Section(models.Model):
         verbose_name_plural = u'Разделы каталога'
 
     tree = generic.GenericRelation(TreeItem)
+    images = generic.GenericRelation('TreeItemImage')
     
     # Display options
     show = models.BooleanField(verbose_name=u'Отображать', default=True)
@@ -85,6 +70,10 @@ class Section(models.Model):
     name = models.CharField(verbose_name=u'Наименование', max_length=200, default='')
     short_description = models.TextField(verbose_name=u'Краткое описание', null=True, blank=True)
     description = models.TextField(verbose_name=u'Описание', null=True, blank=True)
+    
+    @models.permalink
+    def get_absolute_url(self):
+        return self.tree.get().get_absolute_url()
 
     def ext_tree(self):
         return {
@@ -104,7 +93,7 @@ class Section(models.Model):
             'show': self.show,
             'price': 0.0, 
             'quantity': 0, 
-            #'has_image': False if self.tree.images.count() == 0 else True,
+            'has_image': False if self.images.count() == 0 else True,
             'has_image': False,
             'has_description': False if self.short_description is None else True,
         }
@@ -112,10 +101,6 @@ class Section(models.Model):
     def has_nested_sections(self):
         section_ct = ContentType.objects.get_for_model(Section)
         return bool(len(self.tree.get().children.filter(content_type=section_ct)))
-
-    def min_price(self):
-        # FIXME: If children are not Item instances?
-        return min([child.item.price for child in self.tree.children.all()])
 
     def __unicode__(self):
         return self.name
@@ -126,6 +111,16 @@ class MetaItem(Section):
         verbose_name = u"Метатовар"
         verbose_name_plural = u'Метатовары'
 
+    tree = generic.GenericRelation(TreeItem)
+    images = generic.GenericRelation('TreeItemImage')
+    
+    @models.permalink
+    def get_absolute_url(self):
+        return self.tree.get().get_absolute_url()
+
+    def price(self):
+        return min([child.content_object.price for child in self.tree.get().children.all()])
+    
 
 class Item(models.Model):
     class Meta:
@@ -156,6 +151,11 @@ class Item(models.Model):
     quantity = models.IntegerField(verbose_name=u'Остаток на складе',
         help_text=u'Введите 0 если на складе нет товара', null=True, blank=True)
 
+    
+    @models.permalink
+    def get_absolute_url(self):
+        return self.tree.get().get_absolute_url()
+
     def ext_tree(self):
         return {
             'text': self.name,
@@ -173,14 +173,12 @@ class Item(models.Model):
             'show': self.show,
             'price': float(self.price) if self.price is not None else 0.0,
             'quantity': self.quantity, 
-            #'has_image': False if self.tree.images.count() == 0 else True,
-            'has_image': False,
+            'has_image': False if self.images.count() == 0 else True,
             'has_description': False if self.short_description is None else True,
         }
     
     def __unicode__(self):
         return self.name
-
 
 class TreeItemImage(ImageModel):
     image = models.ImageField(verbose_name=u'Изображение',
@@ -193,10 +191,9 @@ class TreeItemImage(ImageModel):
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
 
-
     class IKOptions:
-        cache_dir = 'upload/cache'
-        # other by default
+        cache_dir = 'upload/catalog/cache'
+        spec_module = 'catalog.ikspec'
 
     def __unicode__(self):
         return self.image.url

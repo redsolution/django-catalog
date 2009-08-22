@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import permission_required
 from urllib import urlencode
 
-from catalog.models import Section, Item, TreeItemImage, TreeItem
+from catalog.models import Section, Item, TreeItemImage, TreeItem, MetaItem
 
 
 @permission_required('catalog.add_section', login_url='/admin/')
@@ -53,6 +53,23 @@ def add_section(request):
     
     return HttpResponseRedirect('/admin/catalog/section/%d/?_popup=1'
         % section.id)
+
+@transaction.commit_on_success
+@permission_required('catalog.add_metaitem', login_url='/admin/')
+def add_metaitem(request):
+    parent_id = request.GET.get('parent', None)
+    if parent_id == 'root':
+        parent_tree_item = None
+    else:
+        parent_tree_item = TreeItem.objects.get(id=parent_id)
+    metaitem = MetaItem(name=u'Новый метатовар')
+    metaitem.save()
+
+    tree_item = TreeItem(parent=parent_tree_item, content_object=metaitem)
+    tree_item.save()
+    
+    return HttpResponseRedirect('/admin/catalog/metaitem/%d/?_popup=1'
+        % metaitem.id)
 
 def edit_related(request, obj_id):
     item = get_object_or_404(Item, id=obj_id)
