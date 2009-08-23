@@ -39,6 +39,9 @@ class TreeItem(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
+        return self.get_absolute_url_undecorated()
+    
+    def get_absolute_url_undecorated(self):
         return ('catalog.views.tree', (), {'item_id': self.id, 'slug': self.slug()})
     
     def slug(self):
@@ -116,7 +119,7 @@ class MetaItem(Section):
     
     @models.permalink
     def get_absolute_url(self):
-        return self.tree.get().get_absolute_url()
+        return self.tree.get().get_absolute_url_undecorated()
     
     def palletes(self):
         palletes = []
@@ -160,7 +163,7 @@ class Item(models.Model):
     
     @models.permalink
     def get_absolute_url(self):
-        return self.tree.get().get_absolute_url()
+        return self.tree.get().get_absolute_url_undecorated()
 
     def ext_tree(self):
         return {
