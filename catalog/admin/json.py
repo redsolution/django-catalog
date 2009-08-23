@@ -191,3 +191,8 @@ class SectionsTree(BaseM2MTree):
     base_model = Item
     rel_model = Section
     fk_attr = 'sections'
+
+class ItemsTree(BaseM2MTree):
+    base_model = Section
+    rel_model = Item
+    fk_attr = 'items'

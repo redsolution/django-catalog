@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="{{ LANGUAGE_CODE }}" xml:lang="{{ LANGUAGE_CODE }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
+<head>
+<title>Каталог</title>
+<link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% load adminmedia %}{% admin_media_prefix %}css/base.css{% endblock %}" />
+{% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% admin_media_prefix %}css/rtl.css{% endblock %}" />{% endif %}
+{% block extrastyle %}{% endblock %}
+<link rel="stylesheet" type="text/css" href="/media/catalog/css/catalog-admin.css" />
+<link rel="stylesheet" type="text/css" href="/media/extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="/media/extjs/ext-base.js"></script>
+<script type="text/javascript" src="/media/extjs/ext-all-debug.js"></script>
+<script type="text/javascript" src="/media/admin/js/core.js"></script>
+<script type="text/javascript" src="/media/admin/js/admin/RelatedObjectLookups.js"></script>
+<script type="text/javascript" src="/media/catalog/js/edit_section_related.js"></script>
+<meta name="robots" content="NONE,NOARCHIVE" />
+</head>
+
+
+{% load i18n %}
+
+<body>
+
+<!-- Container -->
+<div id="container">
+
+    <!-- Header -->
+    <div id="header-ct">
+    <div id="header">
+        <div id="branding">
+        <h1 id="site-name">Редактор раздела {{ section }}</h1>
+        </div>
+        {% block nav-global %}{% endblock %}
+    </div>
+    <!-- END Header -->
+    </div>
+    
+</div>
+</body>
+</html>

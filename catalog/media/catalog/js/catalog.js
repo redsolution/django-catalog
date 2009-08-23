@@ -39,6 +39,12 @@ function editItem(id){
     win.focus();
 }
 
+function edit_related(id){
+    var win = window.open("/admin/catalog/relations/" + id +
+            "/?_popup=1", "EditTreeItemWindow", "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
+    win.focus();
+}
+
 /********** tree context menu ******/
 var contextMenu = new Ext.menu.Menu ({
     items: [{
@@ -47,6 +53,13 @@ var contextMenu = new Ext.menu.Menu ({
         handler: function(){
                 node = tree_panel.getSelectionModel().getSelectedNode();
                 editItem(node.id);
+            }
+    },{
+        text: 'Связи',
+        icon: '/media/catalog/img/link.png',
+        handler: function(){
+                node = tree_panel.getSelectionModel().getSelectedNode();
+                edit_related(node.id);
             }
     },{
         text: 'Удалить',

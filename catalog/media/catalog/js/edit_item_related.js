@@ -53,7 +53,7 @@ var topBar = new Ext.Toolbar({
 	},{
 		text: 'Сохранить и закрыть',
 		cls: 'x-btn-text-icon',
-		icon: '/media/catalog/images/show-no.png',
+		icon: '/media/catalog/img/show-no.png',
 		handler: function(){
 			var selNodes = related_tree_panel.getChecked();
 			var rel_selected = [];

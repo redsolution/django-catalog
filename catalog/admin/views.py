@@ -71,13 +71,23 @@ def add_metaitem(request):
     return HttpResponseRedirect('/admin/catalog/metaitem/%d/?_popup=1'
         % metaitem.id)
 
-def edit_related(request, obj_id):
+def edit_item_related(request, obj_id):
     item = get_object_or_404(Item, id=obj_id)
-    
-    return render_to_response('admin/catalog/edit_related.html', {'item': item},
+    return render_to_response('admin/catalog/edit_item_related.html', {'item': item},
         context_instance=RequestContext(request))
+
+def edit_section_related(request, obj_id):
+    section = get_object_or_404(Section, id=obj_id)
+    return render_to_response('admin/catalog/edit_section_related.html', {'section': section},
+        context_instance=RequestContext(request))
+
 
 def editor_redirect(request, obj_id):
     treeitem = get_object_or_404(TreeItem, id=obj_id)
     get_str = urlencode(request.GET)
     return HttpResponseRedirect('/admin/catalog/%s/%s/?%s' % (treeitem.content_type.model, treeitem.content_object.id, get_str))
+
+def related_redirect(request, obj_id):
+    treeitem = get_object_or_404(TreeItem, id=obj_id)
+    get_str = urlencode(request.GET)
+    return HttpResponseRedirect('/admin/catalog/%s/%s/rel/?%s' % (treeitem.content_type.model, treeitem.content_object.id, get_str))
