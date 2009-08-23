@@ -41,13 +41,25 @@ function editItem(id){
 
 function edit_related(id){
     var win = window.open("/admin/catalog/relations/" + id +
-            "/?_popup=1", "EditTreeItemWindow", "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
+            "/?_popup=1", "RelatedTreeItemWindow", "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
+    win.focus();
+}
+
+function view_on_site(id){
+    var win = window.open("/admin/catalog/view/" + id + "/", "NewWindow", "scrollbars=yes");
     win.focus();
 }
 
 /********** tree context menu ******/
 var contextMenu = new Ext.menu.Menu ({
     items: [{
+        text: 'Посмотреть на сайте',
+        icon: '/media/catalog/img/eye.png',
+        handler: function(){
+                node = tree_panel.getSelectionModel().getSelectedNode();
+                view_on_site(node.id);
+            }
+    },{
         text: 'Редактировать',
         icon: '/media/catalog/img/edit.png',
         handler: function(){

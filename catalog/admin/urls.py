@@ -10,6 +10,7 @@ urlpatterns = patterns('catalog.admin',
     url(r'^section/(\d{1,7})/rel/$', 'views.edit_section_related'),
     url(r'^edititem/(\d{1,7})/$', 'views.editor_redirect'),
     url(r'^relations/(\d{1,7})/$', 'views.related_redirect'),
+    url(r'^view/(\d{1,7})/$', 'views.absolute_url_redirect'),
 
     url(r'^json/tree$', 'json.tree'),
     url(r'^json/list$', 'json.list'),
