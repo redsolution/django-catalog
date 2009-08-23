@@ -2,14 +2,14 @@ from django import template
 
 register = template.Library()
 
-# copied from django 1.0.2
+# almost copied from django 1.0.2
 def prepopulated_fields_edit_js(context):
     """
     Creates a list of prepopulated_fields that should render Javascript for
     the prepopulated fields for both the admin form and inlines.
     """
     prepopulated_fields = []
-    if context['add'] and 'adminform' in context:
+    if context['change'] and 'adminform' in context:
         prepopulated_fields.extend(context['adminform'].prepopulated_fields)
     if 'inline_admin_formsets' in context:
         for inline_admin_formset in context['inline_admin_formsets']:
@@ -19,4 +19,3 @@ def prepopulated_fields_edit_js(context):
     context.update({'prepopulated_fields': prepopulated_fields})
     return context
 prepopulated_fields_edit_js = register.inclusion_tag('admin/prepopulated_fields_js.html', takes_context=True)(prepopulated_fields_edit_js)
-
