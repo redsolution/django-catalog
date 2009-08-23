@@ -122,23 +122,28 @@ def delete_items(request):
     except ValueError, TreeItem.DoesNotExist:
         return HttpResponseServerError('Bad arguments')
 
-class RelativeTree(object):
+class BaseM2MTree(object):
+    '''
+    Abstract class to impelement many-to-many tree editor admin view
+    '''
     # the model, which involves FK
-    base_model = Item
+    base_model = None
     # FK model
-    rel_model = TreeItem
-    fk_attr = 'relative'
-    
-    def _get_rel_object(self, obj_id):
+    rel_model = None
+    fk_attr = None
+
+    @classmethod
+    def _get_rel_object(cls, obj_id):
         # we want to override this behavior
-        return get_object_or_404(self.rel_model, id=obj_id)
-    
+        return get_object_or_404(cls.rel_model, tree__id=obj_id)
+
+    @classmethod
     @transaction.commit_on_success
-    def save(self, request, obj_id):
-        current_item = get_object_or_404(self.base_model, id=obj_id)
-        relative_list = request.REQUEST.get(self.fk_attr, u'').split(',')
-        related_manager = getattr(current_item, self.fk_attr)
-        
+    def save(cls, request, obj_id):
+        current_item = get_object_or_404(cls.base_model, id=obj_id)
+        relative_list = request.REQUEST.get(cls.fk_attr, u'').split(',')
+        related_manager = getattr(current_item, cls.fk_attr)
+
         # workaround for empty request
         if u'' in relative_list:
             relative_list.remove(u'')
@@ -148,74 +153,41 @@ class RelativeTree(object):
             if int(obj_id) not in related_manager.values_list('id', flat=True)]
         # remove
         objs_to_remove = [obj for obj in related_manager.all()
-            if str(obj.id) not in relative_list]
+            if str(obj.tree.get().id) not in relative_list]
         
         for new_obj_id in ids_to_add:
-            object = self._get_rel_object(new_obj_id)
+            object = cls._get_rel_object(new_obj_id)
             related_manager.add(object)
         
         for obj in objs_to_remove:
             related_manager.remove(obj)
         return HttpResponse('OK')
 
-    def tree(self, request, obj_id):
-        current_item = get_object_or_404(self.base_model, id=obj_id)
-        related_manager = getattr(current_item, self.fk_attr)
+    @classmethod
+    def tree(cls, request, obj_id):
+        current_item = get_object_or_404(cls.base_model, id=obj_id)
+        related_manager = getattr(current_item, cls.fk_attr)
         
         tree = []
         if request.method == 'POST':
             parent = request.REQUEST.get('node', 'root')
-            content = get_content(parent)
-    
-            for section in content['sections']:
-                tree.append({'text': section.tree.name,
-                             'id': '%d' % section.tree.id,
-                             'cls': 'folder',
-                             })
-            for metaitem in content['metaitems']:
-                tree.append({'text': metaitem.tree.name,
-                             'id': '%d' % metaitem.tree.id,
-                             'cls': 'folder',
-                             })
-            for item in content['items']:
-                tree.append({'text': item.tree.name,
-                             'id': '%d' % item.tree.id,
-                             'cls': 'leaf',
-                             'leaf': True,
-                             'checked': item.tree.id in related_manager.values_list('id', flat=True),
-                             })
+            for treeitem in TreeItem.manager.json(parent):
+                json = treeitem.content_object.ext_tree()
+                if treeitem.content_type.model == cls.rel_model.__name__.lower():
+                    json.update({
+                        'checked': treeitem.content_object.id in related_manager.values_list('id', flat=True), 
+                    })
+                tree.append(json)
         return HttpResponse(simplejson.encode(tree))
 
 
-class SectionsTree(RelativeTree):
-    # the model, which involves FK
+class RelativeTree(BaseM2MTree):
     base_model = Item
-    # FK model
+    rel_model = Item
+    fk_attr = 'relative'
+
+
+class SectionsTree(BaseM2MTree):
+    base_model = Item
     rel_model = Section
     fk_attr = 'sections'
-    
-    def _get_rel_object(self, obj_id):
-        return get_object_or_404(self.rel_model, tree__id=obj_id)
-
-    def tree(self, request, obj_id):
-        current_item = get_object_or_404(self.base_model, id=obj_id)
-        related_manager = getattr(current_item, self.fk_attr)
-        
-        tree = []
-        if request.method == 'POST':
-            parent = request.REQUEST.get('node', 'root')
-            content = get_content(parent)
-    
-            for section in content['sections']:
-                tree.append({'text': section.tree.name,
-                             'id': '%d' % section.tree.id,
-                             'cls': 'folder',
-                             'checked': section.tree.id in related_manager.values_list('id', flat=True),
-                             })
-            for metaitem in content['metaitems']:
-                tree.append({'text': metaitem.tree.name,
-                             'id': '%d' % metaitem.tree.id,
-                             'cls': 'folder',
-                             'checked': metaitem.tree.id in related_manager.values_list('id', flat=True),
-                             })
-        return HttpResponse(simplejson.encode(tree))

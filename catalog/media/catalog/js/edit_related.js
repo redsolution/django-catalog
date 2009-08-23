@@ -1,4 +1,4 @@
-Ext.BLANK_IMAGE_URL = '/media/catalog/extjs/resources/images/default/s.gif';
+Ext.BLANK_IMAGE_URL = '/media/extjs/resources/images/default/s.gif';
 
 var currentNode = document.location.href.split('/').reverse()[2];
 
@@ -31,7 +31,7 @@ var topBar = new Ext.Toolbar({
 	items: [{
 		text: 'Сохранить',
 		cls: 'x-btn-text-icon',
-		icon: '/media/catalog/images/save.png',
+		icon: '/media/catalog/img/save.png',
 		handler: function(){
 			var selNodes = related_tree_panel.getChecked();
 			var rel_selected = [];
