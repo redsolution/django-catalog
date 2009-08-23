@@ -77,6 +77,13 @@ class Section(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url()
+    
+    def get_all_items(self):
+        children = self.tree.get().children_item()
+        related_ids = self.items.values_list('id', flat=True)
+        item_ct = ContentType.objects.get_for_model(Item)
+        related = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
+        return children | related
 
     def ext_tree(self):
         return {
