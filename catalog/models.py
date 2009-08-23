@@ -206,3 +206,15 @@ class TreeItemImage(ImageModel):
 
     def __unicode__(self):
         return self.image.url
+
+# must be at bottom, otherwies breaks imports
+from catalog.admin.utils import get_connected_models
+
+def filtered_children_factory(children_ct):
+    def func(self):
+        return self.children.filter(content_type=children_ct)
+    return func
+ 
+for model_cls, admin_cls in get_connected_models():
+    content_type = ContentType.objects.get_for_model(model_cls)
+    setattr(TreeItem, 'children_%s' % content_type.model, filtered_children_factory(content_type))
