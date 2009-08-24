@@ -65,6 +65,16 @@ except mptt.AlreadyRegistered:
     pass
 
 
+def itemname(value):
+    value = value.replace('.', '. ')
+    parts = value.split("'")
+    if len(parts) < 2:
+        parts = value.split('|')
+    if len(parts) > 1:
+        name = parts[1]
+    else:
+        name = value
+    return name.strip()
 
 class Section(models.Model):
     class Meta:
@@ -86,6 +96,9 @@ class Section(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url()
+
+    def formatted_name(self):
+        return itemname(self.name)
     
     def get_all_items(self):
         children = self.tree.get().children_item()
@@ -93,6 +106,13 @@ class Section(models.Model):
         item_ct = ContentType.objects.get_for_model(Item)
         related = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
         return children | related
+
+    def get_all_items_show(self):
+        filtered = []
+        for treeitem in self.get_all_items():
+            if treeitem.content_object.show:
+                filtered.append(treeitem)
+        return filtered
 
     def ext_tree(self):
         return {
@@ -179,6 +199,9 @@ class Item(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url_undecorated()
+    
+    def formatted_name(self):
+        return itemname(self.name)
 
     def ext_tree(self):
         return {
