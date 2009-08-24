@@ -20,7 +20,16 @@ class TreeItemManager(models.Manager):
             parent = None
             
         return TreeItem.objects.filter(parent=parent)
-    
+ 
+    def linked(self, treeid):
+        if treeid == 'root':
+            return []
+        treeitem = TreeItem.objects.get(id=treeid)
+        if treeitem.content_type.model == 'section':
+            related_ids = treeitem.content_object.items.values_list('id', flat=True)
+            item_ct = ContentType.objects.get_for_model(Item)
+            related = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
+            return related 
 
 class TreeItem(models.Model):
     class Meta:
@@ -97,8 +106,7 @@ class Section(models.Model):
         return {
             'name': self.name,
             'id': '%d' % self.tree.get().id,
-            'cls': 'folder',
-            'type': 'section',
+            'type': self.tree.get().content_type.model, 
             'itemid': self.id,
             'show': self.show,
             'price': 0.0, 

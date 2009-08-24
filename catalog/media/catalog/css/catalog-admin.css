@@ -47,6 +47,11 @@
     height: 13px;
 }
 
+.link {
+    background: url('../img/link.png') no-repeat 50% 50%;
+    height: 13px;
+}
+
 /*** grid headers **/
 
 .x-grid3-hd-show {

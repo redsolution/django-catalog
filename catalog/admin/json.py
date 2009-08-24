@@ -27,9 +27,16 @@ def list(request):
 
         for treeitem in TreeItem.manager.json(parent):
             grid.append(treeitem.content_object.ext_grid())
+
+        for linked in TreeItem.manager.linked(parent):
+            grid_item = linked.content_object.ext_grid()
+            grid_item.update({
+                'type': 'link',
+                'cls': 'link',
+            })
+            grid.append(grid_item)
     
     return HttpResponse(simplejson.encode({'items': grid}))
-
 
 # moving tree items
 

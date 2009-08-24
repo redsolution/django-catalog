@@ -400,6 +400,8 @@ function renderType(value){
 		return '<div class="metaitem"></div>'		
 	if (value == 'item')
 		return '<div class="item"></div>'
+	if (value == 'link')
+		return '<div class="link"></div>'
 }
 
 function renderItemOnly(value, metaData, record) {
