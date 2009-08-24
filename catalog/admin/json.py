@@ -88,9 +88,11 @@ def move_node(request):
 
 def visible(request):
     try:
-        items_list = request.REQUEST.get('items', '').split(',')
+        treeitems_list = request.REQUEST.get('items', '').split(',')
         show = bool(int(request.REQUEST.get('visible', '1')))
-        TreeItem.objects.filter(id__in=items_list).update(show=show)
+        for treeitem in TreeItem.objects.filter(id__in=treeitems_list):
+            treeitem.content_object.show=show
+            treeitem.content_object.save()
         return HttpResponse('OK')
     except ValueError:
         return HttpResponseServerError('Bad arguments')
