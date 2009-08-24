@@ -262,53 +262,57 @@ var gridBar = new Ext.Toolbar({
     		catalog_store.reload();
     	}
     },{
-        text: 'Добавить раздел',
-    	cls: 'x-btn-text-icon',
+    	text: 'Добавить',
     	icon: '/media/extjs/resources/images/default/tree/drop-add.gif',
-    	handler: function(){
-            if (tree_panel.selModel.selNode == null) {
-                return;
-            }
-            var parentSectionId = tree_panel.selModel.selNode.id;
-            
-            var win = window.open("/admin/catalog/newsection?parent=" + 
-                    tree_panel.selModel.selNode.id + 
-                    "&_popup=1", "EditTreeItemWindow", 
-                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
-            win.focus();
-        }
-    },{
-        text: 'Добавить товар',
-    	cls: 'x-btn-text-icon',
-    	icon: '/media/extjs/resources/images/default/tree/drop-add.gif',
-    	handler: function(){
-            if (tree_panel.selModel.selNode == null) {
-                return;
-            }
-            var parentSectionId = tree_panel.selModel.selNode.id;
-            
-            var win = window.open("/admin/catalog/newitem?parent=" + 
-                    tree_panel.selModel.selNode.id + 
-                    "&_popup=1", "EditTreeItemWindow", 
-                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
-            win.focus();
-        }
-    },{
-        text: 'Добавить метатовар',
-    	cls: 'x-btn-text-icon',
-    	icon: '/media/extjs/resources/images/default/tree/drop-add.gif',
-    	handler: function(){
-            if (tree_panel.selModel.selNode == null) {
-                return;
-            }
-            var parentSectionId = tree_panel.selModel.selNode.id;
-            
-            var win = window.open("/admin/catalog/newmetaitem?parent=" + 
-                    tree_panel.selModel.selNode.id + 
-                    "&_popup=1", "EditTreeItemWindow", 
-                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
-            win.focus();
-        }
+    	menu: [{
+	        text: 'Добавить раздел',
+	    	cls: 'x-btn-text-icon',
+	    	icon: '/media/catalog/img/folder.png',
+	    	handler: function(){
+	            if (tree_panel.selModel.selNode == null) {
+	                return;
+	            }
+	            var parentSectionId = tree_panel.selModel.selNode.id;
+	            
+	            var win = window.open("/admin/catalog/newsection?parent=" + 
+	                    tree_panel.selModel.selNode.id + 
+	                    "&_popup=1", "EditTreeItemWindow", 
+	                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
+	            win.focus();
+	        }
+	    },{
+	        text: 'Добавить товар',
+	    	cls: 'x-btn-text-icon',
+	    	icon: '/media/catalog/img/full_page.png',
+	    	handler: function(){
+	            if (tree_panel.selModel.selNode == null) {
+	                return;
+	            }
+	            var parentSectionId = tree_panel.selModel.selNode.id;
+	            
+	            var win = window.open("/admin/catalog/newitem?parent=" + 
+	                    tree_panel.selModel.selNode.id + 
+	                    "&_popup=1", "EditTreeItemWindow", 
+	                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
+	            win.focus();
+	        }
+	    },{
+	        text: 'Добавить метатовар',
+	    	cls: 'x-btn-text-icon',
+	    	icon: '/media/catalog/img/folder_full.png',
+	    	handler: function(){
+	            if (tree_panel.selModel.selNode == null) {
+	                return;
+	            }
+	            var parentSectionId = tree_panel.selModel.selNode.id;
+	            
+	            var win = window.open("/admin/catalog/newmetaitem?parent=" + 
+	                    tree_panel.selModel.selNode.id + 
+	                    "&_popup=1", "EditTreeItemWindow", 
+	                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
+	            win.focus();
+	        }
+	    }]
     },{
     	text: 'Отображать',
     	icon: '/media/catalog/img/eye--plus.png',
@@ -357,7 +361,7 @@ var gridBar = new Ext.Toolbar({
 			        	visible: 0
 			        }
 			    });
-		}
+			}
     	}]
     },{
 		xtype: 'tbfill'
