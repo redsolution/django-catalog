@@ -15,3 +15,11 @@ class ThumbDisplay(processors.Resize):
 class Thumb(ImageSpec):
     pre_cache = True 
     processors = [ThumbDisplay, ]
+
+class resize130(processors.Resize):
+    width = 130
+    height = 130
+
+class Thumb130(ImageSpec):
+    processors = [resize130,]
+
