@@ -62,7 +62,7 @@ class Command(BaseCommand):
             start_make = time()
             self.make_item(item)
             make_time = time() - start_make
-            if make_time > 0.5:
+            if make_time > 10:
                 if self.options['verbose'] >= 2:
                     print '[*] reindexing table...'
                 self.reindex_db()
