@@ -101,11 +101,13 @@ class Section(models.Model):
         return itemname(self.name)
     
     def get_all_items(self):
-        children = self.tree.get().children_item()
+        children = self.tree.get().children_item() | self.tree.get().children_metaitem()
         related_ids = self.items.values_list('id', flat=True)
         item_ct = ContentType.objects.get_for_model(Item)
-        related = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
-        return children | related
+        metaitem_ct = ContentType.objects.get_for_model(MetaItem)
+        related_items = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
+        related_metaitems = TreeItem.objects.filter(content_type=metaitem_ct, object_id__in=related_ids)
+        return children | related_items | related_metaitems
 
     def get_all_items_show(self):
         filtered = []
