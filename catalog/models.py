@@ -192,6 +192,7 @@ class Item(models.Model):
 
     # Sale options
     price = models.DecimalField(verbose_name=u'Цена', null=True, blank=True, max_digits=12, decimal_places=2)
+    wholesale_price = models.DecimalField(verbose_name=u'Оптовая цена', null=True, blank=True, max_digits=12, decimal_places=2)
     identifier = models.CharField(verbose_name=u'Артикул', max_length=50, blank=True, default='')
     barcode = models.CharField(verbose_name=u'Штрих-код', max_length=50, null=True)
     quantity = models.IntegerField(verbose_name=u'Остаток на складе',
