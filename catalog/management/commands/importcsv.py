@@ -23,6 +23,7 @@ def mptt_off():
     models.signals.pre_save.disconnect(mptt.signals.pre_save, sender=TreeItem)
 
 def mptt_on():
+    logging.info('rebuilding mptt...')
     recalculate_mptt(TreeItem)
     cursor = connection.cursor()
     cursor.execute('''

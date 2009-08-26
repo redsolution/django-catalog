@@ -4,7 +4,14 @@ from sys import argv
 from optparse import make_option
 import csv
 from time import time
+from datetime import datetime
+from upload.models import ImportItem
 from django.template.loader import render_to_string
+from django.conf import settings
+from os import path
+from pyExcelerator import Workbook, XFStyle, Alignment, Font
+import logging
+
 
 class Command(BaseCommand):
     help = '''Import items to template price'''
@@ -12,20 +19,26 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--verbose', default=None, dest='verbose', type='int',
             help='Verbose level 0, 1 or 2 (0 by default)'),
+        make_option('--whole', default=False, dest='whole', type='string',
+            help='wholeprice'),
     )
     
     def handle(self, *args, **options):
         start_time = time()
         self.options = options
-
-        if len(args) == 0:
-            raise CommandError("You should specify file to import")
-        src = args[0]
-        try:
-            dst = args[1]
-        except IndexError:
-            dst = None
-
+        
+        if self.options['verbose'] == 2:
+            logging.getLogger().setLevel(logging.DEBUG)
+        elif self.options['verbose'] == 1:
+            logging.getLogger().setLevel(logging.INFO)
+        elif self.options['verbose'] == 0:
+            logging.getLogger().setLevel(logging.ERROR)
+        
+        last_item = ImportItem.objects.filter(ok=True).latest('date_loaded')
+        if not last_item:
+            raise CommandError('No import files')
+        src = last_item.file.path
+        
         class csv_format(csv.Dialect):
             delimiter = ';'
             quotechar = '"'
@@ -37,21 +50,18 @@ class Command(BaseCommand):
         count = 0
         
         if self.options['verbose'] >= 1:
-            print 'Importing items'        
+            logging.info('Importing items')
         
         for item in reader:
             try:
                 self.make_item(item)
             except ValueError:
                 if self.options['verbose'] >= 2:
-                    print 'Error importing record:', item
+                    logging.error('Error importing record: %s' % item)
             count = count + 1
-        self.write_price(dst)
+        self.write_html_price()
+        self.write_xls_price()
 
-        work_time = time() - start_time
-        if self.options['verbose'] >= 1:
-            print count, 'items imported in %s s' % work_time
-    
     def __init__(self):
         self.data = {}
 
@@ -74,9 +84,12 @@ class Command(BaseCommand):
         options = {}
         options['identifier'] = param_list[0]
         options['quantity'] = param_list[1]
-        options['price'] = param_list[4]
-        if len(param_list) == 6:
-            options['barcode'] = param_list[5]
+        if self.options['whole']:
+            options['price'] = param_list[4]
+        else:
+            options['price'] = param_list[5]
+        if len(param_list) == 7:
+            options['barcode'] = param_list[6]
         else:
             options['barcode'] = None
         options['name'] = param_list[3].decode('cp1251').replace('""', '"')
@@ -87,11 +100,57 @@ class Command(BaseCommand):
 
         return self._create_item(**options)
     
-    def write_price(self, filename):
+    def write_html_price(self):
         content = render_to_string('catalog/price.html', {'sections': self.data})
-        if filename is not None:
-            f = open(filename, 'w')
-            f.write(content.encode('utf-8'))
-            f.close()
+        if self.options['whole']:
+            filename = path.join(settings.MEDIA_ROOT, 'upload/wprice.html')
         else:
-            print content
+            filename = path.join(settings.MEDIA_ROOT, 'upload/price.html')
+
+        f = open(filename, 'w')
+        f.write(content.encode('utf-8'))
+        f.close()
+
+    def write_xls_price(self):
+        if self.options['whole']:
+            filename = path.join(settings.MEDIA_ROOT, 'upload/wprice.xls')
+        else:
+            filename = path.join(settings.MEDIA_ROOT, 'upload/price.xls')
+        workBookDocument = Workbook()
+        docSheet = workBookDocument.add_sheet(u'Прайс соло-парфюм')
+        docSheet.col(1).width = 10000
+        headerFont = Font()
+        headerFont.bold = True
+        headerFont.size = 400
+        headerStyle = XFStyle()
+        headerStyle.font = headerFont
+        docSheet.row(0).set_style(headerStyle)
+        if self.options['whole']:
+            docSheet.write_merge(0, 0, 0, 2, u'Оптовый прайс-лист Соло-парфюм (%s)' % datetime.now().strftime('%y.%m.%d'))
+        else:
+            docSheet.write_merge(0, 0, 0, 2, u'Прайс-лист Соло-парфюм (%s)' % datetime.now().strftime('%y.%m.%d'))
+
+        docSheet.write(2, 0, u'Артикул')
+        docSheet.write(2, 1, u'Наименование', )
+        docSheet.write(2, 2, u'Цена')
+
+        sectionFont = Font()
+        sectionFont.bold = True
+        sectionStyle = XFStyle()
+        sectionStyle.font = sectionFont
+        align = Alignment()
+        align.horz = Alignment.HORZ_CENTER
+        sectionStyle.alignment = align
+
+        row = 3
+        for section in self.data.iterkeys():
+            docSheet.write_merge(row, row, 0, 2, section, sectionStyle)
+            row += 1
+            for item in self.data[section]:
+                docSheet.write(row, 0, item['identifier'])
+                docSheet.write(row, 1, item['name'])
+                docSheet.write(row, 2, item['price'])
+                row += 1
+
+        workBookDocument.save(filename)
+
