@@ -1,20 +1,45 @@
 # -*- coding: utf-8 -*-
-from django.core.management.base import BaseCommand, CommandError
 from sys import argv
 from optparse import make_option
-from catalog.models import TreeItem, Section, Item
-import csv
 from urlify import urlify
 from time import time
-from django.db import transaction, connection
+from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction, connection, models
+from catalog.recalculate import recalculate_mptt
+from catalog.models import TreeItem, Section, Item
+import mptt
+import csv
+import logging
 
+
+def mptt_off():
+    cursor = connection.cursor()
+    cursor.execute('''
+        ALTER TABLE "catalog_treeitem" ALTER COLUMN "lft" DROP NOT NULL;
+        ALTER TABLE "catalog_treeitem" ALTER COLUMN "rght" DROP NOT NULL;
+        ALTER TABLE "catalog_treeitem" ALTER COLUMN "tree_id" DROP NOT NULL;
+        ALTER TABLE "catalog_treeitem" ALTER COLUMN "level" DROP NOT NULL;
+    ''')
+    models.signals.pre_save.disconnect(mptt.signals.pre_save, sender=TreeItem)
+
+def mptt_on():
+    recalculate_mptt(TreeItem)
+    cursor = connection.cursor()
+    cursor.execute('''
+        ALTER TABLE "catalog_treeitem" ALTER COLUMN "lft" SET NOT NULL;
+        ALTER TABLE "catalog_treeitem" ALTER COLUMN "rght" SET NOT NULL;
+        ALTER TABLE "catalog_treeitem" ALTER COLUMN "tree_id" SET NOT NULL;
+        ALTER TABLE "catalog_treeitem" ALTER COLUMN "level" SET NOT NULL;
+    ''')
+    models.signals.pre_save.connect(mptt.signals.pre_save, sender=TreeItem)
+    
 
 class Command(BaseCommand):
-    help = '''Import items from CommerceML format
-    Usage: manage.py importcml filename.xml
+    help = '''Import items from CSV format
+    Usage: manage.py importcsv wares.txt
     '''
     option_list = BaseCommand.option_list + (
-        make_option('--verbose', default=None, dest='verbose', type='int',
+        make_option('--verbose', default=0, dest='verbose', type='int',
             help='Verbose level 0, 1 or 2 (0 by default)'),
     )
     
@@ -26,6 +51,13 @@ class Command(BaseCommand):
         if len(args) == 0:
             raise CommandError("You should specify file to import")
         filename = args[0]
+        
+        if self.options['verbose'] == 2:
+            logging.getLogger().setLevel(logging.DEBUG)
+        elif self.options['verbose'] == 1:
+            logging.getLogger().setLevel(logging.INFO)
+        elif self.options['verbose'] == 0:
+            logging.getLogger().setLevel(logging.ERROR)
 
         class csv_format(csv.Dialect):
             delimiter = ';'
@@ -34,53 +66,25 @@ class Command(BaseCommand):
             lineterminator = '\r\n'
             quoting = csv.QUOTE_MINIMAL
             
-#===============================================================================
-#        Preparing
-#===============================================================================
-
+        # Preparing
         reader = csv.reader(open(filename, 'r'), dialect=csv_format)
-        count = 0
 
-        if self.options['verbose'] >= 2:
-            print 'Loading objects'
+        logging.info('Loading objects')
         self.load_objects()
-        
-#===============================================================================
-#        Run!
-#===============================================================================
 
-        try:
-            self.import_section = Section.get(tree__name=u'Импорт')
-        except:
-            self.import_section = self._get_or_create_section(u'Импорт', None)
-        
-        if self.options['verbose'] >= 1:
-            print 'Importing items'        
-        
-        for item in reader:
-#            try:
-            start_make = time()
-            self.make_item(item)
-            make_time = time() - start_make
-            if make_time > 10:
-                if self.options['verbose'] >= 2:
-                    print '[*] reindexing table...'
-                self.reindex_db()
-                
-#            except ValueError:
-#                if self.options['verbose'] >= 2:
-#                    print 'Error importing record:', item
-            count = count + 1
+        # Run!
+        mptt_off()
+        logging.info('Importing items')
+        count = self.make_items(reader)
+        mptt_on()
 
         work_time = time() - start_time
-        if self.options['verbose'] >= 1:
-            print count, 'items imported in %s s' % work_time
-            
+        logging.debug('%s items imported in %s s' % (count, work_time))
+
     def load_objects(self):
-        
+        '''Creates in-memory object cache'''
         def load_from_queryset(queryset, key):
             '''Returns dictionary with key: object, with key lookup from objects'''
-
             class ObjectReader(object):
                 '''Yields queryset object to dict with given key lookup from objects'''
                 def __init__(self, queryset, key):
@@ -104,9 +108,8 @@ class Command(BaseCommand):
             for item in reader:
                 data.update(item)
             return data
-
         
-        #  load treeitems
+        # cache indexes setting
         self.data = {}
         self.data['treeitem_by_id'] = load_from_queryset(TreeItem.objects.all(), 'id')
         self.data['item_by_identifier'] = load_from_queryset(Item.objects.all(), 'identifier')
@@ -126,30 +129,28 @@ class Command(BaseCommand):
 
             self.data['section_by_name'].update({section.name: section})
             
-            if self.options['verbose'] >= 2:
-                print '[S]', '=== %s ===' % section
+            logging.debug('[S] === %s ===' % section)
             return section_tree_item
 
     def _update_or_create_item(self, **kwds):
+        item_options_list = [
+            'price', 'wholesale_price', 'quantity', 'barcode',
+            'identifier', 'short_description', 'name', 'slug',
+        ]
         item_options = {}
-        item_options['price'] =  kwds['price']
-        item_options['quantity'] =  kwds['quantity']
-        item_options['barcode'] =  kwds['barcode']
-        item_options['identifier'] =  kwds['identifier']
-        item_options['short_description'] =  kwds['short_description']
-        item_options['name'] =  kwds['name']
+        for k, v in kwds.iteritems():
+            if k in item_options_list:
+                item_options[k] = v
         item_options['slug'] = urlify(kwds['name'])
         
         if kwds['identifier'] in self.data['item_by_identifier']:
             item = self.data['item_by_identifier'][kwds['identifier']]
-            item.price = item_options['price']
-            item.quantity = item_options['quantity']
-            item.barcode = item_options['barcode']
-            item.name = item_options['name']
-            item.slug = item_options['slug']
+            for k, v in item_options.iteritems():
+                setattr(item, k, v)
             item.save()
-            if self.options['verbose'] >= 2:
-                print '[U]', kwds['name']
+ 
+            self.data['item_by_identifier'].update({item.identifier: item})
+            logging.debug('[U] %s' % kwds['name'])
             # True if created
             return False
         else:
@@ -158,13 +159,27 @@ class Command(BaseCommand):
 
             tree_item = TreeItem(parent=kwds['parent'], content_object=item)
             tree_item.save()
-
-            if self.options['verbose'] >= 2:
-                print '[S]', item.name
+            
+            self.data['item_by_identifier'].update({item.identifier: item})
+            logging.debug('[S] %s' % item.name)
             # True if created
             return True
 
     @transaction.commit_on_success
+    def make_items(self, reader):
+        try:
+            import_section = Section.objects.get(name=u'Импорт')
+            self.import_section = import_section.tree.get()
+        except Section.DoesNotExist:
+            self.import_section = self._get_or_create_section(u'Импорт', None)
+
+        count = 0
+        for item in reader:
+            self.make_item(item)
+            count = count + 1
+        return count
+        
+
     def make_item(self, param_list):
         '''
         Makes a new item in catalog
@@ -173,21 +188,18 @@ class Command(BaseCommand):
         options = {}
         options['identifier'] = param_list[0]
         options['quantity'] = param_list[1]
-        options['price'] = param_list[4]
-        if len(param_list) == 6:
-            options['barcode'] = param_list[5]
+        options['wholesale_price'] = param_list[4]
+        options['price'] = param_list[5]
+        if len(param_list) == 7:
+            options['barcode'] = param_list[6]
         else:
             options['barcode'] = None
         options['name'] = param_list[3].decode('cp1251').replace('""', '"')
+        options['slug'] = urlify(options['name'])
         options['short_description'] = options['name'].split(' ').pop()
         section_name = param_list[2].decode('cp1251')
         section_tree_item = self._get_or_create_section(section_name, self.import_section)
         options['parent'] = section_tree_item
 
         return self._update_or_create_item(**options)
-    
-    def reindex_db(self):
-        cursor = connection.cursor()
-        cursor.execute('''
-        REINDEX TABLE catalog_treeitem FORCE;
-        ''')
+
