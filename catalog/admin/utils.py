@@ -3,6 +3,7 @@ from catalog import settings as catalog_settings
 from django.contrib import admin
 from django.forms import ModelForm
 from django.core.urlresolvers import get_mod_func
+from django.core.exceptions import ImproperlyConfigured
 
 
 def import_item(path, error_text):

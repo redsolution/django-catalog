@@ -69,7 +69,8 @@ def may_move(node, parent):
 def move_node(request):
     if request.method == 'POST':
         sources = request.REQUEST.get('source', '').split(',')
-        target_id = int(request.REQUEST.get('target', ''))
+        target = request.REQUEST.get('target', 'root')
+        target_id = target
         point = request.REQUEST.get('point', '')
         if point == 'above':
             position = 'left'
