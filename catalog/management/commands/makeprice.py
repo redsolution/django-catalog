@@ -126,9 +126,9 @@ class Command(BaseCommand):
         headerStyle.font = headerFont
         docSheet.row(0).set_style(headerStyle)
         if self.options['whole']:
-            docSheet.write_merge(0, 0, 0, 2, u'Оптовый прайс-лист Соло-парфюм (%s)' % datetime.now().strftime('%y.%m.%d'))
+            docSheet.write_merge(0, 0, 0, 2, u'Оптовый прайс-лист Соло-парфюм (%s)' % datetime.now().strftime('%d.%m.%Y'))
         else:
-            docSheet.write_merge(0, 0, 0, 2, u'Прайс-лист Соло-парфюм (%s)' % datetime.now().strftime('%y.%m.%d'))
+            docSheet.write_merge(0, 0, 0, 2, u'Прайс-лист Соло-парфюм (%s)' % datetime.now().strftime('%d.%m.%Y'))
 
         docSheet.write(2, 0, u'Артикул')
         docSheet.write(2, 1, u'Наименование', )
