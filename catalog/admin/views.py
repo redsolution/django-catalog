@@ -4,24 +4,23 @@ from django.template.context import RequestContext
 from django.forms.models import ModelForm, modelformset_factory
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.contrib.auth.decorators import permission_required
 from urllib import urlencode
-
+from catalog.admin.utils import admin_permission_required
 from catalog.models import Section, Item, TreeItemImage, TreeItem, MetaItem
 
 
-@permission_required('catalog.add_section', login_url='/admin/')
+@admin_permission_required('catalog.add_section')
 def catalog_index(request):
     return render_to_response('admin/catalog/main.html',
                               context_instance=RequestContext(request))
 
-@permission_required('catalog.add_section', login_url='/admin/')
+@admin_permission_required('catalog.add_section')
 def close_popup(request):
     return render_to_response('admin/catalog/closepopup.html',
                               context_instance=RequestContext(request))
 
 @transaction.commit_on_success
-@permission_required('catalog.add_item', login_url='/admin/')
+@admin_permission_required('catalog.add_item')
 def add_item(request):
     parent_id = request.GET.get('parent', None)
     if parent_id == 'root':
@@ -38,7 +37,7 @@ def add_item(request):
         % item.id)
 
 @transaction.commit_on_success
-@permission_required('catalog.add_section', login_url='/admin/')
+@admin_permission_required('catalog.add_section')
 def add_section(request):
     parent_id = request.GET.get('parent', None)
     if parent_id == 'root':
@@ -55,7 +54,7 @@ def add_section(request):
         % section.id)
 
 @transaction.commit_on_success
-@permission_required('catalog.add_metaitem', login_url='/admin/')
+@admin_permission_required('catalog.add_metaitem')
 def add_metaitem(request):
     parent_id = request.GET.get('parent', None)
     if parent_id == 'root':
@@ -96,3 +95,4 @@ def absolute_url_redirect(request, obj_id):
     treeitem = get_object_or_404(TreeItem, id=obj_id)
     get_str = urlencode(request.GET)
     return HttpResponseRedirect('%s?%s' % (treeitem.get_absolute_url(), get_str))
+

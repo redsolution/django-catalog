@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.forms import ModelForm
 from django.core.urlresolvers import get_mod_func
 from django.core.exceptions import ImproperlyConfigured
+from django.contrib.admin.views.decorators import staff_member_required
+from django.http import Http404
 
 
 def import_item(path, error_text):
@@ -37,3 +39,15 @@ def get_connected_models():
                 (model_class, make_admin_class(model_class))
             )
     return model_list
+
+def admin_permission_required(permission, login=True):
+    def decorate(view_func):
+        def wrapper(request, *args, **kwargs):
+            if not request.user.has_perm(permission):
+                raise Http404('The requested admin page does not exist.')
+            return view_func(request, *args, **kwargs)
+        if login:
+            wrapper = staff_member_required(wrapper)
+        return wrapper
+    return decorate
+
