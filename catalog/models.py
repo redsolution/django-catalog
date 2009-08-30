@@ -8,7 +8,11 @@ from django.conf import settings
 from catalog.fields import RelatedField
 from catalog import settings as catalog_settings
 from imagekit.models import ImageModel
-import mptt
+
+if catalog_settings.USE_MPTT:
+    import mptt
+else:
+    from catalog import dummy_mptt as mptt
 
 from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
 
@@ -20,7 +24,7 @@ class TreeItemManager(models.Manager):
             parent = None
             
         return TreeItem.objects.filter(parent=parent)
- 
+
     def linked(self, treeid):
         if treeid == 'root':
             return []
@@ -35,7 +39,10 @@ class TreeItem(models.Model):
     class Meta:
         verbose_name = u'Элемент каталога'
         verbose_name_plural = u'Элементы каталога'
-        ordering = ['tree_id', 'lft']
+        if catalog_settings.USE_MPTT:
+            ordering = ['tree_id', 'lft']
+        else:
+            ordering = ['id']
 
     parent = models.ForeignKey('self', related_name='children',
         verbose_name=u'Родительский', null=True, blank=True, editable=False)
@@ -49,7 +56,13 @@ class TreeItem(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return self.get_absolute_url_undecorated()
-    
+
+    def get_level(self):
+        ''' need to override this, because when we turn mptt off,
+            level attr will clash with level method
+        '''
+        return self.level
+
     def get_absolute_url_undecorated(self):
         return ('catalog.views.tree', (), {'item_id': self.id, 'slug': self.slug()})
     
