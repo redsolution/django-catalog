@@ -49,10 +49,20 @@ class CatalogBase(models.Model):
 
 class TreeItemManager(models.Manager):
 
+    def json(self, treeitem_id):
+        '''Returns treeitem by it's id, if "root" given returns None'''
+        if treeitem_id == 'root':
+            return None
+        else:
+            return TreeItem.objects.get(id=treeitem_id)
+
     def json_children(self, parent):
+        '''
+        Returns children treeitems by their parent id.
+        If 'root' given returns root treeitems
+        '''
         if parent == 'root':
             parent = None
-            
         return TreeItem.objects.filter(parent=parent)
 
     def linked(self, treeid):

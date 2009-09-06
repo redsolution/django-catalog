@@ -6,7 +6,7 @@ from django.test.client import Client
 
 class Testjson(TestCase):
     '''Testing json output for admin interface
-    Catalog fixture:
+    Catalog structure:
         section1
             item1
             item2
