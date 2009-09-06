@@ -1,8 +1,7 @@
 from django.conf import settings
 import os.path
+import sys
 
-# URL that handles catalog's media and uses <MEDIA_ROOT>/catalog by default.
-CATALOG_MEDIA_URL = getattr(settings, 'CATALOG_MEDIA_URL', os.path.join(settings.MEDIA_URL, 'catalog/'))
 
 DEFAULT_CATALOG_CONNECTED_MODELS = [
     ('catalog.models.Item', 'catalog.admin.ItemAdmin'),
@@ -15,5 +14,22 @@ try:
 except ImportError:
     DEFAULT_USE_MPTT = False
 
-CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)
-USE_MPTT = getattr(settings, 'CATALOG_USE_MPTT', DEFAULT_USE_MPTT)
+USE_MPTT = getattr(settings, 'USE_MPTT', DEFAULT_USE_MPTT)
+
+DEFAULT_CATALOG_CONNECTED_MODELS = [
+    ('catalog.defaults.Item', 'catalog.defaults.ItemAdmin'),
+    ('catalog.defaults.Section', 'catalog.defaults.SectionAdmin'),
+    ('catalog.defaults.MetaItem', None),
+]
+
+TEST = getattr(settings, 'TEST',  None)
+if TEST is None:
+    if sys.argv[1] == 'test':
+        TEST = True
+    else:
+        TEST = False
+
+if TEST:
+    CATALOG_CONNECTED_MODELS = DEFAULT_CATALOG_CONNECTED_MODELS
+else:
+    CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)

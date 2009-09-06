@@ -13,8 +13,10 @@ def tree(request):
     if request.method == 'POST':
         parent = request.REQUEST.get('node', 'root')
         
-        for treeitem in TreeItem.manager.json(parent):
-            tree.append(treeitem.content_object.ext_tree())
+        for treeitem in TreeItem.manager.json_children(parent):
+            data = treeitem.content_object.ext_tree()
+            if data is not None:
+                tree.append(data)
     
     return HttpResponse(simplejson.encode(tree))
 
@@ -25,8 +27,10 @@ def list(request):
     if request.method == 'POST':
         parent = request.REQUEST.get('node', 'root')
 
-        for treeitem in TreeItem.manager.json(parent):
-            grid.append(treeitem.content_object.ext_grid())
+        for treeitem in TreeItem.manager.json_children(parent):
+            data = treeitem.content_object.ext_grid()
+            if data is not None:
+                grid.append(data)
 
         linked_list = TreeItem.manager.linked(parent)
         if linked_list:
@@ -53,14 +57,9 @@ def get_tree_item(node):
     return item
 
 def may_move(node, parent):
-    move_matrix = {
-        u'item': [u'section', u'metaitem'],
-        u'metaitem': [u'section'],
-        u'section': [u'section'],
-        }
     if parent is None:
         return True
-    elif parent.content_type.model in move_matrix[node.content_type.model]:
+    elif node.content_type.model not in parent.content_object.exclude_children:
         return True
     else:
         return False
@@ -83,10 +82,7 @@ def move_node(request):
         move = []
         for source in sources:
             this_section = get_tree_item(source)
-            if may_move(this_section, new_parent):
-                move.append(True)
-            else:
-                move.append(False)
+            move.append(may_move(this_section, new_parent))
 
         if all(move):
             for source in sources:
@@ -183,7 +179,7 @@ class BaseM2MTree(object):
         tree = []
         if request.method == 'POST':
             parent = request.REQUEST.get('node', 'root')
-            for treeitem in TreeItem.manager.json(parent):
+            for treeitem in TreeItem.manager.json_children(parent):
                 json = treeitem.content_object.ext_tree()
                 if treeitem.content_type.model == cls.rel_model.__name__.lower():
                     json.update({

@@ -6,7 +6,7 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from urllib import urlencode
 from catalog.admin.utils import admin_permission_required
-from catalog.models import Section, Item, TreeItemImage, TreeItem, MetaItem
+from catalog.models import Section, Item, TreeItem, MetaItem
 
 
 @admin_permission_required('catalog.add_section')
