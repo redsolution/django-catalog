@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 from django.db.models import FieldDoesNotExist, PositiveIntegerField
+from catalog.models import TreeItem
 # Almost clone of mptt.__init__ file.
 # Contains overrides for objects in catalog work properly
  
