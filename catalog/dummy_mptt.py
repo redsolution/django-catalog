@@ -24,12 +24,14 @@ def move_to(self, new_parent, position):
         self.parent = new_parent
     else:
         self.parent = new_parent.parent  # same level with 'new_parent'
+    self.level = get_level(self)
     self.save()
+
 
 def get_level(self):
     level = 0
     obj = self
-    for i in range(4):
+    for i in range(10):
         if obj.parent is None:
             break
         else:
