@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 from django.db.models import FieldDoesNotExist, PositiveIntegerField
-#from catalog.models import TreeItem
+#from catalog import models
+import catalog.models
 # Almost clone of mptt.__init__ file.
 # Contains overrides for objects in catalog work properly
  
@@ -17,7 +18,7 @@ registry = []
 
 
 def get_children(self):
-    return TreeItem.objects.filter(parent=self.id)
+    return catalog.models.TreeItem.objects.filter(parent=self.id)
 
 def move_to(self, new_parent, position):
     if position == 'last-child':
@@ -43,11 +44,12 @@ def get_descendants(self):
     
     def get_children_id_list(iter, id_list=[]):
         for child in iter:
-            if child.children.all.count() > 0:
+            if child.children.count() > 0:
                 id_list.append(child.id)
                 get_children_id_list(child.chidren.all(), id_list)
+        return id_list
     children_ids = get_children_id_list(self.children.all(), [self.id])
-    return TreeItem.objects.filter(parent__in=children_ids)
+    return catalog.models.TreeItem.objects.filter(parent__in=children_ids)
 
 def get_descendant_count(self):
     return self.get_descendants().count()

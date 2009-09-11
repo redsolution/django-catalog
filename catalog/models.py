@@ -10,9 +10,9 @@ from catalog import settings as catalog_settings
 from imagekit.models import ImageModel
 
 if catalog_settings.USE_MPTT:
-    import mptt
+    from mptt import register, AlreadyRegistered
 else:
-    from catalog import dummy_mptt as mptt
+    from catalog.dummy_mptt import register, AlreadyRegistered
 
 from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
 
@@ -73,8 +73,8 @@ class TreeItem(models.Model):
             return u'slug'
 
 try:
-    mptt.register(TreeItem, tree_manager_attr='objects')
-except mptt.AlreadyRegistered:
+    register(TreeItem, tree_manager_attr='objects')
+except AlreadyRegistered:
     pass
 
 
@@ -146,9 +146,8 @@ class Section(models.Model):
             'show': self.show,
             'price': 0.0, 
             'quantity': 0, 
-            'has_image': False if self.images.count() == 0 else True,
-            'has_image': False,
-            'has_description': False if self.short_description is None else True,
+            'has_image': bool(self.images.count()),
+            'has_description': bool(self.description),
         }
     
     def has_nested_sections(self):
@@ -236,8 +235,8 @@ class Item(models.Model):
             'show': self.show,
             'price': float(self.price) if self.price is not None else 0.0,
             'quantity': self.quantity, 
-            'has_image': False if self.images.count() == 0 else True,
-            'has_description': False if self.short_description is None else True,
+            'has_image': bool(self.images.count()),
+            'has_description': bool(self.description),
         }
     
     def __unicode__(self):
