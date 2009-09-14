@@ -163,13 +163,28 @@ var tree_events = {
 						}
 					}
 					
+					tree_panel.showMask('Перемещение товара');
+
 				    Ext.Ajax.request({
 				        url: '/admin/catalog/json/move',
+				        timeout: 10000,
 				        success: function(response, options){
-							grid_panel.reload();
+				    		tree_panel.hideMask()	
+				    		grid_panel.reload();
+							tree_panel.reload();
+							
 				        },
 				        failure: function(response, options){
-							grid_panel.reload();
+				        	tree_panel.hideMask()
+				        	if (response.staus == '500') {
+				        		Ext.Msg.alert('Ошибка','Ошибка на сервере');
+								grid_panel.reload();
+								tree_panel.reload();
+				        	}
+				        	if (response.isTimeout) {
+				        		Ext.Msg.alert('Ошибка','Обрыв связи');
+				        		window.location.reload();
+				        	}
 				        },
 				        params: {
 				        	source: source_list.join(','),
@@ -228,13 +243,27 @@ tree_panel.reload = function() {
     // expand the tree and grid to saved state
     var treestate = Ext.state.Manager.get('treestate');
     if (treestate) {
-    	tree_panel.selectPath(treestate);
-    	var treestate = Ext.state.Manager.get('treestate');
-    	catalog_store.load({
-    		params: {node: treestate.split('/').reverse()[0]} 
-    	});
+        tree_panel.selectPath(treestate);
+        var treestate = Ext.state.Manager.get('treestate');
+        catalog_store.load({
+            params: {node: treestate.split('/').reverse()[0]} 
+        });
     } else
-    	tree_panel.getRootNode().expand();	
+        tree_panel.getRootNode().expand();	
+}
+
+tree_panel.showMask = function(message) {
+    target = Ext.get(this.id);
+    mask = new Ext.LoadMask(target, {
+        msg: message
+    });
+    mask.show();
+}
+
+tree_panel.hideMask = function () {
+	target = Ext.get(this.id);
+	mask = new Ext.LoadMask(target);
+	mask.hide();
 }
 
 /********** menu panel *************/
