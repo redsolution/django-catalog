@@ -263,11 +263,11 @@ class TreeItemImage(ImageModel):
 # must be at bottom, otherwies breaks imports
 from catalog.admin.utils import get_connected_models
 
-def filtered_children_factory(children_ct):
+def filtered_children_factory(model_name):
     def func(self):
-        return self.children.filter(content_type=children_ct)
+        return self.children.filter(content_type__model=model_name)
     return func
  
 for model_cls, admin_cls in get_connected_models():
-    content_type = ContentType.objects.get_for_model(model_cls)
-    setattr(TreeItem, 'children_%s' % content_type.model, filtered_children_factory(content_type))
+    model_name = model_cls.__name__.lower()
+    setattr(TreeItem, 'children_%s' % model_name, filtered_children_factory(model_name))
