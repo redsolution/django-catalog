@@ -108,7 +108,7 @@ class Section(models.Model):
     
     @models.permalink
     def get_absolute_url(self):
-        return self.tree.get().get_absolute_url()
+        return self.tree.get().get_absolute_url_undecorated()
 
     def formatted_name(self):
         return itemname(self.name)
