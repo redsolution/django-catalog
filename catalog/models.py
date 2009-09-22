@@ -8,6 +8,7 @@ from django.conf import settings
 from catalog.fields import RelatedField
 from catalog import settings as catalog_settings
 from imagekit.models import ImageModel
+from decimal import Decimal
 
 if catalog_settings.USE_MPTT:
     from mptt import register, AlreadyRegistered
@@ -177,7 +178,11 @@ class MetaItem(Section):
         return palletes
 
     def price(self):
-        return min([child.content_object.price for child in self.tree.get().children.all()])
+        prices = [child.content_object.price for child in self.tree.get().children.all()]
+        if prices:
+            return min(prices)
+        else:
+            return Decimal('0.0') 
     
 
 class Item(models.Model):
