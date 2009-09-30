@@ -211,7 +211,7 @@ class Item(models.Model):
     price = models.DecimalField(verbose_name=u'Цена', null=True, blank=True, max_digits=12, decimal_places=2)
     wholesale_price = models.DecimalField(verbose_name=u'Оптовая цена', null=True, blank=True, max_digits=12, decimal_places=2)
     identifier = models.CharField(verbose_name=u'Артикул', max_length=50, blank=True, default='')
-    barcode = models.CharField(verbose_name=u'Штрих-код', max_length=50, null=True)
+    barcode = models.CharField(verbose_name=u'Штрих-код', max_length=50, blank=True, null=True)
     quantity = models.IntegerField(verbose_name=u'Остаток на складе',
         help_text=u'Введите 0 если на складе нет товара', null=True, blank=True)
 
