@@ -2,7 +2,7 @@ from django.conf.urls.defaults import patterns, url
 from catalog.admin.json import RelativeTree, SectionsTree, ItemsTree
 
 urlpatterns = patterns('catalog.admin',
-    url(r'^$', 'views.catalog_index'),
+    url(r'^$', 'views.catalog_index', name="catalog_admin"),
     url(r'^newsection$', 'views.add_section'),
     url(r'^newitem$', 'views.add_item'),
     url(r'^newmetaitem$', 'views.add_metaitem'),
