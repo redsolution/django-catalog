@@ -1,19 +1,19 @@
 {% extends "catalog/base.html" %}
 
-{% block title %}{% if item.tree.seo_title %}{{ item.tree.seo_title }}{% else %}{{ item.tree.name }}{% endif %}{% endblock %}
+{% block title %}{% if item.seo_title %}{{ item.seo_title }}{% else %}{{ item.name }}{% endif %}{% endblock %}
 
-{% block meta_keywords %}{{ item.tree.seo_keywords }}{% endblock %}
-{% block meta_description %}{{ item.tree.seo_description }}{% endblock %}
+{% block meta_keywords %}{{ item.seo_keywords }}{% endblock %}
+{% block meta_description %}{{ item.seo_description }}{% endblock %}
 
 {% block script %}
     $(document).ready(function(){
-        expand('{{ section.tree.parent.slug }}-{{ section.tree.parent.id }}');
+        expand('{{ section.parent.slug }}-{{ section.parent.id }}');
     });
 {% endblock script %}
 
 {% block center %}
     <!-- Описание товара -->
-    <h3>{{ section.tree.name }}</h3>
+    <h3>{{ section.name }}</h3>
         <div class="about">
             <table>
                 <tr>
@@ -21,7 +21,7 @@
                     <span>Цена: <span id="price">2000 рублей</span>.</span><br/>
                     <select class="metaitem">
                         {% for item in items %}
-                        <option  value="{{ item.id }}">{{ item.tree.short_description }}</option>
+                        <option  value="{{ item.id }}">{{ item.short_description }}</option>
                         {% endfor %}
                     </select><br/>
                     <input type="submit" id="item-{{ items.0.id }}" value="Добавить в корзину" class="submit basket" />

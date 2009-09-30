@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% load pagination_tags sorting_tags %}
 
-{% block title %}{% if section.tree.seo_title %}{{section.tree.seo_title}}{% else %}{{section.tree.name}}{% endif %}{% endblock %}
-{% block meta_keywords %}{{section.tree.seo_keywords}}{% endblock %}
-{% block meta_description %}{{section.tree.seo_description}}{% endblock %}
+{% block title %}{% if section.seo_title %}{{ section.seo_title }}{% else %}{{ section.name }}{% endif %}{% endblock %}
+{% block meta_keywords %}{{ section.seo_keywords }}{% endblock %}
+{% block meta_description %}{{ section.seo_description }}{% endblock %}
 
 {% block script %}
     $(document).ready(function(){
-        expand('{{ section.tree.slug }}-{{ section.tree.id }}');
+        expand('{{ section.slug }}-{{ section.id }}');
     });
 {% endblock script %}
 
 {% block center %}
 <!-- Перечень разделов -->
-<h3>{{ section.tree.name }}</h3>
+<h3>{{ section.name }}</h3>
 
 {% autosort items %}
 {% autopaginate items 10 %}
