@@ -17,3 +17,4 @@ except ImportError:
 
 CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)
 USE_MPTT = getattr(settings, 'CATALOG_USE_MPTT', DEFAULT_USE_MPTT)
+CATALOG_IKSPEC = getattr(settings, 'CATALOG_IKSPEC', 'catalog.ikspec')

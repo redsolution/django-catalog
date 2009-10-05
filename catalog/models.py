@@ -260,7 +260,7 @@ class TreeItemImage(ImageModel):
 
     class IKOptions:
         cache_dir = 'upload/catalog/cache'
-        spec_module = 'catalog.ikspec'
+        spec_module = catalog_settings.CATALOG_IKSPEC
 
     def __unicode__(self):
         return self.image.url
