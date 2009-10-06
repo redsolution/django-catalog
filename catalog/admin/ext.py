@@ -3,6 +3,7 @@ import re
 
 from django.http import HttpResponse, HttpResponseServerError, Http404
 from django.db import transaction
+from django.db.models import fields
 from django.contrib.auth.decorators import permission_required
 from django.utils import simplejson
 from django.shortcuts import render_to_response, get_object_or_404
@@ -12,6 +13,12 @@ from catalog.models import Section, Item, TreeItem
 from catalog.admin.utils import get_grid_for_model, get_tree_for_model
 from catalog.utils import render_to
 
+
+TYPE_MAP = {
+    fields.CharField: 'str',
+    fields.IntegerField: 'int',
+    fields.AutoField: 'int',
+}
 
 class BaseExtAdmin(object):
     '''Base class to register model in ext catalog admin'''
@@ -161,20 +168,33 @@ class ExtAdminSite(object):
         except ValueError, TreeItem.DoesNotExist:
             return HttpResponseServerError('Bad arguments')
 
-#    @render_to('admin/catalog/catalog.js')
     def config_js(self, request, match):
         '''Render ExtJS interface'''
         context_data = {'models': []}
-        for model_cls, admin_cls in self._registry.iteritems():
+        column_model = []
+
+        for model_cls, admin_cls in self.get_registry().iteritems():
             context_data['models'].append(
                 {
                     'name': model_cls.__name__.lower(),
                     'verbose_name': model_cls._meta.verbose_name,
                 }
             )
+            #retrieve column model from classes
+            for field in admin_cls.fields:
+                field_cls = model_cls._meta.get_field_by_name(field)[0]
+                column_model.append({
+                    'name': field,
+                    'type': TYPE_MAP[type(field_cls)],
+                    'header': field_cls.verbose_name,
+                    #TODO: add more functional here
+                })
+            context_data['column_model'] = column_model
 
-        return render_to_response('admin/catalog/catalog.js',
-            context_data)
+            from pprint import pprint
+            pprint(column_model)
+
+        return render_to_response('admin/catalog/catalog.js', context_data)
 
 
 class BaseM2MTree(object):
