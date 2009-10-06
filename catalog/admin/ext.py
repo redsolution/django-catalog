@@ -15,7 +15,8 @@ from catalog.utils import render_to
 
 
 TYPE_MAP = {
-    fields.CharField: 'str',
+    fields.CharField: 'string',
+    fields.SlugField: 'string',
     fields.IntegerField: 'int',
     fields.AutoField: 'int',
 }
@@ -171,7 +172,7 @@ class ExtAdminSite(object):
     def config_js(self, request, match):
         '''Render ExtJS interface'''
         context_data = {'models': []}
-        column_model = []
+        column_model = {}
 
         for model_cls, admin_cls in self.get_registry().iteritems():
             context_data['models'].append(
@@ -183,18 +184,17 @@ class ExtAdminSite(object):
             #retrieve column model from classes
             for field in admin_cls.fields:
                 field_cls = model_cls._meta.get_field_by_name(field)[0]
-                column_model.append({
-                    'name': field,
-                    'type': TYPE_MAP[type(field_cls)],
-                    'header': field_cls.verbose_name,
+                column_model.update({
+                    field: {
+                        'name': field,
+                        'type': TYPE_MAP[type(field_cls)],
+                        'header': field_cls.verbose_name,
                     #TODO: add more functional here
+                    }
                 })
             context_data['column_model'] = column_model
 
-            from pprint import pprint
-            pprint(column_model)
-
-        return render_to_response('admin/catalog/catalog.js', context_data)
+        return render_to_response('admin/catalog/catalog.js', context_data, mimetype='text/javascript')
 
 
 class BaseM2MTree(object):

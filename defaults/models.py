@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from catalog.fields import RelatedField
-from catalog.models import TreeItem
+from catalog.models import TreeItem, Base
 
 from catalog import settings as catalog_settings
 
@@ -19,7 +19,7 @@ else:
     from django.db.models import Model as ImageModel
 
 
-class Section(models.Model):
+class Section(Base):
     class Meta:
         verbose_name = u"Раздел каталога"
         verbose_name_plural = u'Разделы каталога'
@@ -110,7 +110,7 @@ class MetaItem(Section):
         return min([child.content_object.price for child in self.tree.get().children.all()])
 
 
-class Item(models.Model):
+class Item(Base):
     class Meta:
         verbose_name = u"Продукт каталога"
         verbose_name_plural = u'Продукты каталога'

@@ -14,6 +14,20 @@ else:
     from catalog import dummy_mptt as mptt
 
 
+class Base(models.Model):
+    class Meta:
+        abstract = True
+
+    tree = generic.GenericRelation('TreeItem')
+    tree_id = models.IntegerField(editable=False, null=True)
+    
+    def save(self, *args, **kwds):
+        save_tree_id = kwds.pop('save_tree_id', True)
+        if save_tree_id:
+            self.tree_id = self.tree.get().id
+        return super(Base, self).save(*args, **kwds)
+
+
 class TreeItemManager(models.Manager):
 
     def json(self, treeitem_id):

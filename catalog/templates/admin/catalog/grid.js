@@ -126,7 +126,7 @@ var catalog_store = new Ext.data.JsonStore({
     url: '/admin/catalog/json/list/',
     root: 'items',
     fields: [
-    {% for field in column_model.iteritems %}
+    {% for field in column_model.itervalues %}
         {
             name: '{{ field.name }}',
             type: '{{ field.type }}'
@@ -136,7 +136,7 @@ var catalog_store = new Ext.data.JsonStore({
 });
 
 var catalog_col_model = new Ext.grid.ColumnModel([
-    {% for field in column_model %}
+    {% for field in column_model.itervalues %}
         {
             id: '{{ field.name }}',
             name: '{{ field.name }}',

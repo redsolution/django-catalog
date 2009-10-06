@@ -86,4 +86,4 @@ INSTALLED_APPS = (
 )
 
 CATALOG_USE_MPTT = False
-LOGIN_URL = '/admin/login/'
+LOGIN_URL = '/admin/'
