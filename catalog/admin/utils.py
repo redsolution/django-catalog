@@ -51,3 +51,21 @@ def admin_permission_required(permission, login=True):
         return wrapper
     return decorate
 
+def get_grid_for_model(model, model_ext_admin):
+    '''Return dictionary with key/values as they sholud be in column model'''
+    fields = model_ext_admin.fields
+    data = {'id': model.id}
+    for field in fields:
+        data[field] = getattr(model, field, None)
+    return data
+
+def get_tree_for_model(model, model_ext_admin):
+    '''Return dictionary with key/values as they sholud be in column model'''
+    fields = model_ext_admin.fields
+    data = {'id': model.id}
+    for field in fields:
+        data[field] = getattr(model, field, None)
+    
+    tree_text_attr = getattr(model_ext_admin, 'tree_text_attr')
+    data.update({'text': getattr(model, tree_text_attr, None)})
+    return data

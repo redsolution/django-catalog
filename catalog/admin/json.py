@@ -56,16 +56,18 @@ def get_tree_item(node):
             item = None
     return item
 
-def may_move(node, parent):
-    if parent is None:
-        return True
-    elif node.content_type.model not in parent.content_object.exclude_children:
-        return True
-    else:
-        return False
 
 @transaction.commit_on_success
 def move_node(request):
+    
+    def may_move(node, parent):
+        if parent is None:
+            return True
+        elif node.content_type.model not in parent.content_object.exclude_children:
+            return True
+        else:
+            return False
+
     if request.method == 'POST':
         sources = request.REQUEST.get('source', '').split(',')
         target = request.REQUEST.get('target', 'root')

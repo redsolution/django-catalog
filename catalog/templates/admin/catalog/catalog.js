@@ -114,19 +114,17 @@ var tree_events = {
 	panelClick: function(node, event) {
 				    var sn = this.selModel.selNode || {}; // selNode is null on initial selection
 				    if (node.id != sn.id) { // ignore clicks on currently selected node
-				        if (node.id != 'root') {
-				            Ext.getCmp('catalog-admin-statusbar').showBusy();
-				            catalog_store.load({
-				                params: {
-				                    'node': node.id
-				                },
-				                callback: function(r, options, success){
-				                	Ext.getCmp('catalog-admin-statusbar').clearStatus();
-				                	Ext.getCmp('catalog-admin-statusbar').setText(node.attributes.text);
-				                }
-				            });
-				            Ext.state.Manager.set('treestate', node.getPath());
-				        }
+			            Ext.getCmp('catalog-admin-statusbar').showBusy();
+			            catalog_store.load({
+			                params: {
+			                    'node': node.id
+			                },
+			                callback: function(r, options, success){
+			                	Ext.getCmp('catalog-admin-statusbar').clearStatus();
+			                	Ext.getCmp('catalog-admin-statusbar').setText(node.attributes.text);
+			                }
+			            });
+			            Ext.state.Manager.set('treestate', node.getPath());
 				    }
 				},
 	expandNode: function(node) {
@@ -204,7 +202,7 @@ var tree_panel = new Ext.tree.TreePanel({
     containerScroll: true,
     
     // auto create TreeLoader
-    dataUrl: '/admin/catalog/json/tree',
+    dataUrl: '/admin/catalog/json/tree/',
     root: {
         nodeType: 'async',
         text: 'Каталог',
@@ -264,8 +262,10 @@ var gridBar = new Ext.Toolbar({
     },{
     	text: 'Добавить',
     	icon: '/media/extjs/resources/images/default/tree/drop-add.gif',
-    	menu: [{
-	        text: 'Добавить раздел',
+        menu: [
+        {% for model in models %}
+        {
+	        text: 'Добавить {{ model.verbose_name }}',
 	    	cls: 'x-btn-text-icon',
 	    	icon: '/media/catalog/img/folder.png',
 	    	handler: function(){
@@ -274,45 +274,15 @@ var gridBar = new Ext.Toolbar({
 	            }
 	            var parentSectionId = tree_panel.selModel.selNode.id;
 	            
-	            var win = window.open("/admin/catalog/newsection?parent=" + 
+	            var win = window.open("/admin/catalog/new/{{ model.name }}/?parent=" + 
 	                    tree_panel.selModel.selNode.id + 
 	                    "&_popup=1", "EditTreeItemWindow", 
 	                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
 	            win.focus();
 	        }
-	    },{
-	        text: 'Добавить товар',
-	    	cls: 'x-btn-text-icon',
-	    	icon: '/media/catalog/img/full_page.png',
-	    	handler: function(){
-	            if (tree_panel.selModel.selNode == null) {
-	                return;
-	            }
-	            var parentSectionId = tree_panel.selModel.selNode.id;
-	            
-	            var win = window.open("/admin/catalog/newitem?parent=" + 
-	                    tree_panel.selModel.selNode.id + 
-	                    "&_popup=1", "EditTreeItemWindow", 
-	                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
-	            win.focus();
-	        }
-	    },{
-	        text: 'Добавить метатовар',
-	    	cls: 'x-btn-text-icon',
-	    	icon: '/media/catalog/img/folder_full.png',
-	    	handler: function(){
-	            if (tree_panel.selModel.selNode == null) {
-	                return;
-	            }
-	            var parentSectionId = tree_panel.selModel.selNode.id;
-	            
-	            var win = window.open("/admin/catalog/newmetaitem?parent=" + 
-	                    tree_panel.selModel.selNode.id + 
-	                    "&_popup=1", "EditTreeItemWindow", 
-	                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
-	            win.focus();
-	        }
-	    }]
+	    }{% if not forloop.last %},{% endif %}
+	    {% endfor %}
+	    ]
     },{
     	text: 'Отображать',
     	icon: '/media/catalog/img/eye--plus.png',
@@ -412,7 +382,7 @@ function renderItemOnly(value, metaData, record) {
 }
 
 var catalog_store = new Ext.data.JsonStore({
-    url: '/admin/catalog/json/list',
+    url: '/admin/catalog/json/list/',
     root: 'items',
     fields: ['type', 'itemid', 'id', 'name', 'type',
     {

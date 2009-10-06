@@ -33,24 +33,15 @@ def add_instance(request, model_name):
     tree_item = TreeItem(parent=parent_tree_item, content_object=instance)
     tree_item.save()
 
-    return HttpResponseRedirect('/admin/catalog/%s/%d/?_popup=1'
-        % (model_name, instance.id))
-
-def edit_item_related(request, obj_id):
-    item = get_object_or_404(Item, id=obj_id)
-    return render_to_response('admin/catalog/edit_item_related.html', {'item': item},
-        context_instance=RequestContext(request))
-
-def edit_section_related(request, obj_id):
-    section = get_object_or_404(Section, id=obj_id)
-    return render_to_response('admin/catalog/edit_section_related.html', {'section': section},
-        context_instance=RequestContext(request))
-
+    return HttpResponseRedirect('/admin/%s/%s/%d/?_popup=1'
+        % (instance.__module__.rsplit('.', 2)[1], model_name, instance.id))
 
 def editor_redirect(request, obj_id):
     treeitem = get_object_or_404(TreeItem, id=obj_id)
     get_str = urlencode(request.GET)
-    return HttpResponseRedirect('/admin/catalog/%s/%s/?%s' % (treeitem.content_type.model, treeitem.content_object.id, get_str))
+    return HttpResponseRedirect('/admin/%s/%s/%s/?%s' %
+        (treeitem.content_object.__module__.rsplit('.', 2)[1], treeitem.content_type.model,
+        treeitem.content_object.id, get_str))
 
 def related_redirect(request, obj_id):
     treeitem = get_object_or_404(TreeItem, id=obj_id)
@@ -61,4 +52,3 @@ def absolute_url_redirect(request, obj_id):
     treeitem = get_object_or_404(TreeItem, id=obj_id)
     get_str = urlencode(request.GET)
     return HttpResponseRedirect('%s?%s' % (treeitem.get_absolute_url(), get_str))
-

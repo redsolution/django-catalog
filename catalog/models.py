@@ -1,51 +1,18 @@
 # -*- coding: utf-8 -*-
-
 from django.db import models
-from tinymce.models import HTMLField
+from django.db import transaction
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.conf import settings
 from catalog.fields import RelatedField
 from catalog import settings as catalog_settings
-from imagekit.models import ImageModel
+from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
 
-if catalog_settings.USE_MPTT:
+if catalog_settings.CATALOG_MPTT:
     import mptt
 else:
     from catalog import dummy_mptt as mptt
 
-from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
-
-
-class CatalogBase(models.Model):
-    '''Base class contains method to interact with extjs admin'''
-    class Meta:
-        abstract = True
-         
-    tree = generic.GenericRelation('TreeItem')
-    exclude_children = []
-
-    def get_name(self):
-        name = getattr(self, 'name', None)
-        title = getattr(self, 'title', None)
-        return name or title
-
-    def ext_tree(self):
-        return {
-            'text': self.get_name(),
-            'id': '%d' % self.tree.get().id,
-            'leaf': False,
-            'cls': 'folder',
-         }
-
-    def ext_grid(self):
-        return {
-            'name': self.get_name(),
-            'id': '%d' % self.tree.get().id,
-            'type': ContentType.objects.get_for_model(self).model, 
-            'itemid': self.id,
-        }
- 
 
 class TreeItemManager(models.Manager):
 
@@ -80,7 +47,7 @@ class TreeItem(models.Model):
     class Meta:
         verbose_name = u'Элемент каталога'
         verbose_name_plural = u'Элементы каталога'
-        if catalog_settings.USE_MPTT:
+        if catalog_settings.CATALOG_MPTT:
             ordering = ['tree_id', 'lft']
         else:
             ordering = ['id']
@@ -97,6 +64,11 @@ class TreeItem(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return self.get_absolute_url_undecorated()
+    
+    def delete(self, *args, **kwds):
+        self.content_object.delete()
+        super(TreeItem, self).delete(*args, **kwds)
+    delete.alters_data = True
 
     def get_level(self):
         ''' need to override this, because when we turn mptt off,
@@ -122,16 +94,3 @@ except mptt.AlreadyRegistered:
 for model_name, admin_name in catalog_settings.CATALOG_CONNECTED_MODELS:
     module, model = model_name.rsplit('.', 1)
     exec('from %s import %s' % (module, model))
-
-# must be at bottom, otherwise breaks imports
-from catalog.admin.utils import get_connected_models
-
-def filtered_children_factory(model_name):
-    def func(self):
-        return self.children.filter(content_type__model=model_name)
-    return func
- 
-for model_cls, admin_cls in get_connected_models():
-    model_name = model_cls.__name__.lower()
-    setattr(TreeItem, 'children_%s' % model_name, model_name)
-

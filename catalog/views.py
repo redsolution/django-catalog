@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from catalog.models import TreeItem
 from django.db.models import Q
 from django.http import Http404
-from utils.decorators import render_to
+from catalog.utils import render_to
 
 
 @render_to('catalog/treeitem.html')

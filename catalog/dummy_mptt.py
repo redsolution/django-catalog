@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 from django.db.models import FieldDoesNotExist, PositiveIntegerField
-from catalog.models import TreeItem
 # Almost clone of mptt.__init__ file.
 # Contains overrides for objects in catalog work properly
  
@@ -17,6 +16,9 @@ registry = []
 
 
 def get_children(self):
+    # cross import avoid
+    from catalog.models import TreeItem
+
     return TreeItem.objects.filter(parent=self.id)
 
 def move_to(self, new_parent, position):
@@ -38,7 +40,9 @@ def get_level(self):
     return level
 
 def get_descendants(self):
-    
+    # cross import avoid
+    from catalog.models import TreeItem
+
     def get_children_id_list(iter, id_list=[]):
         for child in iter:
             if child.children.all.count() > 0:
@@ -55,7 +59,6 @@ def register(model, tree_manager_attr='tree'):
     Dummy mptt add mptt-like atrributes for models in catalog works properly
     without mptt
     """
-
     if model in registry:
         raise AlreadyRegistered(
             'The model %s has already been registered.' % model.__name__)

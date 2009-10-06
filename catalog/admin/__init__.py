@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 from django.contrib import admin
-from catalog.models import TreeItem
 from django.http import Http404, HttpResponse
 from django.utils.html import escape
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from catalog.admin.utils import get_connected_models
 from django.contrib.contenttypes import generic
+
+from catalog.models import TreeItem
+from catalog.admin.utils import get_connected_models
+from catalog.admin.ext import ext_site, BaseExtAdmin
 
 
 class CatalogAdminMix(admin.ModelAdmin):
+    
+    prepopulated_fields = {'slug': ('name',)}
+    
     def response_change(self, request, obj):
         """
         Wrapper around Django ModelAdmin method to provide
@@ -22,10 +27,16 @@ class CatalogAdminMix(admin.ModelAdmin):
         return super(TreeItemAdmin, self).response_change(request, obj)
 
 # register models
-for model_class, admin_class in get_connected_models():
+def register(model_class, admin_class, ext_admin_class=BaseExtAdmin):
+    # register Django admin model
     class CatalogModelAdmin(admin_class, CatalogAdminMix):
         pass
     try:
         admin.site.register(model_class, CatalogModelAdmin)
+    except admin.sites.AlreadyRegistered:
+        pass
+    # register ext admin
+    try:
+        ext_site.register(model_class, ext_admin_class)
     except admin.sites.AlreadyRegistered:
         pass

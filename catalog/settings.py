@@ -2,25 +2,21 @@ from django.conf import settings
 import os.path
 import sys
 
-
 DEFAULT_CATALOG_CONNECTED_MODELS = [
-    ('catalog.models.Item', 'catalog.admin.ItemAdmin'),
-    ('catalog.models.Section', 'catalog.admin.SectionAdmin'),
-    ('catalog.models.MetaItem', None),
+    ('defaults.models.Item', 'defaults.admin.ItemAdmin'),
+    ('defaults.models.Section', 'defaults.admin.SectionAdmin'),
+    ('defaults.models.MetaItem', None),
 ]
-try:
-    import mptt
-    DEFAULT_USE_MPTT = True
-except ImportError:
-    DEFAULT_USE_MPTT = False
 
-USE_MPTT = getattr(settings, 'USE_MPTT', DEFAULT_USE_MPTT)
+DEFAULT_TINYMCE = 'tinymce' in settings.INSTALLED_APPS
+CATALOG_TINYMCE = getattr(settings, 'CATALOG_TINYMCE', DEFAULT_TINYMCE)
 
-DEFAULT_CATALOG_CONNECTED_MODELS = [
-    ('catalog.defaults.Item', 'catalog.defaults.ItemAdmin'),
-    ('catalog.defaults.Section', 'catalog.defaults.SectionAdmin'),
-    ('catalog.defaults.MetaItem', None),
-]
+DEFAULT_MPTT = 'mptt' in settings.INSTALLED_APPS
+CATALOG_MPTT = getattr(settings, 'CATALOG_MPTT', DEFAULT_MPTT)
+
+DEFAULT_IMAGEKIT = 'imagekit' in settings.INSTALLED_APPS
+CATALOG_IMAGEKIT = getattr(settings, 'CATALOG_IMAGEKIT', DEFAULT_IMAGEKIT)
+
 
 TEST = getattr(settings, 'TEST',  None)
 if TEST is None:

@@ -1,34 +1,31 @@
 # -*- coding: utf-8 -*-
 from django.db import models
-from tinymce.models import HTMLField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
-from django.conf import settings
 from catalog.fields import RelatedField
+from catalog.models import TreeItem
+
 from catalog import settings as catalog_settings
-from imagekit.models import ImageModel
 
-from catalog.models import TreeItem, CatalogBase
+# fake tinymce
+if catalog_settings.CATALOG_TINYMCE:
+    from tinymce.models import HTMLField
+else:
+    from django.forms import Textarea as HTMLField
+# fake imagekit
+if catalog_settings.CATALOG_IMAGEKIT:
+    from imagekit.models import ImageModel
+else:
+    from django.db.models import Model as ImageModel
 
 
-def itemname(value):
-    value = value.replace('.', '. ')
-    parts = value.split("'")
-    if len(parts) < 2:
-        parts = value.split('|')
-    if len(parts) > 1:
-        name = parts[1]
-    else:
-        name = value
-    return name.strip()
-
-class Section(CatalogBase):
+class Section(models.Model):
     class Meta:
         verbose_name = u"Раздел каталога"
         verbose_name_plural = u'Разделы каталога'
 
     images = generic.GenericRelation('TreeItemImage')
-    
+
     # Display options
     show = models.BooleanField(verbose_name=u'Отображать', default=True)
 
@@ -36,14 +33,14 @@ class Section(CatalogBase):
     slug = models.SlugField(verbose_name=u'Slug', max_length=200, null=True, blank=True)
     name = models.CharField(verbose_name=u'Наименование', max_length=200, default='')
     description = models.TextField(verbose_name=u'Описание', null=True, blank=True)
-    
+
     @models.permalink
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url()
 
     def formatted_name(self):
         return itemname(self.name)
-    
+
     def get_all_items(self):
         children = self.tree.get().children_item() | self.tree.get().children_metaitem()
         related_ids = self.items.values_list('id', flat=True)
@@ -67,21 +64,21 @@ class Section(CatalogBase):
             'leaf': False,
             'cls': 'folder',
          }
-    
+
     def ext_grid(self):
         return {
             'name': self.name,
             'id': '%d' % self.tree.get().id,
-            'type': self.tree.get().content_type.model, 
+            'type': self.tree.get().content_type.model,
             'itemid': self.id,
             'show': self.show,
-            'price': 0.0, 
-            'quantity': 0, 
+            'price': 0.0,
+            'quantity': 0,
             'has_image': False if self.images.count() == 0 else True,
             'has_image': False,
             'has_description': False if self.description is None else True,
         }
-    
+
     def has_nested_sections(self):
         section_ct = ContentType.objects.get_for_model(Section)
         return bool(len(self.tree.get().children.filter(content_type=section_ct)))
@@ -90,18 +87,19 @@ class Section(CatalogBase):
         return self.name
 
 
-class MetaItem(Section, CatalogBase):
+class MetaItem(Section):
     class Meta:
         verbose_name = u"Метатовар"
         verbose_name_plural = u'Метатовары'
 
     images = generic.GenericRelation('TreeItemImage')
+
     exclude_children = [u'section']
-    
+
     @models.permalink
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url_undecorated()
-    
+
     def palletes(self):
         palletes = []
         for child in self.tree.get().children.all():
@@ -110,13 +108,13 @@ class MetaItem(Section, CatalogBase):
 
     def price(self):
         return min([child.content_object.price for child in self.tree.get().children.all()])
-    
 
-class Item(CatalogBase):
+
+class Item(models.Model):
     class Meta:
         verbose_name = u"Продукт каталога"
         verbose_name_plural = u'Продукты каталога'
-        
+
     images = generic.GenericRelation('TreeItemImage')
 
     # Display options
@@ -137,12 +135,12 @@ class Item(CatalogBase):
     quantity = models.IntegerField(verbose_name=u'Остаток на складе',
         help_text=u'Введите 0 если на складе нет товара', null=True, blank=True)
 
-    exclude_children = [u'item', u'section', u'metaitem'] 
-    
+    exclude_children = [u'item', u'section', u'metaitem']
+
     @models.permalink
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url_undecorated()
-    
+
     def formatted_name(self):
         return itemname(self.name)
 
@@ -153,7 +151,7 @@ class Item(CatalogBase):
             'leaf': True,
             'cls': 'leaf',
          }
-    
+
     def ext_grid(self):
         return {
             'name': self.name,
@@ -162,18 +160,18 @@ class Item(CatalogBase):
             'itemid': self.id,
             'show': self.show,
             'price': float(self.price) if self.price is not None else 0.0,
-            'quantity': self.quantity, 
+            'quantity': self.quantity,
             'has_image': False if self.images.count() == 0 else True,
             'has_description': False if self.description is None else True,
         }
-    
+
     def __unicode__(self):
         return self.name
 
 class TreeItemImage(ImageModel):
     image = models.ImageField(verbose_name=u'Изображение',
         upload_to='upload/catalog/itemimages/%Y-%m-%d')
-    
+
     pallete = models.BooleanField(default=False, verbose_name=u'Палитра',
         help_text=u'Картинка будет отображаться в полном размере после описания')
 
@@ -187,24 +185,3 @@ class TreeItemImage(ImageModel):
 
     def __unicode__(self):
         return self.image.url
-
-
-#### Admin classes ###
-from django.contrib import admin
-
-class ImageInline(generic.GenericTabularInline):
-    extra = 2
-    model = TreeItemImage
-
-class ItemAdmin(admin.ModelAdmin):
-    inlines = [ImageInline]
-    raw_id_fields = ('relative', 'sections')
-    prepopulated_fields = {'slug': ('name',)}
-    model = Item
-
-
-class SectionAdmin(admin.ModelAdmin):
-    inlines = [ImageInline]
-    prepopulated_fields = {'slug': ('name',)}
-    model = Section
-
