@@ -1,4 +1,6 @@
 /********** tree panel element *************/
+var drop_source_list = [];
+var drop_point = 'append';
 
 function grid_to_treenode(item) {
 	return new Ext.tree.TreeNode({
@@ -54,6 +56,7 @@ var tree_events = {
 				    }
 				},
 	beforeDrop: function(dropEvent) {
+                    // convert data from grid to tree nodes
 					if (dropEvent.source['grid']) {
 						// drag from grid
 						var selections = dropEvent.data.selections;
@@ -64,51 +67,20 @@ var tree_events = {
 						dropEvent.dropNode = r;
 						dropEvent.cancel = r.length < 1;
 					}
-				},
-    nodeDrop: function (dropEvent) {
-					console.log(dropEvent);
-					tree_panel.contextMenuHandler()
-					
-					
-					var source = dropEvent.source.dragData['grid'] ? dropEvent.source.dragData.selections : [dropEvent.source.dragData.node];
-					var source_list = [];
+					// globally make source list
+                    var source = dropEvent.source.dragData['grid'] ? dropEvent.source.dragData.selections : [dropEvent.source.dragData.node];
+					var drop_source_list = [];
 					for (var i=0; i < source.length; i++) {
 						if (source[i]['data']) {
-							source_list.push(source[i].data.id);
+							drop_source_list.push(source[i].data.id);
 						} else {
-							source_list.push(source[i].attributes.id);
+							drop_source_list.push(source[i].attributes.id);
 						}
 					}
-					
-					tree_panel.showMask('Перемещение товара');
-
-				    Ext.Ajax.request({
-				        url: '/admin/catalog/json/move',
-				        timeout: 10000,
-				        success: function(response, options){
-				        	tree_panel.hideMask()	
-				    		grid_panel.reload();
-							tree_panel.reload();
-							
-				        },
-				        failure: function(response, options){
-				        	tree_panel.hideMask()
-				        	if (response.staus == '500') {
-				        		Ext.Msg.alert('Ошибка','Ошибка на сервере');
-								grid_panel.reload();
-								tree_panel.reload();
-				        	}
-				        	if (response.isTimeout) {
-				        		Ext.Msg.alert('Ошибка','Обрыв связи');
-				        		window.location.reload();
-				        	}
-				        },
-				        params: {
-				        	source: source_list.join(','),
-				        	target: dropEvent.target.id,
-				        	point: dropEvent.point
-				        }
-			    	});
+                    // globally set drop point
+                    drop_point = dropEvent.point;
+					dropMenu.show(dropEvent.target.ui.getAnchor());
+                    return false;
 				},
     contextMenuHandler: function(node){
                     node.select();
@@ -148,7 +120,7 @@ var tree_panel = new Ext.tree.TreePanel({
 //		render: treeDropZoneInit,
     	movenode: tree_events.moveNode,
     	beforenodedrop: tree_events.beforeDrop,
-    	nodedrop: tree_events.nodeDrop,
+        //nodedrop: tree_events.nodeDrop,
 		click: tree_events.panelClick,
 		expandnode: tree_events.expandNode,
         contextmenu: tree_events.contextMenuHandler
@@ -214,6 +186,20 @@ var contextMenu = new Ext.menu.Menu ({
                 node = tree_panel.getSelectionModel().getSelectedNode();
                 deleteItems([node.id]);
                 tree_panel.reload();
+            }
+    }]
+});
+
+
+/*********** tree drop menu ***********/
+var dropMenu = new Ext.menu.Menu ({
+    items: [
+    {
+        text: 'Перенести',
+        // icon: '/media/catalog/img/eye.png',
+        handler: function(arg){
+                move_items(drop_source_list,
+                    tree_panel.selModel.selNode, drop_point);
             }
     }]
 });

@@ -15,7 +15,39 @@ function view_on_site(id){
     win.focus();
 }
 
-/****** delte items *******/
+function move_items(source_list, target_id, point) {
+    tree_panel.showMask('Перемещение товара');
+
+    Ext.Ajax.request({
+        url: '/admin/catalog/json/move',
+        timeout: 10000,
+        success: function(response, options){
+            tree_panel.hideMask();
+            grid_panel.reload();
+            tree_panel.reload();
+            
+        },
+        failure: function(response, options){
+            tree_panel.hideMask();
+            if (response.staus == '500') {
+                Ext.Msg.alert('Ошибка','Ошибка на сервере');
+                grid_panel.reload();
+                tree_panel.reload();
+            }
+            if (response.isTimeout) {
+                Ext.Msg.alert('Ошибка','Обрыв связи');
+                window.location.reload();
+            }
+        },
+        params: {
+            source: source_list.join(','),
+            target: target_id,
+            point: point
+        }
+    });
+}
+
+/****** delete items *******/
 function deleteItems(id_list){
     Ext.Ajax.request({
         url: '/admin/catalog/json/count/delete',
