@@ -90,7 +90,7 @@ var gridBar = new Ext.Toolbar({
 			var selections = grid_panel.selModel.getSelections();
 			var r = [];
 			for (var i=0; i < selections.length; i++) {
-				r.push(selections[i].data.id);
+				r.push(selections[i].id);
 				}
             deleteItems(r);
 		}
@@ -168,7 +168,7 @@ var grid_panel = new Ext.grid.GridPanel({
 
 grid_panel.on('rowdblclick', function(grid, rowIndex, e){
 	var item = grid.store.getAt(rowIndex);
-    editItem(grid.store.getAt(rowIndex).get('id'));
+    editItem(grid.store.getAt(rowIndex).id);
     return false;
 });
 

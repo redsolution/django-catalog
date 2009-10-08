@@ -20,6 +20,7 @@ class Base(models.Model):
 
     tree = generic.GenericRelation('TreeItem')
     tree_id = models.IntegerField(editable=False, null=True)
+    exclude_children = []
     
     def save(self, *args, **kwds):
         save_tree_id = kwds.pop('save_tree_id', True)

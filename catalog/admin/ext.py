@@ -36,6 +36,10 @@ class ExtAdminSite(object):
         self._urlconf = (
             (r'^json/tree/$', self.tree),
             (r'^json/list/$', self.grid),
+            (r'^json/move/$', self.move_node),
+            (r'^json/show/$', self.visible),
+            (r'^json/delete_count/$', self.delete_count),
+            (r'^json/delete/$', self.delete_items),
             (r'^js/$', self.config_js),
         )
     
@@ -95,7 +99,7 @@ class ExtAdminSite(object):
 
         return HttpResponse(simplejson.encode({'items': grid}))
 
-    def move_node(request):
+    def move_node(self, request, match):
         '''Move node above, below or into target node'''
         def may_move(node, parent):
             if parent is None:
@@ -117,35 +121,35 @@ class ExtAdminSite(object):
             else:
                 position = 'last-child'
 
-            new_parent = get_tree_item(target_id)
+            new_parent = TreeItem.manager.json(target_id)
             move = []
             for source in sources:
-                this_section = get_tree_item(source)
+                this_section = TreeItem.manager.json(source)
                 move.append(may_move(this_section, new_parent))
 
             if all(move):
                 for source in sources:
-                    this_section = get_tree_item(source)
+                    this_section = TreeItem.manager.json(source)
                     this_section.move_to(new_parent, position)
                 return HttpResponse('OK')
             else:
                 return HttpResponseServerError('Can not move')
 
-    def visible(request):
+    def visible(self, request, match):
         try:
             treeitems_list = request.REQUEST.get('items', '').split(',')
             show = bool(int(request.REQUEST.get('visible', '1')))
-            for treeitem in TreeItem.objects.filter(id__in=treeitems_list):
+            for treeitem in TreeItem.manager.filter(id__in=treeitems_list):
                 treeitem.content_object.show=show
                 treeitem.content_object.save()
             return HttpResponse('OK')
         except ValueError:
             return HttpResponseServerError('Bad arguments')
 
-    def delete_count(request):
+    def delete_count(self, request, match):
         try:
             items_list = request.REQUEST.get('items', '').split(',')
-            items_to_delete = TreeItem.objects.filter(id__in=items_list)
+            items_to_delete = TreeItem.manager.filter(id__in=items_list)
             children_to_delete = 0
             for item in items_to_delete:
                 children_to_delete += item.get_descendant_count()
@@ -153,11 +157,11 @@ class ExtAdminSite(object):
                 'items': len(items_to_delete),
                 'all': len(items_to_delete) + children_to_delete,
             }))
-        except ValueError, TreeItem.DoesNotExist:
-            return HttpResponseServerError('Bad arguments')
+        except (ValueError, TreeItem.DoesNotExist),e:
+            return HttpResponseServerError('Bad arguments: %s' % e)
 
     @transaction.commit_on_success
-    def delete_items(request):
+    def delete_items(self, request, match):
         try:
             items_list = request.REQUEST.get('items', '').split(',')
             items_to_delete = TreeItem.objects.filter(id__in=items_list)
@@ -168,6 +172,10 @@ class ExtAdminSite(object):
             return HttpResponse('OK')
         except ValueError, TreeItem.DoesNotExist:
             return HttpResponseServerError('Bad arguments')
+
+    def add_related(self, request, match):
+        print 'add related:', match
+        return HttpResponse('test')
 
     def config_js(self, request, match):
         '''Render ExtJS interface'''

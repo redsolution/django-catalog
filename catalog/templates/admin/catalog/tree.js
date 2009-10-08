@@ -4,7 +4,7 @@ var drop_point = 'append';
 
 function grid_to_treenode(item) {
 	return new Ext.tree.TreeNode({
-		id: item.data.id,
+		id: item.id,
 		text: item.data.name
 	})
 	
@@ -44,32 +44,22 @@ var tree_events = {
 			            Ext.state.Manager.set('treestate', node.getPath());
 				    }
 				},
-	expandNode: function(node) {
-					
-				},
-	moveNode: function(tree, node, oldParent, newParent, index) {
-				    var post_data = {
-				        node: node.id,
-				        from: oldParent.id,
-				        to: newParent.id,
-				        index: index
-				    }
-				},
 	beforeDrop: function(dropEvent) {
                     // convert data from grid to tree nodes
 					if (dropEvent.source['grid']) {
 						// drag from grid
 						var selections = dropEvent.data.selections;
-						var r = [];
+						var converted_nodes = [];
 							for (var i =0; i < selections.length; i++) {
-								r.push(grid_to_treenode(selections[i]));
+								converted_nodes.push(grid_to_treenode(selections[i]));
 							}
-						dropEvent.dropNode = r;
-						dropEvent.cancel = r.length < 1;
+						dropEvent.cancel = converted_nodes.length < 1;
+                        //select dropped node
+                        tree_panel.selModel.select(dropEvent.target);
 					}
 					// globally make source list
-                    var source = dropEvent.source.dragData['grid'] ? dropEvent.source.dragData.selections : [dropEvent.source.dragData.node];
-					var drop_source_list = [];
+                    var source = dropEvent.source.dragData['grid'] ? converted_nodes : [dropEvent.source.dragData.node];
+					drop_source_list = [];
 					for (var i=0; i < source.length; i++) {
 						if (source[i]['data']) {
 							drop_source_list.push(source[i].data.id);
@@ -118,11 +108,11 @@ var tree_panel = new Ext.tree.TreePanel({
     tbar: treeBar,
 	listeners: {
 //		render: treeDropZoneInit,
-    	movenode: tree_events.moveNode,
+        //movenode: tree_events.moveNode,
     	beforenodedrop: tree_events.beforeDrop,
         //nodedrop: tree_events.nodeDrop,
 		click: tree_events.panelClick,
-		expandnode: tree_events.expandNode,
+		//expandnode: tree_events.expandNode,
         contextmenu: tree_events.contextMenuHandler
 	}
 
@@ -199,7 +189,7 @@ var dropMenu = new Ext.menu.Menu ({
         // icon: '/media/catalog/img/eye.png',
         handler: function(arg){
                 move_items(drop_source_list,
-                    tree_panel.selModel.selNode, drop_point);
+                    tree_panel.selModel.selNode.id, drop_point);
             }
     }]
 });

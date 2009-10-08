@@ -19,13 +19,14 @@ function move_items(source_list, target_id, point) {
     tree_panel.showMask('Перемещение товара');
 
     Ext.Ajax.request({
-        url: '/admin/catalog/json/move',
+        url: '/admin/catalog/json/move/',
         timeout: 10000,
+        callback: function() {
+            grid_panel.reload();
+            tree_panel.selModel.selNode.parentNode.reload();
+        },
         success: function(response, options){
             tree_panel.hideMask();
-            grid_panel.reload();
-            tree_panel.reload();
-            
         },
         failure: function(response, options){
             tree_panel.hideMask();
@@ -50,15 +51,15 @@ function move_items(source_list, target_id, point) {
 /****** delete items *******/
 function deleteItems(id_list){
     Ext.Ajax.request({
-        url: '/admin/catalog/json/count/delete',
-        success: function(response, options){
+        url: '/admin/catalog/json/delete_count/',
+        success: function(response, options) {
             var data = Ext.util.JSON.decode(response.responseText);
             Ext.Msg.confirm('Внимание!', 'Удаление ' + data.items + 
             ' элементов повлечет удаление ' + data.all + ' дочерних элементов. Удалить?',
                 function(btn, text){
                     if (btn == 'yes') {
                         Ext.Ajax.request({
-                            url: '/admin/catalog/json/delete',
+                            url: '/admin/catalog/json/delete/',
                             success: function(response, options){
                                 grid_panel.reload();
                             },

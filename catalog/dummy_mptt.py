@@ -42,13 +42,16 @@ def get_level(self):
 def get_descendants(self):
     # cross import avoid
     from catalog.models import TreeItem
-
     def get_children_id_list(iter, id_list=[]):
         for child in iter:
-            if child.children.all.count() > 0:
+            if child.children.all().count() > 0:
                 id_list.append(child.id)
-                get_children_id_list(child.chidren.all(), id_list)
+                get_children_id_list(child.children.all(), id_list)
+        return id_list
+
     children_ids = get_children_id_list(self.children.all(), [self.id])
+    if children_ids is None:
+        children_ids = []
     return TreeItem.objects.filter(parent__in=children_ids)
 
 def get_descendant_count(self):
