@@ -27,6 +27,7 @@ from catalog.admin.ext import BaseExtAdmin
 class ItemExtAdmin(BaseExtAdmin):
     tree_text_attr = 'name'
     fields = ('name',)
+    m2ms = ('relative', 'sections')
 
 class SectionExtAdmin(BaseExtAdmin):
     tree_text_attr = 'name'

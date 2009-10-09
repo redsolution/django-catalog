@@ -31,6 +31,7 @@ class BaseExtAdmin(object):
 class ExtAdminSite(object):
     # dictionaty with registered models
     _registry = {}
+    _m2ms = {}
 
     def __init__(self):
         self._urlconf = (
@@ -40,16 +41,35 @@ class ExtAdminSite(object):
             (r'^json/show/$', self.visible),
             (r'^json/delete_count/$', self.delete_count),
             (r'^json/delete/$', self.delete_items),
+            (r'^json/rel/([\w-]+)/add/$', self.add_related),
             (r'^js/$', self.config_js),
         )
-    
+
     def get_registry(self):
         return self._registry
-    
+
+    def get_m2ms(self):
+        return self._m2ms
+
     def register(self, model_class, admin_class):
         '''Register Ext model admin in catalog interface'''
         if model_class not in self._registry:
             self._registry.update({model_class: admin_class})
+            # register many to many relations specially
+            for m2m_field_name in admin_class.m2ms:
+                base_field = model_class._meta.get_field_by_name(m2m_field_name)[0]
+                rel_model_class = base_field.rel.to
+                m2m_name = '%s-%s-%s' % (model_class.__name__,
+                    m2m_field_name, rel_model_class.__name__)
+
+                self._m2ms.update({
+                    m2m_name.lower(): {
+                        'base_model': model_class,
+                        'fk_attr': m2m_field_name,
+                        'rel_model': rel_model_class,
+                    }
+                })
+
         else:
             raise AlreadyRegistered('Model %s already registered' % model_class.__str__)
 
@@ -174,13 +194,32 @@ class ExtAdminSite(object):
             return HttpResponseServerError('Bad arguments')
 
     def add_related(self, request, match):
-        print 'add related:', match
-        return HttpResponse('test')
+        m2m = self.get_m2ms().get(match[0], None)
+        if m2m is None:
+            raise Http404
+
+        instance_id = request.REQUEST.get('target', None)
+        instance = get_object_or_404(m2m['base_model'], tree_id=instance_id)
+        
+        rel_list = request.REQUEST.get('source', u'').split(',')
+        related_manager = getattr(instance_id, m2m['fk_attr'])
+        # workaround for empty request
+        if u'' in rel_list:
+            rel_list.remove(u'')
+
+        for rel_obj_id in rel_list:
+            rel_obj = get_object_or_404(m2m['rel_model'], tree_id=rel_obj_id)
+            related_manager.add(rel_obj)
+        
+        print 'finally: ', related_manager.all()
+
+        return HttpResponse('OK')
 
     def config_js(self, request, match):
         '''Render ExtJS interface'''
         context_data = {'models': []}
         column_model = {}
+        relations = {}
 
         for model_cls, admin_cls in self.get_registry().iteritems():
             context_data['models'].append(
@@ -200,7 +239,18 @@ class ExtAdminSite(object):
                     #TODO: add more functional here
                     }
                 })
+            for m2m_name, m2m in self.get_m2ms().iteritems():
+                relations.update({
+                    m2m_name: {
+                        'menu_name': m2m['rel_model']._meta.verbose_name,
+                        'url': m2m_name,
+                    }
+                })
+
+                
+            print 'relations', relations
             context_data['column_model'] = column_model
+            context_data['relations'] = relations
 
         return render_to_response('admin/catalog/catalog.js', context_data, mimetype='text/javascript')
 

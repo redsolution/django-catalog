@@ -48,6 +48,40 @@ function move_items(source_list, target_id, point) {
     });
 }
 
+function add_relations(source_list, target_id, point, url) {
+    tree_panel.showMask('Перемещение товара');
+
+    Ext.Ajax.request({
+        url: '/admin/catalog/json/rel/' + url + '/add/',
+        timeout: 10000,
+        callback: function() {
+            grid_panel.reload();
+            tree_panel.selModel.selNode.parentNode.reload();
+        },
+        success: function(response, options){
+            tree_panel.hideMask();
+        },
+        failure: function(response, options){
+            tree_panel.hideMask();
+            if (response.staus == '500') {
+                Ext.Msg.alert('Ошибка','Ошибка на сервере');
+                grid_panel.reload();
+                tree_panel.reload();
+            }
+            if (response.isTimeout) {
+                Ext.Msg.alert('Ошибка','Обрыв связи');
+                window.location.reload();
+            }
+        },
+        params: {
+            source: source_list.join(','),
+            target: target_id,
+            point: point
+        }
+    });
+}
+
+
 /****** delete items *******/
 function deleteItems(id_list){
     Ext.Ajax.request({

@@ -1,5 +1,6 @@
 /********** tree panel element *************/
 var drop_source_list = [];
+var drop_target = null
 var drop_point = 'append';
 
 function grid_to_treenode(item) {
@@ -69,6 +70,9 @@ var tree_events = {
 					}
                     // globally set drop point
                     drop_point = dropEvent.point;
+                    drop_target = dropEvent.target;
+                    console.log(drop_source_list, drop_target);
+
 					dropMenu.show(dropEvent.target.ui.getAnchor());
                     return false;
 				},
@@ -184,12 +188,22 @@ var contextMenu = new Ext.menu.Menu ({
 /*********** tree drop menu ***********/
 var dropMenu = new Ext.menu.Menu ({
     items: [
+//    TODO: detect type!!!
+    {% for relation in relations.itervalues %}
+    {
+        text: 'Добавить {{ relation.menu_name }}',
+        handler: function(arg){
+            add_relations(drop_source_list, drop_target.id, drop_point, '{{ relation.url }}');
+        }
+    },
+    {% endfor %}
     {
         text: 'Перенести',
         // icon: '/media/catalog/img/eye.png',
         handler: function(arg){
-                move_items(drop_source_list,
-                    tree_panel.selModel.selNode.id, drop_point);
+                move_items(drop_source_list, drop_target.id, drop_point);
             }
+    }, {
+        text: 'Отмена'
     }]
 });
