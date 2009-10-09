@@ -51,20 +51,25 @@ def admin_permission_required(permission, login=True):
         return wrapper
     return decorate
 
-def get_grid_for_model(instance, model_ext_admin):
-    '''Return dictionary with key/values as they sholud be in column model'''
+def get_instance_dict(instance, model_ext_admin):
+    '''Base function converets instance to extjs dict'''
+    data = {
+        'id': instance.tree_id,
+        'type': instance.__class__.__name__.lower(),
+    }
     fields = model_ext_admin.fields
-    data = {'id': instance.tree_id}
     for field in fields:
         data[field] = getattr(instance, field, None)
     return data
 
+def get_grid_for_model(instance, model_ext_admin):
+    '''Return dictionary with key/values as they sholud be in column model'''
+    return get_instance_dict(instance, model_ext_admin)
+
 def get_tree_for_model(instance, model_ext_admin):
     '''Return dictionary with key/values as they sholud be in column model'''
-    fields = model_ext_admin.fields
-    data = {'id': instance.tree_id}
-    for field in fields:
-        data[field] = getattr(instance, field, None)
+    data = get_instance_dict(instance, model_ext_admin)
     tree_text_attr = getattr(model_ext_admin, 'tree_text_attr')
     data.update({'text': getattr(instance, tree_text_attr, None)})
     return data
+

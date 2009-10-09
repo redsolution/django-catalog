@@ -130,8 +130,12 @@ var catalog_store = new Ext.data.JsonStore({
         {
             name: '{{ field.name }}',
             type: '{{ field.type }}'
-        }{% if not forloop.last %},{% endif %}
+        },
     {% endfor %}
+    {
+        name: 'type',
+        type: 'string'
+    }
     ]
 });
 

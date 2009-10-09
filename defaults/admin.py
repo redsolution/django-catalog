@@ -27,11 +27,12 @@ from catalog.admin.ext import BaseExtAdmin
 class ItemExtAdmin(BaseExtAdmin):
     tree_text_attr = 'name'
     fields = ('name',)
-    m2ms = ('relative', 'sections')
+    m2ms = ('relative',)
 
 class SectionExtAdmin(BaseExtAdmin):
     tree_text_attr = 'name'
     fields = ('name', 'slug')
+    m2ms = ('items',)
 
 register(Item, ItemAdmin, ItemExtAdmin)
 register(Section, SectionAdmin, SectionExtAdmin)

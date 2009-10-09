@@ -4,11 +4,9 @@ var drop_target = null
 var drop_point = 'append';
 
 function grid_to_treenode(item) {
-	return new Ext.tree.TreeNode({
-		id: item.id,
-		text: item.data.name
-	})
-	
+    data = item.data;
+    data.id = item.id;
+	return new Ext.tree.TreeNode(data);
 }
 
 /********* tree title bar **********/
@@ -73,7 +71,25 @@ var tree_events = {
                     drop_target = dropEvent.target;
                     console.log(drop_source_list, drop_target);
 
-					dropMenu.show(dropEvent.target.ui.getAnchor());
+                    // check if sources have all one type
+                    one_type = true;
+                    function get_type(item) {
+                        if (item.attributes) {
+                            return item.attributes.type;
+                        } else {
+                            return item.data.type;
+                        }
+                    }
+                    type = get_type(source[0]);
+					for (var i=1; i < source.length; i++) {
+                        one_type = one_type && (get_type(source[i]) == type);
+                    }
+                    if (!one_type) {
+                        type = 'none';
+                    }
+
+                    menu = get_menu(get_type(drop_target), type);
+                    menu.show(dropEvent.target.ui.getAnchor());
                     return false;
 				},
     contextMenuHandler: function(node){
@@ -186,12 +202,13 @@ var contextMenu = new Ext.menu.Menu ({
 
 
 /*********** tree drop menu ***********/
-var dropMenu = new Ext.menu.Menu ({
-    items: [
-//    TODO: detect type!!!
+function get_menu(target_type, source_type) {
+    var items = [
     {% for relation in relations.itervalues %}
     {
-        text: 'Добавить {{ relation.menu_name }}',
+        text: 'Ссылка на {{ relation.menu_name }}',
+        target_type: '{{ relation.target }}',
+        source_type: '{{ relation.source }}',
         handler: function(arg){
             add_relations(drop_source_list, drop_target.id, drop_point, '{{ relation.url }}');
         }
@@ -199,11 +216,25 @@ var dropMenu = new Ext.menu.Menu ({
     {% endfor %}
     {
         text: 'Перенести',
+        type: 'all',
         // icon: '/media/catalog/img/eye.png',
         handler: function(arg){
                 move_items(drop_source_list, drop_target.id, drop_point);
             }
     }, {
-        text: 'Отмена'
+        text: 'Отмена',
+        type: 'all'
     }]
-});
+
+    var menu = []
+    for (var i =0; i < items.length; i++) {
+        if ((items[i]['target_type'] == target_type) & (items[i]['source_type'] == source_type)) {
+            menu.push(items[i]);
+        }
+        if (items[i]['type'] == 'all') {
+            menu.push(items[i]);
+        }
+    }
+    return new Ext.menu.Menu({items: menu});
+}
+

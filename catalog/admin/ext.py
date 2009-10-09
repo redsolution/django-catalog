@@ -58,7 +58,13 @@ class ExtAdminSite(object):
             # register many to many relations specially
             for m2m_field_name in admin_class.m2ms:
                 base_field = model_class._meta.get_field_by_name(m2m_field_name)[0]
-                rel_model_class = base_field.rel.to
+                # workaround reverse relations
+                from django.db.models.related import RelatedObject
+                if type(base_field) is RelatedObject:
+                    rel_model_class = base_field.model
+                else:
+                    rel_model_class = base_field.rel.to
+                
                 m2m_name = '%s-%s-%s' % (model_class.__name__,
                     m2m_field_name, rel_model_class.__name__)
 
@@ -202,7 +208,7 @@ class ExtAdminSite(object):
         instance = get_object_or_404(m2m['base_model'], tree_id=instance_id)
         
         rel_list = request.REQUEST.get('source', u'').split(',')
-        related_manager = getattr(instance_id, m2m['fk_attr'])
+        related_manager = getattr(instance, m2m['fk_attr'])
         # workaround for empty request
         if u'' in rel_list:
             rel_list.remove(u'')
@@ -244,6 +250,8 @@ class ExtAdminSite(object):
                     m2m_name: {
                         'menu_name': m2m['rel_model']._meta.verbose_name,
                         'url': m2m_name,
+                        'target': m2m['base_model'].__name__.lower(),
+                        'source': m2m['rel_model'].__name__.lower(),
                     }
                 })
 
