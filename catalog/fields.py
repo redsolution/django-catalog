@@ -16,6 +16,7 @@ def widget_add_link(add_link):
         return wrapper
     return decorator
 
+
 class SelectFromSelected(forms.SelectMultiple):
     '''
     This widget show SelectMultiple admin input with the difference:
@@ -29,6 +30,7 @@ class SelectFromSelected(forms.SelectMultiple):
         self.choices = selected_choices
         return super(SelectFromSelected, self).render(name, value, attrs, choices)
 
+
 class RelatedField(models.ManyToManyField):
     """
     Catalog related items field 
@@ -36,3 +38,19 @@ class RelatedField(models.ManyToManyField):
     def formfield(self, **kwargs):
         kwargs.update({'widget': SelectFromSelected})
         return super(RelatedField, self).formfield(**kwargs)
+
+
+class MarkItUpField(models.TextField):
+    """
+    A large string field for markdown content.
+    """
+    def formfield(self, **kwargs):
+        try:
+            from markitup.widgets import MarkItUpWidget
+        except ImportError:
+            from django.forms import Textarea as MarkItUpWidget
+
+        defaults = kwargs.copy()
+        defaults.update({'widget': MarkItUpWidget})
+
+        return super(MarkItUpField, self).formfield(**defaults)

@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-
 from django.db import models
-from tinymce.models import HTMLField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.conf import settings
-from catalog.fields import RelatedField
+from catalog.fields import RelatedField, MarkItUpField
 from catalog import settings as catalog_settings
 from imagekit.models import ImageModel
 from decimal import Decimal
@@ -105,7 +103,7 @@ class Section(models.Model):
     slug = models.SlugField(verbose_name=u'Slug', max_length=200, null=True, blank=True)
     name = models.CharField(verbose_name=u'Наименование', max_length=200, default='')
     short_description = models.TextField(verbose_name=u'Краткое описание', null=True, blank=True)
-    description = models.TextField(verbose_name=u'Описание', null=True, blank=True)
+    description = MarkItUpField(verbose_name=u'Описание', null=True, blank=True)
     
     @models.permalink
     def get_absolute_url(self):
@@ -171,16 +169,24 @@ class MetaItem(Section):
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url_undecorated()
     
-    def palletes(self):
-        palletes = []
+    def get_images(self):
+        images = []
         for child in self.tree.get().children.all():
-            palletes += child.content_object.images.filter(pallete=True)
-        return palletes
+            images += child.content_object.images.all()
+        images += self.images.all()
+        return images
 
-    def price(self):
+    def min_price(self):
         prices = [child.content_object.price for child in self.tree.get().children.all()]
         if prices:
             return min(prices)
+        else:
+            return Decimal('0.0') 
+
+    def max_price(self):
+        prices = [child.content_object.price for child in self.tree.get().children.all()]
+        if prices:
+            return max(prices)
         else:
             return Decimal('0.0') 
     
@@ -247,6 +253,13 @@ class Item(models.Model):
     def __unicode__(self):
         return self.name
 
+class ImageManager(models.Manager):
+    def palletes(self):
+        return self.get_query_set().filter(pallete=True)
+
+    def non_palletes(self):
+        return self.get_query_set().filter(pallete=False)
+
 class TreeItemImage(ImageModel):
     image = models.ImageField(verbose_name=u'Изображение',
         upload_to='upload/catalog/itemimages/%Y-%m-%d')
@@ -257,6 +270,8 @@ class TreeItemImage(ImageModel):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
+
+    manager = ImageManager()
 
     class IKOptions:
         cache_dir = 'upload/catalog/cache'

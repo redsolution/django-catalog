@@ -19,12 +19,15 @@ class ItemAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     model = Item
 
-
 class SectionAdmin(admin.ModelAdmin):
     inlines = [ImageInline]
     prepopulated_fields = {'slug': ('name',)}
     model = Section
 
+class MetaItemAdmin(admin.ModelAdmin):
+    inlines = [ImageInline]
+    prepopulated_fields = {'slug': ('name',)}
+    model = MetaItem
 
 class CatalogAdminMix(admin.ModelAdmin):
     def response_change(self, request, obj):
@@ -36,7 +39,7 @@ class CatalogAdminMix(admin.ModelAdmin):
             pk_value = obj._get_pk_val()
             return HttpResponse('<script type="text/javascript">opener.dismissAddAnotherPopup(window, "%s", "%s");</script>' % \
                 (escape(pk_value), escape(obj))) # escape() calls force_unicode.
-        return super(TreeItemAdmin, self).response_change(request, obj)
+        return super(CatalogAdminMix, self).response_change(request, obj)
 
 # register models
 for model_class, admin_class in get_connected_models():

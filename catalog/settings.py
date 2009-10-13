@@ -7,7 +7,7 @@ CATALOG_MEDIA_URL = getattr(settings, 'CATALOG_MEDIA_URL', os.path.join(settings
 DEFAULT_CATALOG_CONNECTED_MODELS = [
     ('catalog.models.Item', 'catalog.admin.ItemAdmin'),
     ('catalog.models.Section', 'catalog.admin.SectionAdmin'),
-    ('catalog.models.MetaItem', None),
+    ('catalog.models.MetaItem', 'catalog.admin.MetaItemAdmin'),
 ]
 try:
     import mptt
