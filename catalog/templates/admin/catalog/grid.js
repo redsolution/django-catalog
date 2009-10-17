@@ -92,7 +92,7 @@ var gridBar = new Ext.Toolbar({
 			for (var i=0; i < selections.length; i++) {
 				r.push(selections[i].id);
 				}
-            deleteItems(r);
+            delete_items(r);
 		}
     }]
 });
@@ -101,6 +101,17 @@ var gridStatus = new Ext.ux.StatusBar({
 	defaultText: 'Готово',
     id: 'catalog-admin-statusbar'
 });
+
+gridStatus.showBusy = function() {
+    gridStatus.setText("<img src='/media/catalog/img/ajax-loader.gif' /> Загрузка");
+    grid_loading = true;
+}
+
+gridStatus.newStatus = function() {
+    gridStatus.clearStatus();
+    gridStatus.setText(node.attributes.text);
+    grid_loading = false;
+}
 
 /********** items grid panel *************/
 
@@ -140,6 +151,12 @@ var catalog_store = new Ext.data.JsonStore({
 });
 
 var catalog_col_model = new Ext.grid.ColumnModel([
+    {
+        id: 'type',
+        name: 'type',
+        dataIndex: 'type',
+        renderer: renderType
+    },
     {% for field in column_model.itervalues %}
         {
             id: '{{ field.name }}',

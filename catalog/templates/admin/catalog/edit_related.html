@@ -1,5 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="{{ LANGUAGE_CODE }}" xml:lang="{{ LANGUAGE_CODE }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru" >
 <head>
 <title>Каталог</title>
 <link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% load adminmedia %}{% admin_media_prefix %}css/base.css{% endblock %}" />
@@ -11,7 +11,7 @@
 <script type="text/javascript" src="/media/extjs/ext-all.js"></script>
 <script type="text/javascript" src="/media/admin/js/core.js"></script>
 <script type="text/javascript" src="/media/admin/js/admin/RelatedObjectLookups.js"></script>
-<script type="text/javascript" src="/media/catalog/js/edit_item_related.js"></script>
+<script type="text/javascript" src="/admin/catalog/rel/{{ m2m.url }}/{{ instance.tree_id }}.js"></script>
 <meta name="robots" content="NONE,NOARCHIVE" />
 </head>
 
@@ -27,7 +27,7 @@
     <div id="header-ct">
     <div id="header">
         <div id="branding">
-        <h1 id="site-name">Редактор товара {{ item }}</h1>
+        <h1 id="site-name">Редактирование {{ instance }}</h1>
         </div>
         {% block nav-global %}{% endblock %}
     </div>

@@ -127,8 +127,8 @@ class Item(Base):
 
     # Item fields
     # Relation options
-    relative = models.ManyToManyField('Item', verbose_name=u'Сопутствующие товары', null=True, blank=True, related_name='relative')
-    sections = models.ManyToManyField('Section', verbose_name=u'Разделы', null=True, blank=True, related_name='items')
+    relative = RelatedField('Item', verbose_name=u'Сопутствующие товары', null=True, blank=True, related_name='relative')
+    sections = RelatedField('Section', verbose_name=u'Разделы', null=True, blank=True, related_name='items')
 
     # Sale options
     price = models.DecimalField(verbose_name=u'Цена', null=True, blank=True, max_digits=12, decimal_places=2)

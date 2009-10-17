@@ -41,8 +41,14 @@ class ExtAdminSite(object):
             (r'^json/show/$', self.visible),
             (r'^json/delete_count/$', self.delete_count),
             (r'^json/delete/$', self.delete_items),
-            (r'^json/rel/([\w-]+)/add/$', self.add_related),
+            # related stuff
+            (r'^rel/json/([\w-]+)/add/$', self.add_related),
+            (r'^rel/([\w-]+)/(\d+)/$', self.edit_related),
+            (r'^rel/json/([\w-]+)/(\d+)/tree/$', self.tree_related),
+            (r'^rel/json/([\w-]+)/(\d+)/save/$', self.save_related),
+            # render javascripts
             (r'^js/$', self.config_js),
+            (r'^rel/([\w-]+)/(\d+)\.js$', self.config_rel_js),
         )
 
     def get_registry(self):
@@ -73,6 +79,7 @@ class ExtAdminSite(object):
                         'base_model': model_class,
                         'fk_attr': m2m_field_name,
                         'rel_model': rel_model_class,
+                        'url': m2m_name.lower(),
                     }
                 })
 
@@ -113,15 +120,17 @@ class ExtAdminSite(object):
                 if data is not None:
                     grid.append(data)
 
-#            linked_list = TreeItem.manager.linked(parent)
-#            if linked_list:
-#                for linked in linked_list:
-#                    grid_item = linked.content_object.ext_grid()
-#                    grid_item.update({
-#                        'type': 'link',
-#                        'cls': 'link',
-#                    })
-#                    grid.append(grid_item)
+            parent_treeitem = TreeItem.manager.json(parent)
+            if parent_treeitem is not None:
+                linked_objects = self.get_linked_objects(parent_treeitem.content_object)
+                for link in linked_objects:
+                    data = get_grid_for_model(link, self.get_registry().get(link.__class__, None))
+                    if data is not None:
+                        data.update({
+                            'type': 'link',
+                            'id': '%s-link' % data['id'],
+                        })
+                        grid.append(data)
 
         return HttpResponse(simplejson.encode({'items': grid}))
 
@@ -175,14 +184,25 @@ class ExtAdminSite(object):
     def delete_count(self, request, match):
         try:
             items_list = request.REQUEST.get('items', '').split(',')
-            items_to_delete = TreeItem.manager.filter(id__in=items_list)
-            children_to_delete = 0
-            for item in items_to_delete:
-                children_to_delete += item.get_descendant_count()
-            return HttpResponse(simplejson.encode({
-                'items': len(items_to_delete),
-                'all': len(items_to_delete) + children_to_delete,
-            }))
+            # workaround for empty request
+            if u'' in items_list:
+                items_list.remove(u'')
+            # remove links' id
+            items_list = [el for el in items_list if not el.endswith('-link')]
+            if len(items_list) > 0:
+                items_to_delete = TreeItem.manager.filter(id__in=items_list)
+                children_to_delete = 0
+                for item in items_to_delete:
+                    children_to_delete += item.get_descendant_count()
+                return HttpResponse(simplejson.encode({
+                    'items': len(items_to_delete),
+                    'all': len(items_to_delete) + children_to_delete,
+                }))
+            else:
+                return HttpResponse(simplejson.encode({
+                    'items': 0,
+                    'all': 0,
+                }))
         except (ValueError, TreeItem.DoesNotExist),e:
             return HttpResponseServerError('Bad arguments: %s' % e)
 
@@ -190,19 +210,82 @@ class ExtAdminSite(object):
     def delete_items(self, request, match):
         try:
             items_list = request.REQUEST.get('items', '').split(',')
-            items_to_delete = TreeItem.objects.filter(id__in=items_list)
-            for item in items_to_delete:
+            parent_id = request.REQUEST.get('parent_id', None)
+            parent = TreeItem.manager.json(parent_id)
+            # delete objects
+            objects_list = [el for el in items_list if not el.endswith('-link')]
+            objects_to_delete = TreeItem.objects.filter(id__in=objects_list)
+            for item in objects_to_delete:
                 for descendant in item.get_descendants():
-                    descendant.delete()
-                item.delete()
+                    pass
+                    #descendant.delete()
+                pass
+                #item.delete()
+
+            # delete m2m relations
+            linked_treeitem_ids = [el.replace('-link', '') for el in items_list if el.endswith('-link')]
+            linked_treeitems = self.get_linked_queryset(
+                parent.content_object).filter(id__in=linked_treeitem_ids)
+            for treeitem in linked_treeitems:
+                self.remove_m2m_object(parent, treeitem)
+            
             return HttpResponse('OK')
         except ValueError, TreeItem.DoesNotExist:
             return HttpResponseServerError('Bad arguments')
 
-    def add_related(self, request, match):
+    #  ---------------------- 
+    # | Many to many stuff   |
+    #  ---------------------- 
+
+    def _get_m2m(self, match):
+        '''utility to retrieve m2m from m2m site registry'''
         m2m = self.get_m2ms().get(match[0], None)
         if m2m is None:
             raise Http404
+        return m2m
+
+    def get_linked_objects(self, instance):
+        '''
+        Returns list of treeitems for objects, linked to instance
+        through extAdmin API
+        '''
+        base_model = instance.__class__
+        linked_list = []
+        for relation in self.get_m2ms().itervalues():
+            if relation['base_model'] == base_model:
+                rel_manager = getattr(instance, relation['fk_attr'])
+                linked_list += rel_manager.all()
+        return linked_list
+
+    def get_linked_queryset(self, instance):
+        '''
+        Same as get_linked_objects, but returns a queryset with TreeItems
+        '''
+        base_model = instance.__class__
+        tree_ids = []
+        for relation in self.get_m2ms().itervalues():
+            if relation['base_model'] == base_model:
+                rel_manager = getattr(instance, relation['fk_attr'])
+                tree_ids += rel_manager.values_list('tree_id', flat=True)
+        return TreeItem.objects.filter(id__in=tree_ids)
+
+    def remove_m2m_object(self, parent_treeitem, treeitem):
+        def get_m2m_for_two_classes(m2m_list, base_cls, rel_cls):
+            result = []
+            for m2m in m2m_list: 
+                if (m2m['base_model'] is parent_treeitem.content_object.__class__ and
+                    m2m['rel_model'] is treeitem.content_object.__class__):
+                    result.append(m2m)
+            return result
+
+        m2ms = get_m2m_for_two_classes(self.get_m2ms().itervalues(),
+            parent_treeitem.content_object.__class__, treeitem.content_object.__class__)
+        for relation in m2ms:
+            rel_manager = getattr(parent_treeitem.content_object, relation['fk_attr'])
+            rel_manager.remove(treeitem.content_object)
+            
+    def add_related(self, request, match):
+        m2m = self._get_m2m(match) 
 
         instance_id = request.REQUEST.get('target', None)
         instance = get_object_or_404(m2m['base_model'], tree_id=instance_id)
@@ -217,9 +300,73 @@ class ExtAdminSite(object):
             rel_obj = get_object_or_404(m2m['rel_model'], tree_id=rel_obj_id)
             related_manager.add(rel_obj)
         
-        print 'finally: ', related_manager.all()
+        return HttpResponse('OK')
+
+    def edit_related(self, request, match):
+        m2m = self._get_m2m(match)
+        obj_id = match[1]
+        context_data = {
+            'verbose_name': m2m['base_model']._meta.verbose_name,
+            'instance': get_object_or_404(m2m['base_model'], tree_id=obj_id),
+            'm2m': m2m,
+        }
+
+        return render_to_response('admin/catalog/edit_related.html', context_data)
+
+
+    def save_related(self, request, match):
+        m2m = self._get_m2m(match) 
+
+        instance_id = match[1] 
+        instance = get_object_or_404(m2m['base_model'], tree_id=instance_id)
+        
+        rel_list = request.REQUEST.get('items', u'').split(',')
+        related_manager = getattr(instance, m2m['fk_attr'])
+        # workaround for empty request
+        if u'' in rel_list:
+            rel_list.remove(u'')
+
+        # add new and items
+        ids_to_add = [obj_id for obj_id in rel_list
+            if int(obj_id) not in related_manager.values_list('tree_id', flat=True)]
+        # remove deselected
+        objs_to_remove = [obj for obj in related_manager.all()
+            if str(obj.tree_id) not in rel_list]
+
+        for new_obj_id in ids_to_add:
+            new_obj = get_object_or_404(m2m['rel_model'], tree_id=new_obj_id)
+            related_manager.add(new_obj)
+
+        for obj in objs_to_remove:
+            related_manager.remove(obj)
 
         return HttpResponse('OK')
+
+    def tree_related(self, request, match):
+        # m2m tree editor for RelatedField
+        m2m = self._get_m2m(match)
+        if m2m is None:
+            raise Http404
+        obj_id = match[1]
+
+        instance = get_object_or_404(m2m['base_model'], tree_id=obj_id)
+        related_manager = getattr(instance, m2m['fk_attr'])
+
+        tree = []
+        if request.method == 'POST':
+            parent = request.REQUEST.get('node', 'root')
+
+            for treeitem in TreeItem.manager.json_children(parent):
+                data = get_tree_for_model(treeitem.content_object,
+                    self._registry.get(treeitem.content_object.__class__, None))
+                
+                # add checkboxes where they can be placed
+                if treeitem.content_type.model == m2m['rel_model'].__name__.lower():
+                    data.update({
+                        'checked': treeitem.content_object.id in related_manager.values_list('id', flat=True),
+                    })
+                tree.append(data)
+        return HttpResponse(simplejson.encode(tree), mimetype='text/json')
 
     def config_js(self, request, match):
         '''Render ExtJS interface'''
@@ -249,94 +396,31 @@ class ExtAdminSite(object):
                 relations.update({
                     m2m_name: {
                         'menu_name': m2m['rel_model']._meta.verbose_name,
+                        'menu_name_plural': m2m['rel_model']._meta.verbose_name_plural,
                         'url': m2m_name,
                         'target': m2m['base_model'].__name__.lower(),
                         'source': m2m['rel_model'].__name__.lower(),
                     }
                 })
 
-                
-            print 'relations', relations
             context_data['column_model'] = column_model
             context_data['relations'] = relations
 
         return render_to_response('admin/catalog/catalog.js', context_data, mimetype='text/javascript')
 
+    def config_rel_js(self, request, match):
+        '''Render relation editor js'''
+        m2m = self._get_m2m(match)
+        tree_id = match[1]
+        instance = get_object_or_404(m2m['base_model'], tree_id=tree_id)
+        context_data = {
+            'm2m': m2m,
+            'instance': instance,
+            'rel_verbose_name': m2m['rel_model']._meta.verbose_name,
+            'rel_verbose_name_plural': m2m['rel_model']._meta.verbose_name_plural,
+        }
 
-class BaseM2MTree(object):
-    '''
-    Abstract class to impelement many-to-many tree editor admin view
-    '''
-    # the model, which involves FK
-    base_model = None
-    # FK model
-    rel_model = None
-    fk_attr = None
-
-    @classmethod
-    def _get_rel_object(cls, obj_id):
-        # we want to override this behavior
-        return get_object_or_404(cls.rel_model, tree__id=obj_id)
-
-    @classmethod
-    @transaction.commit_on_success
-    def save(cls, request, obj_id):
-        current_item = get_object_or_404(cls.base_model, id=obj_id)
-        relative_list = request.REQUEST.get(cls.fk_attr, u'').split(',')
-        related_manager = getattr(current_item, cls.fk_attr)
-
-        # workaround for empty request
-        if u'' in relative_list:
-            relative_list.remove(u'')
-
-        # add
-        ids_to_add = [obj_id for obj_id in relative_list
-            if int(obj_id) not in related_manager.values_list('id', flat=True)]
-        # remove
-        objs_to_remove = [obj for obj in related_manager.all()
-            if str(obj.tree.get().id) not in relative_list]
-
-        for new_obj_id in ids_to_add:
-            object = cls._get_rel_object(new_obj_id)
-            related_manager.add(object)
-
-        for obj in objs_to_remove:
-            related_manager.remove(obj)
-        return HttpResponse('OK')
-
-    @classmethod
-    def tree(cls, request, obj_id):
-        current_item = get_object_or_404(cls.base_model, id=obj_id)
-        related_manager = getattr(current_item, cls.fk_attr)
-
-        tree = []
-        if request.method == 'POST':
-            parent = request.REQUEST.get('node', 'root')
-            for treeitem in TreeItem.manager.json_children(parent):
-                json = treeitem.content_object.ext_tree()
-                if treeitem.content_type.model == cls.rel_model.__name__.lower():
-                    json.update({
-                        'checked': treeitem.content_object.id in related_manager.values_list('id', flat=True),
-                    })
-                tree.append(json)
-        return HttpResponse(simplejson.encode(tree))
-
+        return render_to_response('admin/catalog/edit_related.js', context_data, mimetype='text/javascript')
 
 ext_site = ExtAdminSite()
-
-class RelativeTree(BaseM2MTree):
-    base_model = Item
-    rel_model = Item
-    fk_attr = 'relative'
-
-
-class SectionsTree(BaseM2MTree):
-    base_model = Item
-    rel_model = Section
-    fk_attr = 'sections'
-
-class ItemsTree(BaseM2MTree):
-    base_model = Section
-    rel_model = Item
-    fk_attr = 'items'
 

@@ -14,18 +14,5 @@ urlpatterns = patterns('catalog.admin',
     url(r'^relations/(\d{1,7})/$', 'views.related_redirect'),
     url(r'^view/(\d{1,7})/$', 'views.absolute_url_redirect'),
 
-##    url(r'^json/tree$', 'json.tree'),
-#    url(r'^json/list$', 'json.list'),
-#    url(r'^json/move$', 'json.move_node'),
-#    url(r'^json/visible$', 'json.visible'),
-#    url(r'^json/delete$', 'json.delete_items'),
-#    url(r'^json/count/delete$', 'json.delete_count'),
-#
-#    url(r'^json/relative/(\d{1,7})/$', RelativeTree.tree),
-#    url(r'^json/relative/(\d{1,7})/save/$', RelativeTree.save),
-#    url(r'^json/sections/(\d{1,7})/$', SectionsTree.tree),
-#    url(r'^json/sections/(\d{1,7})/save/$', SectionsTree.save),
-#    url(r'^json/items/(\d{1,7})/$', ItemsTree.tree),
-#    url(r'^json/items/(\d{1,7})/save/$', ItemsTree.save),
     url(r'^(.*)$', ext_site.root),
 )

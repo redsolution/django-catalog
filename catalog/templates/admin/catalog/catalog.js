@@ -1,6 +1,12 @@
 Ext.BLANK_IMAGE_URL = '/media/extjs/resources/images/default/s.gif';
 Ext.MessageBox.buttonText.yes = "Да";
 Ext.MessageBox.buttonText.no = "Нет";
+/** globals **/
+
+var drop_source_list = [];
+var drop_target = null
+var drop_point = 'append';
+var catalog_loading = false;
 
 {% include 'admin/catalog/actions.js' %}
 

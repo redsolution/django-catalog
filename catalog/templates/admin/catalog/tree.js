@@ -1,7 +1,4 @@
 /********** tree panel element *************/
-var drop_source_list = [];
-var drop_target = null
-var drop_point = 'append';
 
 function grid_to_treenode(item) {
     data = item.data;
@@ -9,6 +6,14 @@ function grid_to_treenode(item) {
 	return new Ext.tree.TreeNode(data);
 }
 
+
+function get_type(item) {
+    if (item.attributes) {
+        return item.attributes.type;
+    } else {
+        return item.data.type;
+    }
+}
 /********* tree title bar **********/
 var treeBar = [{ 
 	text: 'Обновить',
@@ -30,14 +35,13 @@ var tree_events = {
 	panelClick: function(node, event) {
 				    var sn = this.selModel.selNode || {}; // selNode is null on initial selection
 				    if (node.id != sn.id) { // ignore clicks on currently selected node
-			            Ext.getCmp('catalog-admin-statusbar').showBusy();
+			            gridStatus.showBusy();
 			            catalog_store.load({
 			                params: {
 			                    'node': node.id
 			                },
 			                callback: function(r, options, success){
-			                	Ext.getCmp('catalog-admin-statusbar').clearStatus();
-			                	Ext.getCmp('catalog-admin-statusbar').setText(node.attributes.text);
+			                	gridStatus.newStatus(node.attributes.text);
 			                }
 			            });
 			            Ext.state.Manager.set('treestate', node.getPath());
@@ -69,17 +73,10 @@ var tree_events = {
                     // globally set drop point
                     drop_point = dropEvent.point;
                     drop_target = dropEvent.target;
-                    console.log(drop_source_list, drop_target);
 
                     // check if sources have all one type
                     one_type = true;
-                    function get_type(item) {
-                        if (item.attributes) {
-                            return item.attributes.type;
-                        } else {
-                            return item.data.type;
-                        }
-                    }
+
                     type = get_type(source[0]);
 					for (var i=1; i < source.length; i++) {
                         one_type = one_type && (get_type(source[i]) == type);
@@ -88,13 +85,14 @@ var tree_events = {
                         type = 'none';
                     }
 
-                    menu = get_menu(get_type(drop_target), type);
+                    menu = get_drop_menu(get_type(drop_target), type);
                     menu.show(dropEvent.target.ui.getAnchor());
                     return false;
 				},
     contextMenuHandler: function(node){
                     node.select();
-                    contextMenu.show(node.ui.getAnchor());
+                    menu = get_context_menu(get_type(node));
+                    menu.show(node.ui.getAnchor());
                 }
 }
 
@@ -127,13 +125,10 @@ var tree_panel = new Ext.tree.TreePanel({
     },
     tbar: treeBar,
 	listeners: {
-//		render: treeDropZoneInit,
-        //movenode: tree_events.moveNode,
     	beforenodedrop: tree_events.beforeDrop,
-        //nodedrop: tree_events.nodeDrop,
 		click: tree_events.panelClick,
-		//expandnode: tree_events.expandNode,
-        contextmenu: tree_events.contextMenuHandler
+        contextmenu: tree_events.contextMenuHandler,
+        dblclick: tree_events.contextMenuHandler
 	}
 
 });
@@ -167,42 +162,92 @@ tree_panel.hideMask = function () {
 
 
 /********** tree context menu ******/
+function relations_edit() {
+    console.log('dummy here');
+}
+
+function get_link_menu() {
+    var type = tree_panel.getSelectionModel().selNode.attributes.type;
+    var items = [{% for relation in relations %}
+    {
+        text: '{{ relation.menu_name }}',
+        handler: function(arg){
+            relations_edit();
+        }
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ];
+
+    var menu = []
+    for (var i =0; i < items.length; i++) {
+        if (items[i]['type'] == type) {
+            menu.push(items[i]);
+        }
+    }
+    return new Ext.menu.Menu({items: menu});
+    
+}
+
 var contextMenu = new Ext.menu.Menu ({
-    items: [{
+    items: []
+});
+
+/*********** tree context menu ********/
+function get_context_menu(type) {
+    var items = [
+    {
         text: 'Посмотреть на сайте',
         icon: '/media/catalog/img/eye.png',
+        type: 'all',
         handler: function(){
-                node = tree_panel.getSelectionModel().getSelectedNode();
-                view_on_site(node.id);
-            }
+             node = tree_panel.getSelectionModel().getSelectedNode();
+             view_on_site(node.id);
+        }
     },{
         text: 'Редактировать',
         icon: '/media/catalog/img/edit.png',
+        type: 'all',
         handler: function(){
-                node = tree_panel.getSelectionModel().getSelectedNode();
-                editItem(node.id);
-            }
-    },{
-        text: 'Связи',
-        icon: '/media/catalog/img/link.png',
+            node = tree_panel.getSelectionModel().getSelectedNode();
+            editItem(node.id);
+        }
+    },
+    {% for relation in relations.itervalues %}
+    {
+        text: 'Посмотреть связанные {{ relation.menu_name_plural }}',
+        type: '{{ relation.target }}',
         handler: function(){
-                node = tree_panel.getSelectionModel().getSelectedNode();
-                edit_related(node.id);
-            }
-    },{
+            //TODO:
+            edit_related('{{ relation.url }}', tree_panel.selModel.selNode.attributes.id);
+        }
+    },
+    {% endfor %}
+    {
         text: 'Удалить',
         icon: '/media/catalog/img/show-no.png',
+        type: 'all',
         handler: function(){
                 node = tree_panel.getSelectionModel().getSelectedNode();
-                deleteItems([node.id]);
+                delete_items([node.id]);
                 tree_panel.reload();
             }
-    }]
-});
+    }
+    ];
 
+    var menu = []
+    for (var i =0; i < items.length; i++) {
+        if (items[i]['type'] == type) {
+            menu.push(items[i]);
+        }
+        if (items[i]['type'] == 'all') {
+            menu.push(items[i]);
+        }
+    }
+    return new Ext.menu.Menu({items: menu});
+}
 
 /*********** tree drop menu ***********/
-function get_menu(target_type, source_type) {
+function get_drop_menu(target_type, source_type) {
     var items = [
     {% for relation in relations.itervalues %}
     {
@@ -221,7 +266,7 @@ function get_menu(target_type, source_type) {
         handler: function(arg){
                 move_items(drop_source_list, drop_target.id, drop_point);
             }
-    }, {
+    },{
         text: 'Отмена',
         type: 'all'
     }]
