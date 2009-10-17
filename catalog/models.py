@@ -109,3 +109,15 @@ except mptt.AlreadyRegistered:
 for model_name, admin_name in catalog_settings.CATALOG_CONNECTED_MODELS:
     module, model = model_name.rsplit('.', 1)
     exec('from %s import %s' % (module, model))
+
+# must be at bottom, otherwies breaks imports
+from catalog.admin.utils import get_connected_models
+
+def filtered_children_factory(model_name):
+    def func(self):
+        return self.children.filter(content_type__model=model_name)
+    return func
+ 
+for model_cls, admin_cls in get_connected_models():
+    model_name = model_cls.__name__.lower()
+    setattr(TreeItem, 'children_%s' % model_name, filtered_children_factory(model_name))

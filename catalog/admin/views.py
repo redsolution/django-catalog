@@ -6,8 +6,7 @@ from django.db import transaction
 from django.http import HttpResponseRedirect, Http404
 from urllib import urlencode
 from catalog.admin.utils import admin_permission_required
-from catalog.models import Section, Item, TreeItem, MetaItem
-
+from catalog.models import TreeItem
 
 @transaction.commit_on_success
 @admin_permission_required('catalog.add_treeitem')

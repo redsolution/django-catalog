@@ -38,51 +38,6 @@ class Section(Base):
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url()
 
-    def formatted_name(self):
-        return itemname(self.name)
-
-    def get_all_items(self):
-        children = self.tree.get().children_item() | self.tree.get().children_metaitem()
-        related_ids = self.items.values_list('id', flat=True)
-        item_ct = ContentType.objects.get_for_model(Item)
-        metaitem_ct = ContentType.objects.get_for_model(MetaItem)
-        related_items = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
-        related_metaitems = TreeItem.objects.filter(content_type=metaitem_ct, object_id__in=related_ids)
-        return children | related_items | related_metaitems
-
-    def get_all_items_show(self):
-        filtered = []
-        for treeitem in self.get_all_items():
-            if treeitem.content_object.show:
-                filtered.append(treeitem)
-        return filtered
-
-    def ext_tree(self):
-        return {
-            'text': self.name,
-            'id': '%d' % self.tree.get().id,
-            'leaf': False,
-            'cls': 'folder',
-         }
-
-    def ext_grid(self):
-        return {
-            'name': self.name,
-            'id': '%d' % self.tree.get().id,
-            'type': self.tree.get().content_type.model,
-            'itemid': self.id,
-            'show': self.show,
-            'price': 0.0,
-            'quantity': 0,
-            'has_image': False if self.images.count() == 0 else True,
-            'has_image': False,
-            'has_description': False if self.description is None else True,
-        }
-
-    def has_nested_sections(self):
-        section_ct = ContentType.objects.get_for_model(Section)
-        return bool(len(self.tree.get().children.filter(content_type=section_ct)))
-
     def __unicode__(self):
         return self.name
 
@@ -99,15 +54,6 @@ class MetaItem(Section):
     @models.permalink
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url_undecorated()
-
-    def palletes(self):
-        palletes = []
-        for child in self.tree.get().children.all():
-            palletes += child.content_object.images.filter(pallete=True)
-        return palletes
-
-    def price(self):
-        return min([child.content_object.price for child in self.tree.get().children.all()])
 
 
 class Item(Base):
@@ -141,30 +87,6 @@ class Item(Base):
     def get_absolute_url(self):
         return self.tree.get().get_absolute_url_undecorated()
 
-    def formatted_name(self):
-        return itemname(self.name)
-
-    def ext_tree(self):
-        return {
-            'text': self.name,
-            'id': '%d' % self.tree.get().id,
-            'leaf': True,
-            'cls': 'leaf',
-         }
-
-    def ext_grid(self):
-        return {
-            'name': self.name,
-            'id': '%d' % self.tree.get().id,
-            'type': 'item',
-            'itemid': self.id,
-            'show': self.show,
-            'price': float(self.price) if self.price is not None else 0.0,
-            'quantity': self.quantity,
-            'has_image': False if self.images.count() == 0 else True,
-            'has_description': False if self.description is None else True,
-        }
-
     def __unicode__(self):
         return self.name
 
@@ -181,7 +103,7 @@ class TreeItemImage(ImageModel):
 
     class IKOptions:
         cache_dir = 'upload/catalog/cache'
-        spec_module = 'catalog.ikspec'
+        spec_module = 'defaults.ikspec'
 
     def __unicode__(self):
         return self.image.url
