@@ -29,11 +29,14 @@ from catalog.admin.ext import BaseExtAdmin
 
 class ItemExtAdmin(BaseExtAdmin):
     tree_text_attr = 'name'
+    tree_leaf = False
+    tree_hide = True
     fields = ('name', 'show')
     m2ms = ('relative',)
 
 class SectionExtAdmin(BaseExtAdmin):
     tree_text_attr = 'name'
+    tree_leaf = False
     fields = ('name', 'slug', 'show')
     m2ms = ('items',)
 

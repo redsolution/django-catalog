@@ -68,8 +68,12 @@ def get_grid_for_model(instance, model_ext_admin):
 
 def get_tree_for_model(instance, model_ext_admin):
     '''Return dictionary with key/values as they sholud be in column model'''
-    data = get_instance_dict(instance, model_ext_admin)
-    tree_text_attr = getattr(model_ext_admin, 'tree_text_attr')
-    data.update({'text': getattr(instance, tree_text_attr, None)})
-    return data
+    if not model_ext_admin.tree_hide:
+        data = get_instance_dict(instance, model_ext_admin)
+        tree_text_attr = getattr(model_ext_admin, 'tree_text_attr')
+        data.update({
+            'text': getattr(instance, tree_text_attr, None),
+            'leaf': model_ext_admin.tree_leaf,
+        })
+        return data
 

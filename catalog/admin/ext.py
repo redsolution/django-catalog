@@ -32,8 +32,24 @@ TYPE_MAP = {
 
 
 class BaseExtAdmin(object):
-    '''Base class to register model in ext catalog admin'''
+    '''
+    Base class to register model in ext catalog admin
+    ..Attributes:
+            tree_text_attr - attribute, which will represent object in tree, 
+                            othwerwords, text property
+            tree_leaf      - is object tree leaf or not, False by default
+            tree_hide      - maybe you don't want show objects in tree at all. Use this attribute
+            
+            fields         - list of fields, which appears in grid. Grid will contains
+                             summary fields of all registered models
+            m2ms           - enables django-catalog many-to-many stuff for this relations
+                             relations may be direct or inverse
+            
+    '''
     tree_text_attr = 'name'
+    tree_leaf = False
+    tree_hide = False
+
     fields = ()
     m2ms = ()
 
