@@ -128,7 +128,9 @@ function delete_items(id_list){
                     }
             }
 
+            var parent_node = tree_panel.selModel.selNode.parentNode;
             var parent_id = tree_panel.selModel.selNode ? tree_panel.selModel.selNode.attributes.id : 'root';
+             
 
             Ext.Msg.confirm('Внимание!', warning_message,
                 function(btn, text){
@@ -137,6 +139,7 @@ function delete_items(id_list){
                             url: '/admin/catalog/json/delete/',
                             success: function(response, options){
                                 grid_panel.reload();
+                                tree_panel.selModel.select()
                             },
                             failure: function(response, options){
                                 grid_panel.reload();

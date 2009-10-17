@@ -37,15 +37,17 @@ Ext.onReady(function(){
 
 /********* Django admin site routines ******/
 function dismissAddAnotherPopup(win, newId, newRepr) {
-    win.close();
+
 	grid_panel.reload();
-    tree_panel.reload();
+	node = tree_panel.selModel.selNode;
+	node.reload();
+    win.close();
 }
 
 function dismissRelatedLookupPopup(win, chosenId) {
-    win.close();
 	grid_panel.reload();
     tree_panel.reload();
+    win.close();
 }
 
 function showAddAnotherPopup(triggeringLink) {

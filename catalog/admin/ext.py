@@ -3,7 +3,7 @@ import re
 
 from django.http import HttpResponse, HttpResponseServerError, Http404
 from django.db import transaction
-from django.db.models import fields
+from django.db import models
 from django.contrib.auth.decorators import permission_required
 from django.utils import simplejson
 from django.shortcuts import render_to_response, get_object_or_404
@@ -13,13 +13,23 @@ from catalog.models import Section, Item, TreeItem
 from catalog.admin.utils import get_grid_for_model, get_tree_for_model
 from catalog.utils import render_to
 
-
 TYPE_MAP = {
-    fields.CharField: 'string',
-    fields.SlugField: 'string',
-    fields.IntegerField: 'int',
-    fields.AutoField: 'int',
+    models.AutoField: 'int',
+    models.BooleanField: 'boolean',
+    models.CharField: 'string',
+    models.DateField: 'date',
+    models.DateTimeField: 'date',
+    models.DecimalField: 'string',
+    models.EmailField: 'string',
+    models.FileField: 'string',
+    models.FloatField: 'float',
+    models.IntegerField: 'int',
+    models.IPAddressField: 'string',
+    models.NullBooleanField: 'boolean',
+    models.TimeField: 'date',
+    models.SlugField: 'string',
 }
+
 
 class BaseExtAdmin(object):
     '''Base class to register model in ext catalog admin'''
@@ -32,13 +42,14 @@ class ExtAdminSite(object):
     # dictionaty with registered models
     _registry = {}
     _m2ms = {}
+    chunks = {}
+    
 
     def __init__(self):
         self._urlconf = (
             (r'^json/tree/$', self.tree),
             (r'^json/list/$', self.grid),
             (r'^json/move/$', self.move_node),
-            (r'^json/show/$', self.visible),
             (r'^json/delete_count/$', self.delete_count),
             (r'^json/delete/$', self.delete_items),
             # related stuff
@@ -47,7 +58,7 @@ class ExtAdminSite(object):
             (r'^rel/json/([\w-]+)/(\d+)/tree/$', self.tree_related),
             (r'^rel/json/([\w-]+)/(\d+)/save/$', self.save_related),
             # render javascripts
-            (r'^js/$', self.config_js),
+            (r'^catalog.js$', self.config_js),
             (r'^rel/([\w-]+)/(\d+)\.js$', self.config_rel_js),
         )
 
@@ -60,7 +71,7 @@ class ExtAdminSite(object):
     def register(self, model_class, admin_class):
         '''Register Ext model admin in catalog interface'''
         if model_class not in self._registry:
-            self._registry.update({model_class: admin_class})
+            self.get_registry().update({model_class: admin_class})
             # register many to many relations specially
             for m2m_field_name in admin_class.m2ms:
                 base_field = model_class._meta.get_field_by_name(m2m_field_name)[0]
@@ -170,16 +181,6 @@ class ExtAdminSite(object):
             else:
                 return HttpResponseServerError('Can not move')
 
-    def visible(self, request, match):
-        try:
-            treeitems_list = request.REQUEST.get('items', '').split(',')
-            show = bool(int(request.REQUEST.get('visible', '1')))
-            for treeitem in TreeItem.manager.filter(id__in=treeitems_list):
-                treeitem.content_object.show=show
-                treeitem.content_object.save()
-            return HttpResponse('OK')
-        except ValueError:
-            return HttpResponseServerError('Bad arguments')
 
     def delete_count(self, request, match):
         try:
@@ -217,10 +218,8 @@ class ExtAdminSite(object):
             objects_to_delete = TreeItem.objects.filter(id__in=objects_list)
             for item in objects_to_delete:
                 for descendant in item.get_descendants():
-                    pass
-                    #descendant.delete()
-                pass
-                #item.delete()
+                    descendant.delete()
+                item.delete()
 
             # delete m2m relations
             linked_treeitem_ids = [el.replace('-link', '') for el in items_list if el.endswith('-link')]
@@ -405,6 +404,7 @@ class ExtAdminSite(object):
 
             context_data['column_model'] = column_model
             context_data['relations'] = relations
+            context_data['chunks'] = self.chunks
 
         return render_to_response('admin/catalog/catalog.js', context_data, mimetype='text/javascript')
 

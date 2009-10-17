@@ -12,7 +12,7 @@ from catalog.admin.ext import ext_site, BaseExtAdmin
 
 
 class CatalogAdminMix(admin.ModelAdmin):
-    
+    '''Mixin to make popup edit-object windows close on save''' 
     prepopulated_fields = {'slug': ('name',)}
     
     def response_change(self, request, obj):
@@ -24,7 +24,7 @@ class CatalogAdminMix(admin.ModelAdmin):
             pk_value = obj._get_pk_val()
             return HttpResponse('<script type="text/javascript">opener.dismissAddAnotherPopup(window, "%s", "%s");</script>' % \
                 (escape(pk_value), escape(obj))) # escape() calls force_unicode.
-        return super(TreeItemAdmin, self).response_change(request, obj)
+        return super(CatalogAdminMix, self).response_change(request, obj)
 
 # register models
 def register(model_class, admin_class, ext_admin_class=BaseExtAdmin):

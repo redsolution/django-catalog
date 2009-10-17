@@ -1,5 +1,4 @@
 from django.conf.urls.defaults import patterns, url
-from catalog.admin.json import RelativeTree, SectionsTree, ItemsTree
 from django.views.generic.simple import direct_to_template
 from django.contrib.auth.decorators import login_required
 from catalog.admin.ext import ext_site

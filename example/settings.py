@@ -8,6 +8,7 @@ TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
+    ('webmaster', 'root@localhost'),
 )
 
 MANAGERS = ADMINS

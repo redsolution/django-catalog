@@ -143,7 +143,11 @@ tree_panel.reload = function() {
     		params: {node: treestate.split('/').reverse()[0]} 
     	});
     } else
-        tree_panel.getRootNode().expand();	
+        tree_panel.selModel.select(tree_panel.getRootNode());
+        tree_panel.getRootNode().expand();
+        catalog_store.load({
+            params: {node: 'root'} 
+        });
 }
 
 tree_panel.showMask = function(message) {
@@ -229,7 +233,6 @@ function get_context_menu(type) {
         handler: function(){
                 node = tree_panel.getSelectionModel().getSelectedNode();
                 delete_items([node.id]);
-                tree_panel.reload();
             }
     }
     ];

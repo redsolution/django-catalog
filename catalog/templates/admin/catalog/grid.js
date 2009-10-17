@@ -31,57 +31,9 @@ var gridBar = new Ext.Toolbar({
 	    }{% if not forloop.last %},{% endif %}
 	    {% endfor %}
 	    ]
-    },{
-    	text: 'Отображать',
-    	icon: '/media/catalog/img/eye--plus.png',
-    	menu: [{
-    		text: 'Да',
-    		icon: '/media/catalog/img/show-yes.png',
-    		handler: function(){
-    			var selections = grid_panel.selModel.getSelections();
-				var r = [];
-				for (var i=0; i < selections.length; i++) {
-					r.push(selections[i].data.id);
-					}
-			    Ext.Ajax.request({
-			        url: '/admin/catalog/json/visible',
-			        success: function(response, options){
-						grid_panel.reload();
-			        },
-			        failure: function(response, options){
-						grid_panel.reload();
-			        },
-			        params: {
-			        	items: r.join(','),
-			        	visible: 1
-			        }
-			    });
-			}
-    	},{
-    		text: 'Нет',
-    		icon: '/media/catalog/img/show-no.png',
-    		handler: function(){
-				var selections = grid_panel.selModel.getSelections();
-				var r = [];
-				for (var i=0; i < selections.length; i++) {
-					r.push(selections[i].data.id);
-					}
-			    Ext.Ajax.request({
-			        url: '/admin/catalog/json/visible',
-			        success: function(response, options){
-						grid_panel.reload();
-			        },
-			        failure: function(response, options){
-						grid_panel.reload();
-			        },
-			        params: {
-			        	items: r.join(','),
-			        	visible: 0
-			        }
-			    });
-			}
-    	}]
-    },{
+    },
+    {{ chunks.grid_bar }}
+    {
 		xtype: 'tbfill'
 	},{
 		text: 'Удалить',
@@ -109,7 +61,7 @@ gridStatus.showBusy = function() {
 
 gridStatus.newStatus = function() {
     gridStatus.clearStatus();
-    gridStatus.setText(node.attributes.text);
+    gridStatus.setText(tree_panel.selModel.selNode.attributes.text);
     grid_loading = false;
 }
 
@@ -126,12 +78,6 @@ function renderType(value){
     return '<div class="' + value + '"></div>'
 }
 
-function renderItemOnly(value, metaData, record) {
-	if (record.data.type == 'item') 
-		return value;
-	else 
-		return '&nbsp;'
-}
 
 var catalog_store = new Ext.data.JsonStore({
     url: '/admin/catalog/json/list/',
@@ -156,17 +102,18 @@ var catalog_col_model = new Ext.grid.ColumnModel([
         name: 'type',
         dataIndex: 'type',
         renderer: renderType
-    },
+    }
     {% for field in column_model.itervalues %}
-        {
+        , {
             id: '{{ field.name }}',
             name: '{{ field.name }}',
             dataIndex: '{{ field.name }}',
             type: '{{ field.type }}',
+            {% ifequal field.type 'boolean' %}
+            renderer: renderYesNo,
+            {% endifequal %}
             header: '{{ field.header }}'
-            //width: 50,
-            //renderer: renderType, renderItemOnly, renderYesNo
-        }{% if not forloop.last %},{% endif %}
+        }
     {% endfor %}
 ]);
 
