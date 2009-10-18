@@ -6,7 +6,7 @@ from django.core.urlresolvers import get_mod_func
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404
-
+from decimal import Decimal
 
 def import_item(path, error_text):
     """Imports a model by given string. In error case raises ImpoprelyConfigured"""
@@ -77,3 +77,7 @@ def get_tree_for_model(instance, model_ext_admin):
         })
         return data
 
+def encode_decimal(obj):
+     if isinstance(obj, Decimal):
+         return float(obj)
+     raise TypeError(repr(o) + " is not JSON serializable")

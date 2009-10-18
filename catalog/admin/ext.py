@@ -10,7 +10,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.contrib.admin.sites import AlreadyRegistered
 
 from catalog.models import Section, Item, TreeItem
-from catalog.admin.utils import get_grid_for_model, get_tree_for_model
+from catalog.admin.utils import get_grid_for_model, get_tree_for_model, encode_decimal
 from catalog.utils import render_to
 
 TYPE_MAP = {
@@ -159,7 +159,7 @@ class ExtAdminSite(object):
                         })
                         grid.append(data)
 
-        return HttpResponse(simplejson.encode({'items': grid}))
+        return HttpResponse(simplejson.dumps({'items': grid}, default=encode_decimal))
 
     def move_node(self, request, match):
         '''Move node above, below or into target node'''
