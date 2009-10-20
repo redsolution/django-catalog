@@ -8,10 +8,3 @@
         {% include "catalog/item.html" %}
     {% endwith %}
 {% endifequal %}
-{% ifequal treeitem.content_type.model 'metaitem' %}
-    {% with treeitem.content_object as section %}
-    {% with treeitem.children_item as items %}
-        {% include "catalog/metaitem.html" %}
-    {% endwith %}
-    {% endwith %}
-{% endifequal %}

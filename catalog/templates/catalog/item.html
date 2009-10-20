@@ -5,47 +5,17 @@
 {% block meta_keywords %}{{ item.tree.seo_keywords }}{% endblock %}
 {% block meta_description %}{{ item.tree.seo_description }}{% endblock %}
 
-{% block script %}
-    $(document).ready(function(){
-        expand('{{ item.tree.parent.slug }}-{{ item.tree.parent.id }}');
-    });
-{% endblock script %}
-
-{% block center %}
+{% block content %}
     <!-- Описание товара -->
-	<h3>{{ item.tree.name }}</h3>
+	<h3>{{ item.name }}</h3>
     <div class="about">
-    <table>
-        <tbody>
-            <tr>
-                <td><img src="{{ item.images.all.0.image.url }}">
-                <span>Цена: <span id="price">{{ item.price }} рублей</span>.</span><br/>
-                <input type="submit" id="item-{{ item.id }}" value="Добавить в корзину" class="submit basket" />
-                </td>
-                <td> {{ item.description|safe }} </td>
-            </tr>
-        </tbody>
-    </table>
+        {% if item.images.count %}
+            <img src="{{ item.images.all.0.image.url }}" alt="Изображение товара" title="Изображение товара">
+        {% else %}
+            <img src="/media/img/default_item_image.jpg" alt="Изображение товара" title="Изображение товара">
+        {% endif %}
+        <span>Цена: <span id="price">{{ item.price }} рублей</span></span><br />
+        <input type="submit" id="item-{{ item.id }}" value="Добавить в корзину" class="submit basket" />
+        <div>{{ item.description|safe }}</div>
     </div>
-
-	{% if relative %}
-	    <h4>Обратите внимание:</h4>
-	    <div class="item">
-	    <table>
-	        <tr>
-	        {% for rel_item in relative %}
-	        
-	            <td>
-	                <img src="{{ rel_item.item.image.image.url }}" alt="Изображение товара" title="">
-	                
-	                <p><a href="{{ rel_item.get_absolute_url }}" title="">{{ rel_item.name }}</a><br>
-	                <span>Цена: {{ rel_item.item.price }} рублей</span></p>
-	            </td>
-	            {% cycle ' ' ' ' '</tr><tr>' %}
-	        
-	        {% endfor %}
-	        </tr>
-	    </table>
-	    </div>
-	{% endif %}
-{% endblock center %}
+{% endblock content %}
