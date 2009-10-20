@@ -1,6 +1,8 @@
 {% ifequal treeitem.content_type.model 'section' %}
     {% with treeitem.content_object as section %}
+    {% with treeitem.children.all as items %}
         {% include "catalog/section.html" %}
+    {% endwith %}
     {% endwith %}
 {% endifequal %}
 {% ifequal treeitem.content_type.model 'item' %}

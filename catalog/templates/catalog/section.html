@@ -8,14 +8,7 @@
 {% block content %}
 <h3>{{ section.name }}</h3>
 
-{% autosort items %}
 {% autopaginate items 10 %}
-
-<ul>
-    <li>Сортировать:</li>
-    <li>{% anchor name 'по наименованию' %}</li>
-    <li>{% anchor price 'по цене' %}</li>
-</ul>
 
 {% for item in items %}
     <div>
