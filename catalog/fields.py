@@ -36,3 +36,20 @@ class RelatedField(models.ManyToManyField):
     def formfield(self, **kwargs):
         kwargs.update({'widget': SelectFromSelected})
         return super(RelatedField, self).formfield(**kwargs)
+
+
+class MarkItUpField(models.TextField):
+    """
+    A large string field for markdown content.
+    """
+    def formfield(self, **kwargs):
+        try:
+            from markitup.widgets import MarkItUpWidget
+        except ImportError:
+            from django.forms import Textarea as MarkItUpWidget
+
+        defaults = kwargs.copy()
+        defaults.update({'widget': MarkItUpWidget})
+
+        return super(MarkItUpField, self).formfield(**defaults)
+
