@@ -136,7 +136,8 @@ var grid_panel = new Ext.grid.GridPanel({
 
 grid_panel.on('rowdblclick', function(grid, rowIndex, e){
 	var item = grid.store.getAt(rowIndex);
-    editItem(grid.store.getAt(rowIndex).id);
+    item_id = String(item.id).replace(/-link/, '');
+    editItem(item_id);
     return false;
 });
 
