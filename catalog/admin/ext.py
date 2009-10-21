@@ -398,12 +398,23 @@ class ExtAdminSite(object):
             )
             #retrieve column model from classes
             for field in admin_cls.fields:
-                field_cls = model_cls._meta.get_field_by_name(field)[0]
+                try:
+                    field_cls = model_cls._meta.get_field_by_name(field)[0]
+                except models.FieldDoesNotExist:
+                    # get verbose name from function attributes
+                    # default type will be string
+                    verbose_name = getattr(getattr(model_cls, field), 'verbose_name', u'')
+                    field_type = getattr(getattr(model_cls, field), 'type', u'string')
+                    field_cls = None
+                else:
+                    verbose_name = field_cls.verbose_name
+                    field_type = 'string'
+
                 column_model.update({
                     field: {
                         'name': field,
-                        'type': TYPE_MAP[type(field_cls)],
-                        'header': field_cls.verbose_name,
+                        'type': TYPE_MAP.get(type(field_cls), field_type),
+                        'header': verbose_name,
                     #TODO: add more functional here
                     }
                 })

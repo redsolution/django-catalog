@@ -59,7 +59,11 @@ def get_instance_dict(instance, model_ext_admin):
     }
     fields = model_ext_admin.fields
     for field in fields:
-        data[field] = getattr(instance, field, None)
+        value = getattr(instance, field, None)
+        if callable(value):
+            data[field] = value()
+        else:
+            data[field] = getattr(instance, field, None)
     return data
 
 def get_grid_for_model(instance, model_ext_admin):
