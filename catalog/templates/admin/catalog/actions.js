@@ -92,7 +92,6 @@ function delete_items(id_list){
     var children_count = 0;
     var warning_message = '';
 
-    console.log('deleting', id_list);
     for (var i=0; i<id_list.length;i++){
         var match = String(id_list[i]).match(link_regexp);
         if (match) {
@@ -108,9 +107,6 @@ function delete_items(id_list){
         success: function(response, options) {
             var data = Ext.util.JSON.decode(response.responseText);
             children_count = data.all - objects_to_delete.length;
-            
-            console.log('data: ', data, ' children:', children_count, 'objects', objects_to_delete, objects_to_delete.length);
-
             // prepare wraning message
             if (children_count > 0 ){
                 warning_message = 'Удаление ' + objects_to_delete.length + ' объектов приведет к удалению ' + children_count + ' дочерних объектов';

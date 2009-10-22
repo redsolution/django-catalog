@@ -164,12 +164,6 @@ tree_panel.hideMask = function () {
 	mask.hide();
 }
 
-
-/********** tree context menu ******/
-function relations_edit() {
-    console.log('dummy here');
-}
-
 function get_link_menu() {
     var type = tree_panel.getSelectionModel().selNode.attributes.type;
     var items = [{% for relation in relations %}
