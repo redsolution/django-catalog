@@ -133,7 +133,7 @@ class ExtAdminSite(object):
                 if data is not None:
                     tree.append(data)
 
-        return HttpResponse(simplejson.encode(tree))
+        return HttpResponse(simplejson.dumps(tree, default=encode_decimal))
 
     def grid(self, request, match):
         '''Return json encoded grid data'''
@@ -381,7 +381,7 @@ class ExtAdminSite(object):
                         'checked': treeitem.content_object.id in related_manager.values_list('id', flat=True),
                     })
                 tree.append(data)
-        return HttpResponse(simplejson.encode(tree), mimetype='text/json')
+        return HttpResponse(simplejson.encode(tree, default=encode_decimal), mimetype='text/json')
 
     def config_js(self, request, match):
         '''Render ExtJS interface'''
