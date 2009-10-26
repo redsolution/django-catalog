@@ -6,7 +6,7 @@ from django.core.urlresolvers import get_mod_func
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404
-
+from decimal import Decimal
 
 def import_item(path, error_text):
     """Imports a model by given string. In error case raises ImpoprelyConfigured"""
@@ -51,3 +51,37 @@ def admin_permission_required(permission, login=True):
         return wrapper
     return decorate
 
+def get_instance_dict(instance, model_ext_admin):
+    '''Base function converets instance to extjs dict'''
+    data = {
+        'id': instance.tree_id,
+        'type': instance.__class__.__name__.lower(),
+    }
+    fields = model_ext_admin.fields
+    for field in fields:
+        value = getattr(instance, field, None)
+        if callable(value):
+            data[field] = value()
+        else:
+            data[field] = getattr(instance, field, None)
+    return data
+
+def get_grid_for_model(instance, model_ext_admin):
+    '''Return dictionary with key/values as they sholud be in column model'''
+    return get_instance_dict(instance, model_ext_admin)
+
+def get_tree_for_model(instance, model_ext_admin):
+    '''Return dictionary with key/values as they sholud be in column model'''
+    if not model_ext_admin.tree_hide:
+        data = get_instance_dict(instance, model_ext_admin)
+        tree_text_attr = getattr(model_ext_admin, 'tree_text_attr')
+        data.update({
+            'text': getattr(instance, tree_text_attr, None),
+            'leaf': model_ext_admin.tree_leaf,
+        })
+        return data
+
+def encode_decimal(obj):
+     if isinstance(obj, Decimal):
+         return float(obj)
+     raise TypeError(repr(o) + " is not JSON serializable")

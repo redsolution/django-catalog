@@ -1,6 +1,7 @@
-from catalog.models import TreeItem
 from django.shortcuts import get_object_or_404
-from catalog.decorators import render_to
+from catalog.models import TreeItem
+from catalog.utils import render_to
+
 
 @render_to('catalog/treeitem.html')
 def tree(request, item_id, slug=None):

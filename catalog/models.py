@@ -1,27 +1,50 @@
 # -*- coding: utf-8 -*-
 from django.db import models
+from django.db import transaction
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.conf import settings
-from catalog.fields import RelatedField, MarkItUpField
+from catalog.fields import RelatedField
 from catalog import settings as catalog_settings
-from imagekit.models import ImageModel
-from decimal import Decimal
-
-if catalog_settings.USE_MPTT:
-    from mptt import register, AlreadyRegistered
-else:
-    from catalog.dummy_mptt import register, AlreadyRegistered
-
 from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
+
+if catalog_settings.CATALOG_MPTT:
+    import mptt
+else:
+    from catalog import dummy_mptt as mptt
+
+
+class Base(models.Model):
+    class Meta:
+        abstract = True
+
+    tree = generic.GenericRelation('TreeItem')
+    tree_id = models.IntegerField(editable=False, null=True)
+    exclude_children = []
+    
+    def save(self, *args, **kwds):
+        save_tree_id = kwds.pop('save_tree_id', True)
+        if save_tree_id:
+            self.tree_id = self.tree.get().id
+        return super(Base, self).save(*args, **kwds)
 
 
 class TreeItemManager(models.Manager):
 
-    def json(self, parent):
+    def json(self, treeitem_id):
+        '''Returns treeitem by it's id, if "root" given returns None'''
+        if treeitem_id == 'root':
+            return None
+        else:
+            return TreeItem.objects.get(id=treeitem_id)
+
+    def json_children(self, parent):
+        '''
+        Returns children treeitems by their parent id.
+        If 'root' given returns root treeitems
+        '''
         if parent == 'root':
             parent = None
-            
         return TreeItem.objects.filter(parent=parent)
 
     def linked(self, treeid):
@@ -34,11 +57,12 @@ class TreeItemManager(models.Manager):
             related = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
             return related 
 
+
 class TreeItem(models.Model):
     class Meta:
         verbose_name = u'Элемент каталога'
         verbose_name_plural = u'Элементы каталога'
-        if catalog_settings.USE_MPTT:
+        if catalog_settings.CATALOG_MPTT:
             ordering = ['tree_id', 'lft']
         else:
             ordering = ['id']
@@ -55,6 +79,11 @@ class TreeItem(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return self.get_absolute_url_undecorated()
+    
+    def delete(self, *args, **kwds):
+        self.content_object.delete()
+        super(TreeItem, self).delete(*args, **kwds)
+    delete.alters_data = True
 
     def get_level(self):
         ''' need to override this, because when we turn mptt off,
@@ -72,213 +101,14 @@ class TreeItem(models.Model):
             return u'slug'
 
 try:
-    register(TreeItem, tree_manager_attr='objects')
-except AlreadyRegistered:
+    mptt.register(TreeItem, tree_manager_attr='objects')
+except mptt.AlreadyRegistered:
     pass
 
-
-def itemname(value):
-    value = value.replace('.', '. ')
-    parts = value.split("'")
-    if len(parts) < 2:
-        parts = value.split('|')
-    if len(parts) > 1:
-        name = parts[1]
-    else:
-        name = value
-    return name.strip()
-
-class Section(models.Model):
-    class Meta:
-        verbose_name = u"Раздел каталога"
-        verbose_name_plural = u'Разделы каталога'
-
-    tree = generic.GenericRelation(TreeItem)
-    images = generic.GenericRelation('TreeItemImage')
-    
-    # Display options
-    show = models.BooleanField(verbose_name=u'Отображать', default=True)
-
-    # Primary options
-    slug = models.SlugField(verbose_name=u'Slug', max_length=200, null=True, blank=True)
-    name = models.CharField(verbose_name=u'Наименование', max_length=200, default='')
-    short_description = models.TextField(verbose_name=u'Краткое описание', null=True, blank=True)
-    description = MarkItUpField(verbose_name=u'Описание', null=True, blank=True)
-    
-    @models.permalink
-    def get_absolute_url(self):
-        return self.tree.get().get_absolute_url_undecorated()
-
-    def formatted_name(self):
-        return itemname(self.name)
-    
-    def get_all_items(self):
-        children = self.tree.get().children_item() | self.tree.get().children_metaitem()
-        related_ids = self.items.values_list('id', flat=True)
-        item_ct = ContentType.objects.get_for_model(Item)
-        metaitem_ct = ContentType.objects.get_for_model(MetaItem)
-        related_items = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
-        related_metaitems = TreeItem.objects.filter(content_type=metaitem_ct, object_id__in=related_ids)
-        return children | related_items | related_metaitems
-
-    def get_all_items_show(self):
-        filtered = []
-        for treeitem in self.get_all_items():
-            if treeitem.content_object.show:
-                filtered.append(treeitem)
-        return filtered
-
-    def ext_tree(self):
-        return {
-            'text': self.name,
-            'id': '%d' % self.tree.get().id,
-            'leaf': False,
-            'cls': 'folder',
-         }
-    
-    def ext_grid(self):
-        return {
-            'name': self.name,
-            'id': '%d' % self.tree.get().id,
-            'type': self.tree.get().content_type.model, 
-            'itemid': self.id,
-            'show': self.show,
-            'price': 0.0, 
-            'quantity': 0, 
-            'has_image': bool(self.images.count()),
-            'has_description': bool(self.description),
-        }
-    
-    def has_nested_sections(self):
-        section_ct = ContentType.objects.get_for_model(Section)
-        return bool(len(self.tree.get().children.filter(content_type=section_ct)))
-
-    def __unicode__(self):
-        return self.name
-
-
-class MetaItem(Section):
-    class Meta:
-        verbose_name = u"Метатовар"
-        verbose_name_plural = u'Метатовары'
-
-    tree = generic.GenericRelation(TreeItem)
-    images = generic.GenericRelation('TreeItemImage')
-    
-    @models.permalink
-    def get_absolute_url(self):
-        return self.tree.get().get_absolute_url_undecorated()
-    
-    def get_images(self):
-        images = []
-        for child in self.tree.get().children.all():
-            images += child.content_object.images.all()
-        images += self.images.all()
-        return images
-
-    def min_price(self):
-        prices = [child.content_object.price for child in self.tree.get().children.all()]
-        if prices:
-            return min(prices)
-        else:
-            return Decimal('0.0') 
-
-    def max_price(self):
-        prices = [child.content_object.price for child in self.tree.get().children.all()]
-        if prices:
-            return max(prices)
-        else:
-            return Decimal('0.0') 
-    
-
-class Item(models.Model):
-    class Meta:
-        verbose_name = u"Продукт каталога"
-        verbose_name_plural = u'Продукты каталога'
-        
-    tree = generic.GenericRelation('TreeItem')
-    images = generic.GenericRelation('TreeItemImage')
-
-    # Display options
-    show = models.BooleanField(verbose_name=u'Отображать', default=True)
-
-    # Primary options
-    slug = models.SlugField(verbose_name=u'Slug', max_length=200, null=True, blank=True)
-    name = models.CharField(verbose_name=u'Наименование', max_length=200, default='')
-    short_description = models.TextField(verbose_name=u'Краткое описание', null=True, blank=True)
-    description = models.TextField(verbose_name=u'Описание', null=True, blank=True)
-
-    # Item fields
-    # Relation options
-    relative = RelatedField('Item', verbose_name=u'Сопутствующие товары', null=True, blank=True, related_name='relative')
-    sections = RelatedField('Section', verbose_name=u'Разделы', null=True, blank=True, related_name='items')
-
-    # Sale options
-    price = models.DecimalField(verbose_name=u'Цена', null=True, blank=True, max_digits=12, decimal_places=2)
-    wholesale_price = models.DecimalField(verbose_name=u'Оптовая цена', null=True, blank=True, max_digits=12, decimal_places=2)
-    identifier = models.CharField(verbose_name=u'Артикул', max_length=50, blank=True, default='')
-    barcode = models.CharField(verbose_name=u'Штрих-код', max_length=50, blank=True, null=True)
-    quantity = models.IntegerField(verbose_name=u'Остаток на складе',
-        help_text=u'Введите 0 если на складе нет товара', null=True, blank=True)
-
-    
-    @models.permalink
-    def get_absolute_url(self):
-        return self.tree.get().get_absolute_url_undecorated()
-    
-    def formatted_name(self):
-        return itemname(self.name)
-
-    def ext_tree(self):
-        return {
-            'text': self.name,
-            'id': '%d' % self.tree.get().id,
-            'leaf': True,
-            'cls': 'leaf',
-         }
-    
-    def ext_grid(self):
-        return {
-            'name': self.name,
-            'id': '%d' % self.tree.get().id,
-            'type': 'item',
-            'itemid': self.id,
-            'show': self.show,
-            'price': float(self.price) if self.price is not None else 0.0,
-            'quantity': self.quantity, 
-            'has_image': bool(self.images.count()),
-            'has_description': bool(self.description),
-        }
-    
-    def __unicode__(self):
-        return self.name
-
-class ImageManager(models.Manager):
-    def palletes(self):
-        return self.get_query_set().filter(pallete=True)
-
-    def non_palletes(self):
-        return self.get_query_set().filter(pallete=False)
-
-class TreeItemImage(ImageModel):
-    image = models.ImageField(verbose_name=u'Изображение',
-        upload_to='upload/catalog/itemimages/%Y-%m-%d')
-    
-    pallete = models.BooleanField(default=False, verbose_name=u'Палитра',
-        help_text=u'Картинка будет отображаться в полном размере после описания')
-
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
-
-    manager = ImageManager()
-
-    class IKOptions:
-        cache_dir = 'upload/catalog/cache'
-        spec_module = catalog_settings.CATALOG_IKSPEC
-
-    def __unicode__(self):
-        return self.image.url
+# HACK: import models by their names for convenient usage
+for model_name, admin_name in catalog_settings.CATALOG_CONNECTED_MODELS:
+    module, model = model_name.rsplit('.', 1)
+    exec('from %s import %s' % (module, model))
 
 # must be at bottom, otherwies breaks imports
 from catalog.admin.utils import get_connected_models

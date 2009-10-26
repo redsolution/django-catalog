@@ -1,20 +1,31 @@
 from django.conf import settings
 import os.path
-
-# URL that handles catalog's media and uses <MEDIA_ROOT>/catalog by default.
-CATALOG_MEDIA_URL = getattr(settings, 'CATALOG_MEDIA_URL', os.path.join(settings.MEDIA_URL, 'catalog/'))
+import sys
 
 DEFAULT_CATALOG_CONNECTED_MODELS = [
-    ('catalog.models.Item', 'catalog.admin.ItemAdmin'),
-    ('catalog.models.Section', 'catalog.admin.SectionAdmin'),
-    ('catalog.models.MetaItem', 'catalog.admin.MetaItemAdmin'),
+    ('defaults.models.Item', 'defaults.admin.ItemAdmin'),
+    ('defaults.models.Section', 'defaults.admin.SectionAdmin'),
+    ('defaults.models.MetaItem', None),
 ]
-try:
-    import mptt
-    DEFAULT_USE_MPTT = True
-except ImportError:
-    DEFAULT_USE_MPTT = False
 
-CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)
-USE_MPTT = getattr(settings, 'CATALOG_USE_MPTT', DEFAULT_USE_MPTT)
-CATALOG_IKSPEC = getattr(settings, 'CATALOG_IKSPEC', 'catalog.ikspec')
+DEFAULT_TINYMCE = 'tinymce' in settings.INSTALLED_APPS
+CATALOG_TINYMCE = getattr(settings, 'CATALOG_TINYMCE', DEFAULT_TINYMCE)
+
+DEFAULT_MPTT = 'mptt' in settings.INSTALLED_APPS
+CATALOG_MPTT = getattr(settings, 'CATALOG_MPTT', DEFAULT_MPTT)
+
+DEFAULT_IMAGEKIT = 'imagekit' in settings.INSTALLED_APPS
+CATALOG_IMAGEKIT = getattr(settings, 'CATALOG_IMAGEKIT', DEFAULT_IMAGEKIT)
+
+
+TEST = getattr(settings, 'TEST',  None)
+if TEST is None:
+    if sys.argv[1] == 'test':
+        TEST = True
+    else:
+        TEST = False
+
+if TEST:
+    CATALOG_CONNECTED_MODELS = DEFAULT_CATALOG_CONNECTED_MODELS
+else:
+    CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)
