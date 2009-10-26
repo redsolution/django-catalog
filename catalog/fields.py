@@ -24,7 +24,6 @@ class SelectFromSelected(forms.SelectMultiple):
     hundreds of options, resulting page loading is too slow.
     ''' 
     
-    @widget_add_link('rel')
     def render(self, name, value, attrs=None, choices=[]):
         selected_choices = [(el[0], el[1]) for el in self.choices if el[0] in value]
         self.choices = selected_choices
