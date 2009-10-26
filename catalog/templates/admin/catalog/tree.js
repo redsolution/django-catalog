@@ -94,7 +94,7 @@ var tree_events = {
                     menu = get_context_menu(get_type(node));
                     menu.show(node.ui.getAnchor());
                 }
-}
+};
 
 var tree_panel = new Ext.tree.TreePanel({
     title: 'Разделы',
@@ -190,58 +190,6 @@ var contextMenu = new Ext.menu.Menu ({
     items: []
 });
 
-/*********** tree context menu ********/
-function get_context_menu(type) {
-    var items = [
-    {
-        text: 'Посмотреть на сайте',
-        icon: '/media/catalog/img/eye.png',
-        type: 'all',
-        handler: function(){
-             node = tree_panel.getSelectionModel().getSelectedNode();
-             view_on_site(node.id);
-        }
-    },{
-        text: 'Редактировать',
-        icon: '/media/catalog/img/edit.png',
-        type: 'all',
-        handler: function(){
-            node = tree_panel.getSelectionModel().getSelectedNode();
-            editItem(node.id);
-        }
-    },
-    {% for relation in relations.itervalues %}
-    {
-        text: 'Посмотреть связанные {{ relation.menu_name_plural }}',
-        type: '{{ relation.target }}',
-        handler: function(){
-            //TODO:
-            edit_related('{{ relation.url }}', tree_panel.selModel.selNode.attributes.id);
-        }
-    },
-    {% endfor %}
-    {
-        text: 'Удалить',
-        icon: '/media/catalog/img/show-no.png',
-        type: 'all',
-        handler: function(){
-                node = tree_panel.getSelectionModel().getSelectedNode();
-                delete_items([node.id]);
-            }
-    }
-    ];
-
-    var menu = []
-    for (var i =0; i < items.length; i++) {
-        if (items[i]['type'] == type) {
-            menu.push(items[i]);
-        }
-        if (items[i]['type'] == 'all') {
-            menu.push(items[i]);
-        }
-    }
-    return new Ext.menu.Menu({items: menu});
-}
 
 /*********** tree drop menu ***********/
 function get_drop_menu(target_type, source_type) {

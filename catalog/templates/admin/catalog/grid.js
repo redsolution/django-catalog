@@ -117,6 +117,17 @@ var catalog_col_model = new Ext.grid.ColumnModel([
     {% endfor %}
 ]);
 
+/*** events ***/
+
+var grid_events = {
+    rowcontextmenu: function(grid, rowIndex, e) {
+                        var item = catalog_store.getAt(rowIndex);
+                        menu = get_context_menu(get_type(item)); 
+                        menu.show(e.target);
+                        return false;
+        }
+};
+
 var grid_panel = new Ext.grid.GridPanel({
     //  look
     title: 'Содержимое',
@@ -129,18 +140,20 @@ var grid_panel = new Ext.grid.GridPanel({
     ddGroup: 'tree',
     tbar: gridBar,
     bbar: gridStatus,
-    enableDragDrop: true
+    enableDragDrop: true,
+    listeners: {
+        rowcontextmenu: grid_events.rowcontextmenu,
+        contextmenu: function(e){return false}
+    }
 });
 
-/*** events ***/
-
+// strange bug, inserted in listeners, breaks interface loading
 grid_panel.on('rowdblclick', function(grid, rowIndex, e){
-	var item = grid.store.getAt(rowIndex);
+    var item = grid.store.getAt(rowIndex);
     item_id = String(item.id).replace(/-link/, '');
     editItem(item_id);
     return false;
 });
-
 
 grid_panel.reload = function(){
     catalog_store.reload();
