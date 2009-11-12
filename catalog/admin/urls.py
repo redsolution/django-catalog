@@ -5,7 +5,7 @@ from catalog.admin.utils import admin_permission_required
 
 
 urlpatterns = patterns('catalog.admin',
-    url(r'^$', admin_permission_required('caatalog.add_treeitem')(direct_to_template),
+    url(r'^$', admin_permission_required('catalog.add_treeitem')(direct_to_template),
         {'template': 'admin/catalog/main.html'}),
     url(r'^/closepopup$', admin_permission_required('catalog.add_treeitem')(direct_to_template),
         {'template': 'admin/catalog/closepopup.html'}),
