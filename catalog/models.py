@@ -91,7 +91,7 @@ class TreeItem(models.Model):
         return self.level
 
     def get_absolute_url_undecorated(self):
-        return ('catalog.views.tree', (), {'item_id': self.id, 'slug': self.slug()})
+        return ('tree', (), {'item_id': self.id, 'slug': self.slug()})
     
     def slug(self):
         try:
