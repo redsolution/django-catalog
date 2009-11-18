@@ -1,5 +1,7 @@
 from django.db import connection
 from django.db.transaction import commit_unless_managed
+from catalog import settings as catalog_settings
+
 
 def children_mptt(model, id=None):
     if id is None:
@@ -7,12 +9,16 @@ def children_mptt(model, id=None):
     else:
         condition = '= %s'
     cursor = connection.cursor()
-    cursor.execute('SELECT id FROM "%(table)s" WHERE "%(parent)s" %(condition)s;' 
-        % {
+    query = 'SELECT id FROM "%(table)s" WHERE "%(parent)s" %(condition)s ' % {
             'table': model._meta.db_table, 
             'parent': model._meta.get_field(model._meta.parent_attr).column,
             'condition': condition,
-        }, [id])
+        }
+    if catalog_settings.EXTRA_ORDER:
+        query += 'ORDER BY "order";'
+    else:
+        query += ';'
+    cursor.execute(query, [id])
     result = [row[0] for row in cursor.fetchall()]
     commit_unless_managed()
     return result

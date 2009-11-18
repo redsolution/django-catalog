@@ -27,6 +27,11 @@ class Base(models.Model):
         if save_tree_id:
             self.tree_id = self.tree.get().id
         return super(Base, self).save(*args, **kwds)
+    save.alters_data = True
+    
+    def delete(self, *args, **kwds):
+        super(Base, self).delete(*args, **kwds)
+    delete.alters_data = True
 
 
 class TreeItemManager(models.Manager):
@@ -64,6 +69,9 @@ class TreeItem(models.Model):
         verbose_name_plural = u'Элементы каталога'
         if catalog_settings.CATALOG_MPTT:
             ordering = ['tree_id', 'lft']
+            if catalog_settings.EXTRA_ORDER:
+                # insert order first
+                ordering[0:0] = ['order']
         else:
             ordering = ['id']
 
@@ -73,9 +81,12 @@ class TreeItem(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
+
+    if catalog_settings.EXTRA_ORDER:
+        order = models.IntegerField()
     
     manager = TreeItemManager()
-
+    
     def get_absolute_url(self):
         return self.get_absolute_url_undecorated()
     
@@ -83,6 +94,12 @@ class TreeItem(models.Model):
         self.content_object.delete()
         super(TreeItem, self).delete(*args, **kwds)
     delete.alters_data = True
+    
+    def save(self, *args, **kwds):
+        if catalog_settings.CATALOG_MPTT and catalog_settings.EXTRA_ORDER:
+            self.order = self.lft * self.tree_id
+        super(TreeItem, self).save(*args, **kwds)
+    save.alters_data = True
 
     def get_level(self):
         ''' need to override this, because when we turn mptt off,

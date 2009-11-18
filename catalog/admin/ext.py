@@ -12,6 +12,7 @@ from django.contrib.admin.sites import AlreadyRegistered
 from catalog.models import TreeItem
 from catalog.admin.utils import get_grid_for_model, get_tree_for_model, encode_decimal
 from catalog.utils import render_to
+from catalog import settings as catalog_settings
 
 TYPE_MAP = {
     models.AutoField: 'int',
@@ -193,6 +194,9 @@ class ExtAdminSite(object):
                 for source in sources:
                     this_section = TreeItem.manager.json(source)
                     this_section.move_to(new_parent, position)
+                    if catalog_settings.EXTRA_ORDER:
+                        # this is necessary if we want to keep order=lft
+                        this_section.save()
                 return HttpResponse('OK')
             else:
                 return HttpResponseServerError('Can not move')
