@@ -97,11 +97,10 @@ class TreeItem(models.Model):
     
     def save(self, *args, **kwds):
         if catalog_settings.CATALOG_MPTT and catalog_settings.EXTRA_ORDER:
-            if self.id is None:
-                # new object - double save :(
+            if self.tree_id is None:
                 self.order = 0
-                super(TreeItem, self).save(*args, **kwds)
-            self.order = self.lft * self.tree_id
+            else:
+                self.order = self.lft * self.tree_id
             super(TreeItem, self).save(*args, **kwds)
         else:
             return super(TreeItem, self).save(*args, **kwds)
