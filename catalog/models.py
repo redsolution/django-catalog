@@ -83,7 +83,7 @@ class TreeItem(models.Model):
     content_object = generic.GenericForeignKey('content_type', 'object_id')
 
     if catalog_settings.EXTRA_ORDER:
-        order = models.IntegerField()
+        order = models.IntegerField(null=True)
     
     manager = TreeItemManager()
     

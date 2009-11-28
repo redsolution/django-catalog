@@ -52,4 +52,4 @@ def related_redirect(request, obj_id):
 def absolute_url_redirect(request, obj_id):
     treeitem = get_object_or_404(TreeItem, id=obj_id)
     get_str = urlencode(request.GET)
-    return HttpResponseRedirect('%s?%s' % (treeitem.get_absolute_url(), get_str))
+    return HttpResponseRedirect('%s?%s' % (treeitem.content_object.get_absolute_url(), get_str))
