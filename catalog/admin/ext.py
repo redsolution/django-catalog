@@ -215,12 +215,12 @@ class ExtAdminSite(object):
                 children_to_delete = 0
                 for item in items_to_delete:
                     children_to_delete += item.get_descendant_count()
-                return HttpResponse(simplejson.encode({
+                return HttpResponse(simplejson.dumps({
                     'items': len(items_to_delete),
                     'all': len(items_to_delete) + children_to_delete,
                 }))
             else:
-                return HttpResponse(simplejson.encode({
+                return HttpResponse(simplejson.dumps({
                     'items': 0,
                     'all': 0,
                 }))
