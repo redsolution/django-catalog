@@ -83,7 +83,7 @@ var catalog_store = new Ext.data.JsonStore({
     url: '/admin/catalog/json/list/',
     root: 'items',
     fields: [
-    {% for field in column_model.itervalues %}
+    {% for field in column_model %}
         {
             name: '{{ field.name }}',
             type: '{{ field.type }}'
@@ -96,14 +96,16 @@ var catalog_store = new Ext.data.JsonStore({
     ]
 });
 
+
 var catalog_col_model = new Ext.grid.ColumnModel([
     {
         id: 'type',
         name: 'type',
         dataIndex: 'type',
+        width: 32,
         renderer: renderType
     }
-    {% for field in column_model.itervalues %}
+    {% for field in column_model %}
         , {
             id: '{{ field.name }}',
             name: '{{ field.name }}',
@@ -111,6 +113,10 @@ var catalog_col_model = new Ext.grid.ColumnModel([
             type: '{{ field.type }}',
             {% ifequal field.type 'boolean' %}
             renderer: renderYesNo,
+            width: 32,
+            {% endifequal %}
+            {% ifequal field.name 'name' %}
+            width: 300,
             {% endifequal %}
             header: '{{ field.header }}'
         }

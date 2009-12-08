@@ -419,7 +419,8 @@ class ExtAdminSite(object):
                         'name': field,
                         'type': TYPE_MAP.get(type(field_cls), field_type),
                         'header': verbose_name,
-                    #TODO: add more functional here
+                        'order': admin_cls.fields.index(field),
+                        #TODO: add more functional here
                     }
                 })
             for m2m_name, m2m in self.get_m2ms().iteritems():
@@ -432,8 +433,8 @@ class ExtAdminSite(object):
                         'source': m2m['rel_model'].__name__.lower(),
                     }
                 })
-
-            context_data['column_model'] = column_model
+                
+            context_data['column_model'] = sorted(column_model.itervalues(), key=lambda x: x['order'])
             context_data['relations'] = relations
             context_data['chunks'] = self.chunks
 
