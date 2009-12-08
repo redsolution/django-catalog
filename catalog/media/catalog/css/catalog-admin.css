@@ -51,23 +51,3 @@
     background: url('../img/link.png') no-repeat 50% 50%;
     height: 13px;
 }
-
-/*** grid headers **/
-
-.x-grid3-hd-show {
-    background: url(../img/eye--plus.png) no-repeat 50% 50% !important;
-}
-
-
-.x-grid3-hd-seo_title {
-    background: url(../img/seo_title.gif) no-repeat 50% 50% !important;
-}
-
-
-.x-grid3-hd-seo_keywords {
-    background: url(../img/seo_keywords.gif) no-repeat 50% 50% !important;
-}
-
-.x-grid3-hd-seo_description {
-    background: url(../img/seo_description.gif) no-repeat 50% 50% !important;
-}
