@@ -162,6 +162,7 @@ class ExtAdminSite(object):
 
         return HttpResponse(simplejson.dumps({'items': grid}, default=encode_decimal))
 
+    @transaction.commit_on_success
     def move_node(self, request, match):
         '''Move node above, below or into target node'''
         def may_move(node, parent):
@@ -288,6 +289,7 @@ class ExtAdminSite(object):
                 tree_ids += rel_manager.values_list('tree_id', flat=True)
         return TreeItem.objects.filter(id__in=tree_ids)
 
+    @transaction.commit_on_success
     def remove_m2m_object(self, parent_treeitem, treeitem):
         def get_m2m_for_two_classes(m2m_list, base_cls, rel_cls):
             result = []
@@ -302,6 +304,7 @@ class ExtAdminSite(object):
         for relation in m2ms:
             rel_manager = getattr(parent_treeitem.content_object, relation['fk_attr'])
             rel_manager.remove(treeitem.content_object)
+    @transaction.commit_on_success
             
     def add_related(self, request, match):
         m2m = self._get_m2m(match) 
@@ -332,6 +335,7 @@ class ExtAdminSite(object):
 
         return render_to_response('admin/catalog/edit_related.html', context_data)
 
+    @transaction.commit_on_success
 
     def save_related(self, request, match):
         m2m = self._get_m2m(match) 
