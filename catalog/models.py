@@ -21,18 +21,21 @@ class Base(models.Model):
     tree = generic.GenericRelation('TreeItem')
     tree_id = models.IntegerField(editable=False, null=True)
     exclude_children = []
-    
+
     def save(self, *args, **kwds):
         save_tree_id = kwds.pop('save_tree_id', True)
         if save_tree_id:
             self.tree_id = self.tree.get().id
         return super(Base, self).save(*args, **kwds)
     save.alters_data = True
-    
+
     def delete(self, *args, **kwds):
         super(Base, self).delete(*args, **kwds)
     delete.alters_data = True
 
+    @models.permalink
+    def get_absolute_url(self):
+        return self.tree.get().get_absolute_url_undecorated()
 
 class TreeItemManager(models.Manager):
 
@@ -84,17 +87,18 @@ class TreeItem(models.Model):
 
     if catalog_settings.EXTRA_ORDER:
         order = models.IntegerField(null=True, default=0)
-    
+
     manager = TreeItemManager()
-    
+
+    @models.permalink
     def get_absolute_url(self):
         return self.get_absolute_url_undecorated()
-    
+
     def delete(self, *args, **kwds):
         self.content_object.delete()
         super(TreeItem, self).delete(*args, **kwds)
     delete.alters_data = True
-    
+
     def save(self, *args, **kwds):
         if catalog_settings.CATALOG_MPTT and catalog_settings.EXTRA_ORDER:
             if self.tree_id is None:
