@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from django.db import models
+from django.db import models, connection
 from django.db.models import FieldDoesNotExist, PositiveIntegerField
 # Almost clone of mptt.__init__ file.
 # Contains overrides for objects in catalog work properly
- 
+
 __all__ = ('register',)
 
 class AlreadyRegistered(Exception):
@@ -22,10 +22,61 @@ def get_children(self):
     return TreeItem.objects.filter(parent=self.id)
 
 def move_to(self, new_parent, position):
+    '''
+    Moves node to new place considering order.
+
+    Valid values for ``position`` are ``'first-child'``,
+    ``'last-child'``, ``'left'`` or ``'right'``.
+    '''
+    # cross import avoid
+    from catalog.models import TreeItem
+
     if position == 'last-child':
         self.parent = new_parent
-    else:
+        siblings = new_parent.children.all()
+        if siblings:
+            self.order = max(new_parent.children.values_list('order', flat=True)) + 1
+        else:
+            self.order = 0
+    elif position == 'first-child':
+        self.parent = new_parent
+        siblings = new_parent.children.all()
+        if siblings:
+            # increment all orders to 1
+            sql_query = 'UPDATE %s SET "order" = "order" + 1 WHERE parent_id = %s;' % (
+                TreeItem._meta.db_table, new_parent.id)
+            cursor = connection.cursor()
+            cursor.execute(sql_query)
+            self.order = 0
+        else:
+            self.order = 0
+    elif position == 'left':
         self.parent = new_parent.parent  # same level with 'new_parent'
+        left_siblings = self.parent.children.filter(order__lt=new_parent.order)
+        right_siblings = self.parent.children.filter(order__gte=new_parent.order)
+        self.order = new_parent.order
+        # increment order of right siblings
+        if right_siblings:
+            # increment all orders to 1
+            sql_query = 'UPDATE %s SET "order" = "order" + 1 WHERE parent_id = %s AND "order" >= %s;' % (
+                TreeItem._meta.db_table, new_parent.parent.id, new_parent.order)
+            cursor = connection.cursor()
+            cursor.execute(sql_query)
+    elif position == 'right':
+        # same as left, but 'less than' becomes 'less than equal
+        # and 'greater or equal' becomes 'greater'
+        self.parent = new_parent.parent  # same level with 'new_parent'
+        left_siblings = self.parent.children.filter(order__lte=new_parent.order)
+        right_siblings = self.parent.children.filter(order__gt=new_parent.order)
+        self.order = new_parent.order + 1
+        # increment order of right siblings
+        if right_siblings:
+            # increment all orders to 1
+            sql_query = 'UPDATE %s SET "order" = "order" + 1 WHERE parent_id = %s AND "order" > %s;' % (
+                TreeItem._meta.db_table, new_parent.parent.id, new_parent.order)
+            cursor = connection.cursor()
+            cursor.execute(sql_query)
+
     self.level = get_level(self)
     self.save()
 
@@ -89,3 +140,13 @@ def register(model, tree_manager_attr='tree'):
     models.Manager().contribute_to_class(model, tree_manager_attr)
     setattr(model, '_tree_manager', getattr(model, tree_manager_attr))
 #    setattr(model, tree_manager_attr, models.Manager())
+
+
+def set_order(parent):
+    from catalog.models import TreeItem
+    children = TreeItem.objects.filter(parent=parent).order_by('order', 'tree_id', 'lft')
+    for i in range(children.count()):
+        obj = children[i]
+        obj.order = i
+        obj.save()
+        set_order(obj)

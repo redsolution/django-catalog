@@ -76,7 +76,10 @@ class TreeItem(models.Model):
                 # insert order first
                 ordering[0:0] = ['order']
         else:
-            ordering = ['id']
+            if catalog_settings.EXTRA_ORDER:
+                ordering = ['order']
+            else:
+                ordering = ['id']
 
     parent = models.ForeignKey('self', related_name='children',
         verbose_name=u'Родительский', null=True, blank=True, editable=False)

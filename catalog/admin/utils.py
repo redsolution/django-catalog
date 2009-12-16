@@ -76,7 +76,9 @@ def get_tree_for_model(instance, model_ext_admin):
         data = get_instance_dict(instance, model_ext_admin)
         tree_text_attr = getattr(model_ext_admin, 'tree_text_attr')
         data.update({
-            'text': getattr(instance, tree_text_attr, None),
+            'text': getattr(instance, tree_text_attr)() if callable(
+                getattr(instance, tree_text_attr)) else getattr(
+                instance, tree_text_attr, None),
             'leaf': model_ext_admin.tree_leaf,
         })
         return data
