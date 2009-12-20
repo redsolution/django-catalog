@@ -97,7 +97,12 @@ var catalog_store = new Ext.data.JsonStore({
 });
 
 
-var catalog_col_model = new Ext.grid.ColumnModel([
+var catalog_col_model = new Ext.grid.ColumnModel({
+    defaults: {
+        width: 120,
+        sortable: true
+    },
+    columns: [
     {
         id: 'type',
         name: 'type',
@@ -121,7 +126,7 @@ var catalog_col_model = new Ext.grid.ColumnModel([
             header: '{{ field.header }}'
         }
     {% endfor %}
-]);
+]});
 
 /*** events ***/
 
