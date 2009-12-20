@@ -175,6 +175,7 @@ function get_context_menu(type) {
             editItem(node.id);
         }
     },
+    {{ chunks.context_menu }}
     {% for relation in relations.itervalues %}
     {
         text: 'Посмотреть связанные {{ relation.menu_name_plural }}',
