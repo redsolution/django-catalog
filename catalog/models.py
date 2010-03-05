@@ -72,14 +72,8 @@ class TreeItem(models.Model):
         verbose_name_plural = u'Элементы каталога'
         if catalog_settings.CATALOG_MPTT:
             ordering = ['tree_id', 'lft']
-            if catalog_settings.EXTRA_ORDER:
-                # insert order first
-                ordering[0:0] = ['order']
         else:
-            if catalog_settings.EXTRA_ORDER:
-                ordering = ['order']
-            else:
-                ordering = ['id']
+            ordering = ['order']
 
     parent = models.ForeignKey('self', related_name='children',
         verbose_name=u'Родительский', null=True, blank=True, editable=False)
@@ -88,7 +82,7 @@ class TreeItem(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
 
-    if catalog_settings.EXTRA_ORDER:
+    if not catalog_settings.CATALOG_MPTT:
         order = models.IntegerField(null=True, default=0)
 
     manager = TreeItemManager()
@@ -103,14 +97,11 @@ class TreeItem(models.Model):
     delete.alters_data = True
 
     def save(self, *args, **kwds):
-        if catalog_settings.CATALOG_MPTT and catalog_settings.EXTRA_ORDER:
-            if self.tree_id is None:
-                self.order = 0
-            else:
-                self.order = self.lft * self.tree_id
-            super(TreeItem, self).save(*args, **kwds)
-        else:
-            return super(TreeItem, self).save(*args, **kwds)
+        if not catalog_settings.CATALOG_MPTT:
+            if self.order is None:
+                max_order = TreeItem.objects.json_children(self.parent).latest('order').order
+                self.order = max_order + 1
+        return super(TreeItem, self).save(*args, **kwds)
     save.alters_data = True
 
     def get_level(self):

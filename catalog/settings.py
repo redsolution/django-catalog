@@ -17,11 +17,12 @@ CATALOG_MPTT = getattr(settings, 'CATALOG_MPTT', DEFAULT_MPTT)
 DEFAULT_IMAGEKIT = 'imagekit' in settings.INSTALLED_APPS
 CATALOG_IMAGEKIT = getattr(settings, 'CATALOG_IMAGEKIT', DEFAULT_IMAGEKIT)
 
-EXTRA_ORDER = getattr(settings, 'CATALOG_EXTRA_ORDER', False)
+# how urls will look like
+# you may set 'id' or 'slug' values 
 CATALOG_URL_SHEME = getattr(settings, 'CATALOG_URL_SHEME', 'id')
 CATALOG_ROOT_PAGE = getattr(settings, 'CATALOG_ROOT_PAGE', True)
 
-TEST = getattr(settings, 'TEST',  None)
+TEST = getattr(settings, 'TEST', None)
 if TEST is None:
     if sys.argv[1] == 'test':
         TEST = True

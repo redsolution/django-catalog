@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from catalog.models import TreeItem
 from catalog.utils import render_to
+from catalog import settings
 
 
 @render_to('catalog/treeitem.html')
@@ -14,14 +15,14 @@ def tree(request, item_id=None, slug=None):
         children = treeitem.children.all()
         root_page = False
     else:
-        # root page
-        treeitem = None
-        children = TreeItem.manager.json_children(parent='root')
-        root_page =True
+        if settings.CATALOG_ROOT_PAGE:
+            # root page
+            treeitem = None
+            children = TreeItem.manager.json_children(parent='root')
+            root_page = True
 
     return {
         'treeitem': treeitem,
         'children': children,
         'root_page': root_page,
     }
-
