@@ -1,16 +1,26 @@
-{% if root_page %}
-    {% include "catalog/root.html" %}
-{% else %}
-    {% ifequal treeitem.content_type.model 'section' %}
-        {% with treeitem.content_object as section %}
-        {% with treeitem.children.all as items %}
-            {% include "catalog/section.html" %}
-        {% endwith %}
-        {% endwith %}
-    {% endifequal %}
-    {% ifequal treeitem.content_type.model 'item' %}
-        {% with treeitem.content_object as item %}
-            {% include "catalog/item.html" %}
-        {% endwith %}
-    {% endifequal %}
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% with treeitem.content_object as content_object %}
+<h1>
+{% if root_page %}{% trans "Catalog root section" %}{% else %}{{ content_object.name }}{% endif %}
+</h1>
+
+{% if children %}
+    <ul>
+    {% for item in children %}
+        <li><a href="{{ item.get_absolute_url }}">{{ item.content_object.name }}</a></li>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <ul><li>Section is empty</li></ul>
 {% endif %}
+
+{% ifequal treeitem.content_type.model 'item' %}
+    <h2>{% trans "Details" %}</h2>
+    <p>{{ content_object.name }}</p>
+{% endifequal %}
+
+{% endwith %}
+{% endblock content %}
