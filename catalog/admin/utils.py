@@ -84,6 +84,6 @@ def get_tree_for_model(instance, model_ext_admin):
         return data
 
 def encode_decimal(obj):
-     if isinstance(obj, Decimal):
-         return float(obj)
-     raise TypeError(repr(o) + " is not JSON serializable")
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError(repr(o) + " is not JSON serializable")
