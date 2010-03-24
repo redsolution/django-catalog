@@ -195,9 +195,6 @@ class ExtAdminSite(object):
                 for source in sources:
                     this_section = TreeItem.manager.json(source)
                     this_section.move_to(new_parent, position)
-                    if catalog_settings.EXTRA_ORDER:
-                        # this is necessary if we want to keep order=lft
-                        this_section.save()
                 return HttpResponse('OK')
             else:
                 return HttpResponseServerError('Can not move')
