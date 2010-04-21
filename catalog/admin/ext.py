@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
-import re
-
-from django.http import HttpResponse, HttpResponseServerError, Http404
-from django.db import transaction
-from django.db import models
-from django.contrib.auth.decorators import permission_required
-from django.utils import simplejson
-from django.shortcuts import render_to_response, get_object_or_404
-from django.contrib.admin.sites import AlreadyRegistered
-
-from catalog.models import TreeItem
-from catalog.admin.utils import get_grid_for_model, get_tree_for_model, encode_decimal
-from catalog.utils import render_to
 from catalog import settings as catalog_settings
+from catalog.admin.utils import admin_permission_required, get_grid_for_model, \
+    get_tree_for_model, encode_decimal
+from catalog.models import TreeItem
+from catalog.utils import render_to
+from django.contrib.admin.sites import AlreadyRegistered, AdminSite, \
+    NotRegistered
+from django.db import models, transaction
+from django.http import HttpResponse, HttpResponseServerError, Http404, \
+    HttpResponseRedirect
+from django.shortcuts import render_to_response, get_object_or_404
+from django.utils import simplejson
+from django.utils.functional import update_wrapper
+from django.views.generic.simple import direct_to_template
+import re
+from catalog.admin import CatalogAdmin
+from django.db.models.base import ModelBase
+
 
 TYPE_MAP = {
     models.AutoField: 'int',
@@ -32,38 +36,29 @@ TYPE_MAP = {
 }
 
 
-class BaseExtAdmin(object):
-    '''
-    Base class to register model in ext catalog admin
-    ..Attributes:
-            tree_text_attr - attribute, which will represent object in tree, 
-                            othwerwords, text property
-            tree_leaf      - is object tree leaf or not, False by default
-            tree_hide      - maybe you don't want show objects in tree at all. Use this attribute
-            
-            fields         - list of fields, which appears in grid. Grid will contains
-                             summary fields of all registered models
-            m2ms           - enables django-catalog many-to-many stuff for this relations
-                             relations may be direct or inverse
-            
-    '''
-    tree_text_attr = 'name'
-    tree_leaf = False
-    tree_hide = False
-
-    fields = ()
-    m2ms = ()
-
-
-class ExtAdminSite(object):
+class ExtAdminSite(AdminSite):
     # dictionaty with registered models
     _registry = {}
     _m2ms = {}
     chunks = {}
-    
 
-    def __init__(self):
-        self._urlconf = (
+    def get_urls(self):
+        from django.conf.urls.defaults import patterns, url, include
+
+        def wrap(view, cacheable=False):
+            def wrapper(*args, **kwargs):
+                return self.admin_view(view, cacheable)(*args, **kwargs)
+            return update_wrapper(wrapper, view)
+
+        urlpatterns = patterns('',
+            # direct to templates
+            url(r'^$', wrap(self.index), name='index'),
+            url(r'^/closepopup$', wrap(self.closepopup), name='closepopup'),
+            # redirects
+            url(r'^edit/(\d{1,7})/$', wrap(self.editor_redirect), name='editor_redirect'),
+            url(r'^relations/(\d{1,7})/$', wrap(self.related_redirect), name='related_redirect'),
+            url(r'^view/(\d{1,7})/$', wrap(self.absolute_url_redirect), name='absolute_url_redirect'),
+            # ajax views
             (r'^json/tree/$', self.tree),
             (r'^json/list/$', self.grid),
             (r'^json/move/$', self.move_node),
@@ -78,6 +73,11 @@ class ExtAdminSite(object):
             (r'^catalog.js$', self.config_js),
             (r'^rel/([\w-]+)/(\d+)\.js$', self.config_rel_js),
         )
+        return urlpatterns
+
+    def urls(self):
+        return self.get_urls(), self.app_name, self.name
+    urls = property(urls)
 
     def get_registry(self):
         return self._registry
@@ -85,43 +85,96 @@ class ExtAdminSite(object):
     def get_m2ms(self):
         return self._m2ms
 
-    def register(self, model_class, admin_class):
-        '''Register Ext model admin in catalog interface'''
-        if model_class not in self._registry:
-            self.get_registry().update({model_class: admin_class})
+    def register(self, model_or_iterable, admin_class=None, **options):
+        '''
+        Register Ext model admin in catalog interface, 
+        see contrib.admin.site.register
+        
+        If an admin class isn't given, it will use CatalogAdmin by default
+        '''
+        if not admin_class:
+            admin_class = CatalogAdmin
+
+        if isinstance(model_or_iterable, ModelBase):
+            model_or_iterable = [model_or_iterable]
+
+        for model in model_or_iterable:
+            if model in self._registry:
+                raise AlreadyRegistered('The model %s is already registered' % model.__name__)
+            if options:
+                # For reasons I don't quite understand, without a __module__
+                # the created class appears to "live" in the wrong place,
+                # which causes issues later on.
+                options['__module__'] = __name__
+                admin_class = type("%sAdmin" % model.__name__, (admin_class,), options)
+
+            self._registry.update({model: admin_class})
             # register many to many relations specially
             for m2m_field_name in admin_class.m2ms:
-                base_field = model_class._meta.get_field_by_name(m2m_field_name)[0]
+                base_field = model._meta.get_field_by_name(m2m_field_name)[0]
                 # workaround reverse relations
                 from django.db.models.related import RelatedObject
                 if type(base_field) is RelatedObject:
                     rel_model_class = base_field.model
                 else:
                     rel_model_class = base_field.rel.to
-                
-                m2m_name = '%s-%s-%s' % (model_class.__name__,
+
+                m2m_name = '%s-%s-%s' % (model.__name__,
                     m2m_field_name, rel_model_class.__name__)
 
                 self._m2ms.update({
                     m2m_name.lower(): {
-                        'base_model': model_class,
+                        'base_model': model,
                         'fk_attr': m2m_field_name,
                         'rel_model': rel_model_class,
                         'url': m2m_name.lower(),
                     }
                 })
 
-        else:
-            raise AlreadyRegistered('Model %s already registered' % model_class.__str__)
+    def unregister(self, model_or_iterable):
+        """
+        Unregisters the given model(s).
 
-    def root(self, request, url):
-        '''Handle catalog admin views'''
-        for reg, func in self._urlconf:
-            match = re.match(reg, url)
-            if match is not None:
-                return func(request, match.groups())
-        raise Http404
+        If a model isn't already registered, this will raise NotRegistered.
+        """
+        if isinstance(model_or_iterable, ModelBase):
+            model_or_iterable = [model_or_iterable]
+        for model in model_or_iterable:
+            if model not in self._registry:
+                raise NotRegistered('The model %s is not registered' % model.__name__)
+            del self._registry[model]
+            # TODO: remove from m2ms
 
+    #===========================================================================
+    #  Html views
+    #===========================================================================
+    @admin_permission_required('catalog.add_treeitem')
+    def index(self, request):
+        '''
+        Display base template layout for catalog admin
+        '''
+        return direct_to_template(request, 'admin/catalog/main.html')
+
+    @admin_permission_required('catalog.add_treeitem')
+    def closepopup(self, request):
+        '''
+        Display javascript that closes popup window
+        '''
+        return direct_to_template(request, 'admin/catalog/closepopup.html')
+
+    @admin_permission_required('catalog.edit_treeitem')
+    def editor_redirect(self, request, obj_id):
+        from urllib import urlencode
+        treeitem = get_object_or_404(TreeItem, id=obj_id)
+        get_str = urlencode(request.GET)
+        # TODO: reverse this url
+        return HttpResponseRedirect('/admin/%s/%s/%s/?%s' %
+            (treeitem.content_object.__module__.rsplit('.', 2)[-2], treeitem.content_type.model,
+            treeitem.content_object.id, get_str))
+
+    #===========================================================================
+    #  AJAX views
+    #===========================================================================
     def tree(self, request, match):
         '''Return json encoded tree'''
         tree = []
@@ -199,7 +252,6 @@ class ExtAdminSite(object):
             else:
                 return HttpResponseServerError('Can not move')
 
-
     def delete_count(self, request, match):
         try:
             items_list = request.REQUEST.get('items', '').split(',')
@@ -222,7 +274,7 @@ class ExtAdminSite(object):
                     'items': 0,
                     'all': 0,
                 }))
-        except (ValueError, TreeItem.DoesNotExist),e:
+        except (ValueError, TreeItem.DoesNotExist), e:
             return HttpResponseServerError('Bad arguments: %s' % e)
 
     @transaction.commit_on_success
@@ -245,14 +297,14 @@ class ExtAdminSite(object):
                 parent.content_object).filter(id__in=linked_treeitem_ids)
             for treeitem in linked_treeitems:
                 self.remove_m2m_object(parent, treeitem)
-            
+
             return HttpResponse('OK')
         except ValueError, TreeItem.DoesNotExist:
             return HttpResponseServerError('Bad arguments')
 
-    #  ---------------------- 
-    # | Many to many stuff   |
-    #  ---------------------- 
+    #===========================================================================
+    # Many to many internal stuff
+    #===========================================================================
 
     def _get_m2m(self, match):
         '''utility to retrieve m2m from m2m site registry'''
@@ -286,40 +338,9 @@ class ExtAdminSite(object):
                 tree_ids += rel_manager.values_list('tree_id', flat=True)
         return TreeItem.objects.filter(id__in=tree_ids)
 
-    @transaction.commit_on_success
-    def remove_m2m_object(self, parent_treeitem, treeitem):
-        def get_m2m_for_two_classes(m2m_list, base_cls, rel_cls):
-            result = []
-            for m2m in m2m_list: 
-                if (m2m['base_model'] is parent_treeitem.content_object.__class__ and
-                    m2m['rel_model'] is treeitem.content_object.__class__):
-                    result.append(m2m)
-            return result
-
-        m2ms = get_m2m_for_two_classes(self.get_m2ms().itervalues(),
-            parent_treeitem.content_object.__class__, treeitem.content_object.__class__)
-        for relation in m2ms:
-            rel_manager = getattr(parent_treeitem.content_object, relation['fk_attr'])
-            rel_manager.remove(treeitem.content_object)
-    @transaction.commit_on_success
-            
-    def add_related(self, request, match):
-        m2m = self._get_m2m(match) 
-
-        instance_id = request.REQUEST.get('target', None)
-        instance = get_object_or_404(m2m['base_model'], tree_id=instance_id)
-        
-        rel_list = request.REQUEST.get('source', u'').split(',')
-        related_manager = getattr(instance, m2m['fk_attr'])
-        # workaround for empty request
-        if u'' in rel_list:
-            rel_list.remove(u'')
-
-        for rel_obj_id in rel_list:
-            rel_obj = get_object_or_404(m2m['rel_model'], tree_id=rel_obj_id)
-            related_manager.add(rel_obj)
-        
-        return HttpResponse('OK')
+    #===========================================================================
+    # M2M Html views
+    #===========================================================================
 
     def edit_related(self, request, match):
         m2m = self._get_m2m(match)
@@ -333,13 +354,78 @@ class ExtAdminSite(object):
         return render_to_response('admin/catalog/edit_related.html', context_data)
 
     @transaction.commit_on_success
+    def remove_m2m_object(self, parent_treeitem, treeitem):
+        def get_m2m_for_two_classes(m2m_list, base_cls, rel_cls):
+            result = []
+            for m2m in m2m_list:
+                if (m2m['base_model'] is parent_treeitem.content_object.__class__ and
+                    m2m['rel_model'] is treeitem.content_object.__class__):
+                    result.append(m2m)
+            return result
 
-    def save_related(self, request, match):
-        m2m = self._get_m2m(match) 
+        m2ms = get_m2m_for_two_classes(self.get_m2ms().itervalues(),
+            parent_treeitem.content_object.__class__, treeitem.content_object.__class__)
+        for relation in m2ms:
+            rel_manager = getattr(parent_treeitem.content_object, relation['fk_attr'])
+            rel_manager.remove(treeitem.content_object)
 
-        instance_id = match[1] 
+
+    #===========================================================================
+    #  M2M AJAX views
+    #===========================================================================
+    def tree_related(self, request, match):
+        # m2m tree editor for RelatedField
+        m2m = self._get_m2m(match)
+        if m2m is None:
+            raise Http404
+        obj_id = match[1]
+
+        instance = get_object_or_404(m2m['base_model'], tree_id=obj_id)
+        related_manager = getattr(instance, m2m['fk_attr'])
+
+        tree = []
+        if request.method == 'POST':
+            parent = request.REQUEST.get('node', 'root')
+
+            for treeitem in TreeItem.manager.json_children(parent):
+                data = get_tree_for_model(treeitem.content_object,
+                    self._registry.get(treeitem.content_object.__class__, None))
+
+                # add checkboxes where they can be placed
+                if treeitem.content_type.model == m2m['rel_model'].__name__.lower():
+                    data.update({
+                        'checked': treeitem.content_object.id in related_manager.values_list('id', flat=True),
+                    })
+                tree.append(data)
+        return HttpResponse(simplejson.dumps(tree, default=encode_decimal), mimetype='text/json')
+
+
+    @transaction.commit_on_success
+    def add_related(self, request, match):
+        m2m = self._get_m2m(match)
+
+        instance_id = request.REQUEST.get('target', None)
         instance = get_object_or_404(m2m['base_model'], tree_id=instance_id)
-        
+
+        rel_list = request.REQUEST.get('source', u'').split(',')
+        related_manager = getattr(instance, m2m['fk_attr'])
+        # workaround for empty request
+        if u'' in rel_list:
+            rel_list.remove(u'')
+
+        for rel_obj_id in rel_list:
+            rel_obj = get_object_or_404(m2m['rel_model'], tree_id=rel_obj_id)
+            related_manager.add(rel_obj)
+
+        return HttpResponse('OK')
+
+    @transaction.commit_on_success
+    def save_related(self, request, match):
+        m2m = self._get_m2m(match)
+
+        instance_id = match[1]
+        instance = get_object_or_404(m2m['base_model'], tree_id=instance_id)
+
         rel_list = request.REQUEST.get('items', u'').split(',')
         related_manager = getattr(instance, m2m['fk_attr'])
         # workaround for empty request
@@ -362,32 +448,9 @@ class ExtAdminSite(object):
 
         return HttpResponse('OK')
 
-    def tree_related(self, request, match):
-        # m2m tree editor for RelatedField
-        m2m = self._get_m2m(match)
-        if m2m is None:
-            raise Http404
-        obj_id = match[1]
-
-        instance = get_object_or_404(m2m['base_model'], tree_id=obj_id)
-        related_manager = getattr(instance, m2m['fk_attr'])
-
-        tree = []
-        if request.method == 'POST':
-            parent = request.REQUEST.get('node', 'root')
-
-            for treeitem in TreeItem.manager.json_children(parent):
-                data = get_tree_for_model(treeitem.content_object,
-                    self._registry.get(treeitem.content_object.__class__, None))
-                
-                # add checkboxes where they can be placed
-                if treeitem.content_type.model == m2m['rel_model'].__name__.lower():
-                    data.update({
-                        'checked': treeitem.content_object.id in related_manager.values_list('id', flat=True),
-                    })
-                tree.append(data)
-        return HttpResponse(simplejson.dumps(tree, default=encode_decimal), mimetype='text/json')
-
+    #===========================================================================
+    # render javascript templates 
+    #===========================================================================
     def config_js(self, request, match):
         '''Render ExtJS interface'''
         context_data = {'models': []}
@@ -434,7 +497,7 @@ class ExtAdminSite(object):
                         'source': m2m['rel_model'].__name__.lower(),
                     }
                 })
-                
+
             context_data['column_model'] = sorted(column_model.itervalues(), key=lambda x: x['order'])
             context_data['relations'] = relations
             context_data['chunks'] = self.chunks
@@ -455,5 +518,4 @@ class ExtAdminSite(object):
 
         return render_to_response('admin/catalog/edit_related.js', context_data, mimetype='text/javascript')
 
-ext_site = ExtAdminSite()
-
+ext_site = ExtAdminSite(name='catalog')

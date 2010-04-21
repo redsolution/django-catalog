@@ -1,21 +1,25 @@
 # -*- coding: utf-8 -*-
-from catalog.admin.ext import ext_site, BaseExtAdmin
+from django.contrib.admin import site as admin_site
 from catalog.admin.utils import get_connected_models
-from catalog.models import TreeItem
 from django.contrib import admin
-from django.contrib.admin.util import flatten_fieldsets
-from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.contrib.contenttypes import generic
-from django.db import models
-from django.forms.models import modelform_factory
+from django.db.models.signals import class_prepared
 from django.http import Http404, HttpResponse
-from django.utils.functional import curry
+from django.utils.functional import update_wrapper
 from django.utils.html import escape
 
-
-class CatalogAdminMix(admin.ModelAdmin):
-    '''Mixin to make popup edit-object windows close on save'''
+class CatalogAdmin(admin.ModelAdmin):
+    '''
+    Base admin class to register model as catalog item
+    '''
     prepopulated_fields = {'slug': ('name',)}
+
+    # these fields are used in ext_site
+    tree_text_attr = 'name'
+    tree_leaf = False
+    tree_hide = False
+
+    fields = ()
+    m2ms = ()
 
     def response_change(self, request, obj):
         """
@@ -26,7 +30,7 @@ class CatalogAdminMix(admin.ModelAdmin):
             pk_value = obj._get_pk_val()
             return HttpResponse('<script type="text/javascript">opener.dismissAddAnotherPopup(window, "%s", "%s");</script>' % \
                 (escape(pk_value), escape(obj))) # escape() calls force_unicode.
-        return super(CatalogAdminMix, self).response_change(request, obj)
+        return super(CatalogAdmin, self).response_change(request, obj)
 
     def get_form(self, request, obj=None, **kwargs):
         """
@@ -34,7 +38,7 @@ class CatalogAdminMix(admin.ModelAdmin):
         object, but not store it in database. We want to pass it to TreeItem class,
         which connected to pre_save() signal of each catalog model 
         """
-        FormClass = super(CatalogAdminMix, self).get_form(request, obj, **kwargs)
+        FormClass = super(CatalogAdmin, self).get_form(request, obj, **kwargs)
 
         class ModelFormCatalogWrapper(FormClass):
             '''
@@ -46,18 +50,3 @@ class CatalogAdminMix(admin.ModelAdmin):
                 return super(ModelFormCatalogWrapper, self).save(*args, **kwds)
 
         return ModelFormCatalogWrapper
-
-# register models
-def register(model_class, admin_class, ext_admin_class=BaseExtAdmin):
-    # register Django admin model
-    class CatalogModelAdmin(admin_class, CatalogAdminMix):
-        pass
-    try:
-        admin.site.register(model_class, CatalogModelAdmin)
-    except admin.sites.AlreadyRegistered:
-        pass
-    # register ext admin
-    try:
-        ext_site.register(model_class, ext_admin_class)
-    except admin.sites.AlreadyRegistered:
-        pass

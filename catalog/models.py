@@ -5,7 +5,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.signals import post_save
 
-
 if catalog_settings.CATALOG_MPTT:
     import mptt
 else:
@@ -60,9 +59,10 @@ class TreeItemManager(models.Manager):
         treeitem = TreeItem.objects.get(id=treeid)
         if treeitem.content_type.model == 'section':
             related_ids = treeitem.content_object.items.values_list('id', flat=True)
+            # FIXME OMG
             item_ct = ContentType.objects.get_for_model(Item)
             related = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
-            return related 
+            return related
 
 
 class TreeItem(models.Model):
@@ -86,7 +86,6 @@ class TreeItem(models.Model):
 
     manager = TreeItemManager()
 
-    @models.permalink
     def get_absolute_url(self):
         return self.get_absolute_url_undecorated()
 
@@ -111,7 +110,7 @@ class TreeItem(models.Model):
 
     def get_absolute_url_undecorated(self):
         return ('tree', (), {'item_id': self.id, 'slug': self.slug()})
-    
+
     def slug(self):
         try:
             return self.content_object.slug
@@ -123,41 +122,7 @@ try:
 except mptt.AlreadyRegistered:
     pass
 
-def insert_in_tree(sender, instance, **kwrgs):
-    '''
-    Insert newly created object in catalog tree.
-    If no parent provided, insert object in tree root 
-    '''
-    # to avoid recursion save, process only for new instances
-    created = kwrgs.pop('created', False)
-
-    if created:
-        parent = getattr(instance, 'parent')
-        parent_tree_item = TreeItem.manager.json(parent)
-        tree_item = TreeItem(parent=parent_tree_item, content_object=instance)
-        tree_item.save()
-        instance.save(save_tree_id=True)
-
 # HACK: import models by their names for convenient usage
 for model_name, admin_name in catalog_settings.CATALOG_CONNECTED_MODELS:
     module, model = model_name.rsplit('.', 1)
     exec('from %s import %s' % (module, model))
-
-# !!! must be at bottom, otherwies breaks imports !!!
-from catalog.admin.utils import get_connected_models
-
-def filtered_children_factory(model_name):
-    def func(self):
-        return self.children.filter(content_type__model=model_name)
-    return func
-
-for model_cls, admin_cls in get_connected_models():
-    # for each connected model:
-    model_name = model_cls.__name__.lower()
-    # set hack attribute, so you can use it in templates like this:
-    #    Children item list: {{ treeitem.children_item.all }}
-    #    Children section list: {{ treeitem.children_section.all }}
-    setattr(TreeItem, 'children_%s' % model_name, filtered_children_factory(model_name))
-
-    # connect automatic TreeItem creation for catalog models
-    post_save.connect(insert_in_tree, model_cls)

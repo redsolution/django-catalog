@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from catalog import settings as catalog_settings
 from django.contrib import admin
-from django.forms import ModelForm
-from django.core.urlresolvers import get_mod_func
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404
@@ -11,7 +9,7 @@ from decimal import Decimal
 def import_item(path, error_text):
     """Imports a model by given string. In error case raises ImpoprelyConfigured"""
     i = path.rfind('.')
-    module, attr = path[:i], path[i+1:]
+    module, attr = path[:i], path[i + 1:]
     try:
         return getattr(__import__(module, {}, {}, ['']), attr)
     except ImportError, e:
@@ -26,7 +24,7 @@ def get_connected_models():
         class AutoAdmin(admin.ModelAdmin):
             model = model_class
         return AutoAdmin
-    
+
     model_list = []
     for model_str, admin_str in catalog_settings.CATALOG_CONNECTED_MODELS:
         model_class = import_item(model_str, '')
