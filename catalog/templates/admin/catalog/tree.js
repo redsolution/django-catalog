@@ -128,7 +128,6 @@ var tree_panel = new Ext.tree.TreePanel({
     	beforenodedrop: tree_events.beforeDrop,
 		click: tree_events.panelClick,
         contextmenu: tree_events.contextMenuHandler,
-        dblclick: tree_events.contextMenuHandler
 	}
 
 });

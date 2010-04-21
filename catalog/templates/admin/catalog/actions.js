@@ -1,5 +1,5 @@
 function editItem(id){
-    var win = window.open("/admin/catalog/edititem/" + id +
+    var win = window.open("/admin/catalog/edit/" + id +
             "/?_popup=1", "EditTreeItemWindow", "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
     win.focus();
 }

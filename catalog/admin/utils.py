@@ -59,8 +59,7 @@ def get_instance_dict(instance, model_ext_admin):
         'id': instance.tree_id,
         'type': instance.__class__.__name__.lower(),
     }
-    fields = model_ext_admin.fields
-    for field in fields:
+    for field in model_ext_admin.catalog_fields:
         value = getattr(instance, field, None)
         if callable(value):
             data[field] = value()

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.contrib.admin import site as admin_site
 from catalog.admin.utils import get_connected_models
 from django.contrib import admin
 from django.db.models.signals import class_prepared
@@ -18,7 +17,7 @@ class CatalogAdmin(admin.ModelAdmin):
     tree_leaf = False
     tree_hide = False
 
-    fields = ()
+    catalog_fields = ()
     m2ms = ()
 
     def response_change(self, request, obj):
@@ -50,3 +49,20 @@ class CatalogAdmin(admin.ModelAdmin):
                 return super(ModelFormCatalogWrapper, self).save(*args, **kwds)
 
         return ModelFormCatalogWrapper
+
+def register(model_or_iterable, admin_cls=None):
+    '''
+    Perform trivial register process in both admin_site and catalog_admin_site
+    '''
+    from catalog.admin.ext import catalog_admin_site
+    from django.contrib.admin import site as admin_site
+
+    try:
+        admin.site.register(model_or_iterable, admin_cls)
+    except admin.sites.AlreadyRegistered:
+        pass
+
+    try:
+        catalog_admin_site.register(model_or_iterable, admin_cls)
+    except admin.sites.AlreadyRegistered:
+        pass

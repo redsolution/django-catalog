@@ -193,12 +193,11 @@ class ExtAdminSite(AdminSite):
         # TODO: reverse this url
         return HttpResponseRedirect('/admin/catalog/%s/%s/rel/?%s' % (treeitem.content_type.model, treeitem.content_object.id, get_str))
 
-    @admin_permission_required('catalog.edit_treeitem')
     def absolute_url_redirect(self, request, obj_id):
         treeitem = get_object_or_404(TreeItem, id=obj_id)
         get_str = urlencode(request.GET)
         # TODO: reverse this url
-        return HttpResponseRedirect('%s?%s' % (treeitem.content_object.get_absolute_url(), get_str))
+        return HttpResponseRedirect('%s?%s' % (treeitem.get_absolute_url(), get_str))
 
 
     #===========================================================================
@@ -488,10 +487,11 @@ class ExtAdminSite(AdminSite):
                 {
                     'name': model_cls.__name__.lower(),
                     'verbose_name': model_cls._meta.verbose_name,
+                    'app': model_cls.__module__.lower().rsplit('.', 2)[-2],
                 }
             )
             #retrieve column model from classes
-            for field in admin_cls.fields:
+            for field in admin_cls.catalog_fields:
                 try:
                     field_cls = model_cls._meta.get_field_by_name(field)[0]
                 except models.FieldDoesNotExist:
@@ -509,7 +509,7 @@ class ExtAdminSite(AdminSite):
                         'name': field,
                         'type': TYPE_MAP.get(type(field_cls), field_type),
                         'header': verbose_name,
-                        'order': admin_cls.fields.index(field),
+                        'order': admin_cls.catalog_fields.index(field),
                         #TODO: add more functional here
                     }
                 })

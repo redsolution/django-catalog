@@ -22,7 +22,7 @@ var gridBar = new Ext.Toolbar({
 	            }
 	            var parentSectionId = tree_panel.selModel.selNode.id;
 	            
-	            var win = window.open("/admin/catalog/new/{{ model.name }}/?parent=" + 
+	            var win = window.open("/admin/{{ model.app }}/{{ model.name }}/add/?parent=" + 
 	                    tree_panel.selModel.selNode.id + 
 	                    "&_popup=1", "EditTreeItemWindow", 
 	                "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes");
@@ -135,6 +135,8 @@ var grid_events = {
                         var item = catalog_store.getAt(rowIndex);
                         menu = get_context_menu(get_type(item)); 
                         menu.show(e.target);
+                        e.preventDefault();
+                        e.stopPropagation();
                         return false;
         }
 };
@@ -154,16 +156,8 @@ var grid_panel = new Ext.grid.GridPanel({
     enableDragDrop: true,
     listeners: {
         rowcontextmenu: grid_events.rowcontextmenu,
-        contextmenu: function(e){return false}
+//        contextmenu: function(e){return false;}
     }
-});
-
-// strange bug, inserted in listeners, breaks interface loading
-grid_panel.on('rowdblclick', function(grid, rowIndex, e){
-    var item = grid.store.getAt(rowIndex);
-    item_id = String(item.id).replace(/-link/, '');
-    editItem(item_id);
-    return false;
 });
 
 grid_panel.reload = function(){
