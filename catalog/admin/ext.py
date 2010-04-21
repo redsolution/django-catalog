@@ -310,7 +310,7 @@ class ExtAdminSite(AdminSite):
     def delete_items(self, request):
         try:
             items_list = request.REQUEST.get('items', '').split(',')
-            parent_id = request.REQUEST.get('parent_id', None)
+            parent_id = request.REQUEST.get('parent_id', 'root')
             parent = TreeItem.manager.json(parent_id)
             # delete objects
             objects_list = [el for el in items_list if not el.endswith('-link')]
@@ -322,10 +322,11 @@ class ExtAdminSite(AdminSite):
 
             # delete m2m relations
             linked_treeitem_ids = [el.replace('-link', '') for el in items_list if el.endswith('-link')]
-            linked_treeitems = self.get_linked_queryset(
-                parent.content_object).filter(id__in=linked_treeitem_ids)
-            for treeitem in linked_treeitems:
-                self.remove_m2m_object(parent, treeitem)
+            if parent:
+                linked_treeitems = self.get_linked_queryset(
+                    parent.content_object).filter(id__in=linked_treeitem_ids)
+                for treeitem in linked_treeitems:
+                    self.remove_m2m_object(parent, treeitem)
 
             return HttpResponse('OK')
         except ValueError, TreeItem.DoesNotExist:

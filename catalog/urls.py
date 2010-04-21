@@ -10,7 +10,7 @@ if catalog_settings.CATALOG_URL_SHEME == 'id':
     )
 elif catalog_settings.CATALOG_URL_SHEME == 'slug':
     urlpatterns += patterns('catalog.views',
-        url(r'^(?P<slug>.*)-(?P<item_id>\d{1,7})/$', 'tree', name='tree'),
+        url(r'^(?P<model>\w{1,20})-(?P<slug>.*)/$', 'tree', name='tree'),
     )
 
 if catalog_settings.CATALOG_ROOT_PAGE:

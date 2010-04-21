@@ -112,7 +112,16 @@ class TreeItem(models.Model):
         return self.level
 
     def get_absolute_url_undecorated(self):
-        return ('tree', (), {'item_id': self.id, 'slug': self.slug()})
+        if catalog_settings.CATALOG_URL_SHEME == 'id':
+            return ('tree', (), {
+                'item_id': self.id,
+                'slug': self.slug(),
+            })
+        elif catalog_settings.CATALOG_URL_SHEME == 'slug':
+            return ('tree', (), {
+                'slug': self.slug(),
+                'model': self.content_type.model,
+            })
 
     def slug(self):
         try:
