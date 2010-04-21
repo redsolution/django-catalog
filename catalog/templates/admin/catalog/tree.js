@@ -91,7 +91,7 @@ var tree_events = {
 				},
     contextMenuHandler: function(node){
                     node.select();
-                    menu = get_context_menu(get_type(node));
+                    menu = get_context_menu(get_type(node), 'tree');
                     menu.show(node.ui.getAnchor());
                 }
 };
@@ -129,7 +129,6 @@ var tree_panel = new Ext.tree.TreePanel({
 		click: tree_events.panelClick,
         contextmenu: tree_events.contextMenuHandler,
 	}
-
 });
 
 tree_panel.reload = function() {
@@ -141,12 +140,27 @@ tree_panel.reload = function() {
     	catalog_store.load({
     		params: {node: treestate.split('/').reverse()[0]} 
     	});
+    	
     } else
         tree_panel.selModel.select(tree_panel.getRootNode());
         tree_panel.getRootNode().expand();
         catalog_store.load({
             params: {node: 'root'} 
         });
+}
+
+tree_panel.up = function(){
+    if (this.selModel.getSelectedNode()){
+        var parent = this.selModel.getSelectedNode().parentNode;
+        if (parent) {
+            this.selModel.select(parent);
+            Ext.state.Manager.set('treestate', parent.getPath());
+        }
+    }
+    else{
+        this.selModel.select(this.root);
+        Ext.state.Manager.set('treestate', this.root.getPath());
+    }
 }
 
 tree_panel.showMask = function(message) {

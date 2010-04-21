@@ -18,6 +18,7 @@ var gridBar = new Ext.Toolbar({
 	    	icon: '/media/catalog/img/folder.png',
 	    	handler: function(){
 	            if (tree_panel.selModel.selNode == null) {
+	                Ext.Msg.alert('Внимание','Выберите раздел для добавления на левой панели');
 	                return;
 	            }
 	            var parentSectionId = tree_panel.selModel.selNode.id;
@@ -44,7 +45,7 @@ var gridBar = new Ext.Toolbar({
 			for (var i=0; i < selections.length; i++) {
 				r.push(selections[i].id);
 				}
-            delete_items(r);
+            delete_items(r, 'grid');
 		}
     }]
 });
@@ -133,10 +134,9 @@ var catalog_col_model = new Ext.grid.ColumnModel({
 var grid_events = {
     rowcontextmenu: function(grid, rowIndex, e) {
                         var item = catalog_store.getAt(rowIndex);
-                        menu = get_context_menu(get_type(item)); 
+                        menu = get_context_menu(get_type(item), 'grid'); 
                         menu.show(e.target);
                         e.preventDefault();
-                        e.stopPropagation();
                         return false;
         }
 };

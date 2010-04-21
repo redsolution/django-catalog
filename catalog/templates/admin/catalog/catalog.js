@@ -42,13 +42,13 @@ function dismissAddAnotherPopup(win, newId, newRepr) {
 	node = tree_panel.selModel.selNode;
 	node.reload();
     win.close();
-}
+};
 
 function dismissRelatedLookupPopup(win, chosenId) {
 	grid_panel.reload();
     tree_panel.reload();
     win.close();
-}
+};
 
 function showAddAnotherPopup(triggeringLink) {
     var name = triggeringLink.id.replace(/^add_/, '');
@@ -62,4 +62,4 @@ function showAddAnotherPopup(triggeringLink) {
     var win = window.open(href, name, 'height=500,width=800,resizable=yes,scrollbars=yes');
     win.focus();
     return false;
-}
+};

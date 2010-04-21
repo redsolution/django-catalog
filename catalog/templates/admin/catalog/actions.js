@@ -85,7 +85,7 @@ function add_relations(source_list, target_id, point, url) {
 
 
 /****** delete items *******/
-function delete_items(id_list){
+function delete_items(id_list, sender){
     var link_regexp = /\d+-link/;
     var links_to_delete = [];
     var objects_to_delete = [];
@@ -109,7 +109,8 @@ function delete_items(id_list){
             children_count = data.all - objects_to_delete.length;
             // prepare wraning message
             if (children_count > 0 ){
-                warning_message = 'Удаление ' + objects_to_delete.length + ' объектов приведет к удалению ' + children_count + ' дочерних объектов';
+                warning_message = 'Удаление ' + objects_to_delete.length + 
+                ' объектов приведет к удалению ' + children_count + ' дочерних объектов';
                     if (links_to_delete.length > 0 ) {
                         warning_message += 'и ' + links_to_delete.length + 'ссылок. Продолжить?';
                     } else {
@@ -124,9 +125,7 @@ function delete_items(id_list){
                     }
             }
 
-            var parent_node = tree_panel.selModel.selNode.parentNode;
             var parent_id = tree_panel.selModel.selNode ? tree_panel.selModel.selNode.attributes.id : 'root';
-             
 
             Ext.Msg.confirm('Внимание!', warning_message,
                 function(btn, text){
@@ -134,10 +133,19 @@ function delete_items(id_list){
                         Ext.Ajax.request({
                             url: '/admin/catalog/json/delete/',
                             success: function(response, options){
-                                grid_panel.reload();
-                                tree_panel.selModel.select()
+                                if  (sender == 'tree'){
+                                    tree_panel.up();
+                                    tree_panel.reload();
+                                    tree_panel.selModel.selNode.reload();
+                                }
+                                if (sender == 'grid') {
+                                    tree_panel.selModel.selNode.reload();
+                                    tree_panel.reload();
+                                }
+                                
                             },
                             failure: function(response, options){
+                                tree_panel.reload();
                                 grid_panel.reload();
                             },
                             params: {
@@ -156,7 +164,7 @@ function delete_items(id_list){
 }
 
 /*********** item context menu ********/
-function get_context_menu(type) {
+function get_context_menu(type, panel) {
     var items = [
     {
         text: 'Посмотреть на сайте',
@@ -184,18 +192,24 @@ function get_context_menu(type) {
             //TODO:
             edit_related('{{ relation.url }}', tree_panel.selModel.selNode.attributes.id);
         }
-    },
+    }{% if not forloop.last %},{% endif %}
     {% endfor %}
-    {
-        text: 'Удалить',
-        icon: '/media/catalog/img/show-no.png',
-        type: 'all',
-        handler: function(){
-                node = tree_panel.getSelectionModel().getSelectedNode();
-                delete_items([node.id]);
-            }
-    }
     ];
+    
+    // Я решил убрать удаление из контекстного меню таблицы, т.к. не очевидно,
+    // что удалять - текущий элемент или все выделенные
+    if (panel=='tree'){
+        items.push({
+            text: 'Удалить',
+            icon: '/media/catalog/img/show-no.png',
+            type: 'all',
+            handler: function(e){
+                    node = tree_panel.getSelectionModel().getSelectedNode();
+                    delete_items([node.id], 'tree');
+                }        
+        });
+    };
+
 
     var menu = []
     for (var i =0; i < items.length; i++) {
