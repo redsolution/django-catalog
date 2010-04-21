@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-from catalog import settings as catalog_settings
 from catalog.admin.utils import admin_permission_required, get_grid_for_model, \
     get_tree_for_model, encode_decimal
 from catalog.models import TreeItem
-from catalog.utils import render_to
 from django.contrib.admin.sites import AlreadyRegistered, AdminSite, \
     NotRegistered
 from django.db import models, transaction
@@ -13,9 +11,9 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.utils import simplejson
 from django.utils.functional import update_wrapper
 from django.views.generic.simple import direct_to_template
-import re
 from catalog.admin import CatalogAdmin
 from django.db.models.base import ModelBase
+from django.utils.http import urlencode
 
 
 TYPE_MAP = {
@@ -43,35 +41,56 @@ class ExtAdminSite(AdminSite):
     chunks = {}
 
     def get_urls(self):
-        from django.conf.urls.defaults import patterns, url, include
+        from django.conf.urls.defaults import patterns, url
 
-        def wrap(view, cacheable=False):
+        def wrap(view, permission=None):
             def wrapper(*args, **kwargs):
-                return self.admin_view(view, cacheable)(*args, **kwargs)
+                return admin_permission_required(permission)(view)(*args, **kwargs)
             return update_wrapper(wrapper, view)
 
         urlpatterns = patterns('',
             # direct to templates
             url(r'^$', wrap(self.index), name='index'),
-            url(r'^/closepopup$', wrap(self.closepopup), name='closepopup'),
+            url(r'^closepopup$', wrap(self.closepopup), name='closepopup'),
             # redirects
-            url(r'^edit/(\d{1,7})/$', wrap(self.editor_redirect), name='editor_redirect'),
-            url(r'^relations/(\d{1,7})/$', wrap(self.related_redirect), name='related_redirect'),
-            url(r'^view/(\d{1,7})/$', wrap(self.absolute_url_redirect), name='absolute_url_redirect'),
+            url(r'^edit/(\d{1,7})/$',
+                wrap(self.editor_redirect, 'catalog.edit_treeitem'),
+                name='editor_redirect'),
+            url(r'^relations/(\d{1,7})/$',
+                wrap(self.related_redirect, 'catalog.edit_treeitem'),
+                name='related_redirect'),
+            url(r'^view/(\d{1,7})/$',
+                wrap(self.absolute_url_redirect),
+                name='absolute_url_redirect'),
             # ajax views
-            (r'^json/tree/$', self.tree),
-            (r'^json/list/$', self.grid),
-            (r'^json/move/$', self.move_node),
-            (r'^json/delete_count/$', self.delete_count),
-            (r'^json/delete/$', self.delete_items),
+            url(r'^json/tree/$', wrap(self.tree), name='catalog_ajax_tree'),
+            url(r'^json/list/$', wrap(self.grid), name='catalog_aajx_list'),
+            url(r'^json/move/$',
+                wrap(self.move_node, 'catalog.edit_treeitem'),
+                name='catalog_ajax_move'),
+            url(r'^json/delete_count/$', wrap(self.delete_count),
+                name='catalog_ajax_delcount'),
+            url(r'^json/delete/$',
+                wrap(self.delete_items, 'catalog.delete_treeitem'),
+                name='catalog_ajax_delete'),
             # related stuff
-            (r'^rel/json/([\w-]+)/add/$', self.add_related),
-            (r'^rel/([\w-]+)/(\d+)/$', self.edit_related),
-            (r'^rel/json/([\w-]+)/(\d+)/tree/$', self.tree_related),
-            (r'^rel/json/([\w-]+)/(\d+)/save/$', self.save_related),
+            url(r'^rel/(?P<m2m_name>[\w-]+)/(?P<obj_id>\d+)/$',
+                wrap(self.edit_related, 'catalog.edit_treeitem'),
+                name='catalog_m2m_edit'),
+            url(r'^rel/json/(?P<m2m_name>[\w-]+)/add/$',
+                wrap(self.add_related, 'catalog.add_treeitem'),
+                name='catalog_m2m_add'),
+            url(r'^rel/json/(?P<m2m_name>[\w-]+)/(?P<obj_id>\d+)/tree/$',
+                wrap(self.tree_related),
+                name='catalog_m2m_tree'),
+            url(r'^rel/json/(?P<m2m_name>[\w-]+)/(?P<obj_id>\d+)/save/$',
+                wrap(self.save_related, 'catalog.edit_treeitem'),
+                name='catalog_m2m_save'),
             # render javascripts
-            (r'^catalog.js$', self.config_js),
-            (r'^rel/([\w-]+)/(\d+)\.js$', self.config_rel_js),
+            url(r'^catalog.js$', wrap(self.config_js),
+                name='catalog_js'),
+            url(r'^rel/(?P<m2m_name>[\w-]+)/(\d+)\.js$', wrap(self.config_rel_js),
+                name='catalog_rel_js'),
         )
         return urlpatterns
 
@@ -148,23 +167,19 @@ class ExtAdminSite(AdminSite):
     #===========================================================================
     #  Html views
     #===========================================================================
-    @admin_permission_required('catalog.add_treeitem')
     def index(self, request):
         '''
         Display base template layout for catalog admin
         '''
         return direct_to_template(request, 'admin/catalog/main.html')
 
-    @admin_permission_required('catalog.add_treeitem')
     def closepopup(self, request):
         '''
         Display javascript that closes popup window
         '''
         return direct_to_template(request, 'admin/catalog/closepopup.html')
 
-    @admin_permission_required('catalog.edit_treeitem')
     def editor_redirect(self, request, obj_id):
-        from urllib import urlencode
         treeitem = get_object_or_404(TreeItem, id=obj_id)
         get_str = urlencode(request.GET)
         # TODO: reverse this url
@@ -172,10 +187,24 @@ class ExtAdminSite(AdminSite):
             (treeitem.content_object.__module__.rsplit('.', 2)[-2], treeitem.content_type.model,
             treeitem.content_object.id, get_str))
 
+    def related_redirect(self, request, obj_id):
+        treeitem = get_object_or_404(TreeItem, id=obj_id)
+        get_str = urlencode(request.GET)
+        # TODO: reverse this url
+        return HttpResponseRedirect('/admin/catalog/%s/%s/rel/?%s' % (treeitem.content_type.model, treeitem.content_object.id, get_str))
+
+    @admin_permission_required('catalog.edit_treeitem')
+    def absolute_url_redirect(self, request, obj_id):
+        treeitem = get_object_or_404(TreeItem, id=obj_id)
+        get_str = urlencode(request.GET)
+        # TODO: reverse this url
+        return HttpResponseRedirect('%s?%s' % (treeitem.content_object.get_absolute_url(), get_str))
+
+
     #===========================================================================
     #  AJAX views
     #===========================================================================
-    def tree(self, request, match):
+    def tree(self, request):
         '''Return json encoded tree'''
         tree = []
         if request.method == 'POST':
@@ -183,21 +212,22 @@ class ExtAdminSite(AdminSite):
 
             for treeitem in TreeItem.manager.json_children(parent):
                 data = get_tree_for_model(treeitem.content_object,
-                    self._registry.get(treeitem.content_object.__class__, None))
+                    self._registry.get(treeitem.content_object.__class__))
                 if data is not None:
                     tree.append(data)
 
         return HttpResponse(simplejson.dumps(tree, default=encode_decimal))
 
-    def grid(self, request, match):
+    def grid(self, request):
         '''Return json encoded grid data'''
         grid = []
-        if request.method == 'POST':
+#        if request.method == 'POST':
+        if True:
             parent = request.REQUEST.get('node', 'root')
 
             for treeitem in TreeItem.manager.json_children(parent):
                 data = get_grid_for_model(treeitem.content_object,
-                    self._registry.get(treeitem.content_object.__class__, None))
+                    self._registry[treeitem.content_object.__class__])
                 if data is not None:
                     grid.append(data)
 
@@ -216,7 +246,7 @@ class ExtAdminSite(AdminSite):
         return HttpResponse(simplejson.dumps({'items': grid}, default=encode_decimal))
 
     @transaction.commit_on_success
-    def move_node(self, request, match):
+    def move_node(self, request):
         '''Move node above, below or into target node'''
         def may_move(node, parent):
             if parent is None:
@@ -252,7 +282,7 @@ class ExtAdminSite(AdminSite):
             else:
                 return HttpResponseServerError('Can not move')
 
-    def delete_count(self, request, match):
+    def delete_count(self, request):
         try:
             items_list = request.REQUEST.get('items', '').split(',')
             # workaround for empty request
@@ -278,7 +308,7 @@ class ExtAdminSite(AdminSite):
             return HttpResponseServerError('Bad arguments: %s' % e)
 
     @transaction.commit_on_success
-    def delete_items(self, request, match):
+    def delete_items(self, request):
         try:
             items_list = request.REQUEST.get('items', '').split(',')
             parent_id = request.REQUEST.get('parent_id', None)
@@ -306,9 +336,9 @@ class ExtAdminSite(AdminSite):
     # Many to many internal stuff
     #===========================================================================
 
-    def _get_m2m(self, match):
+    def _get_m2m(self, name):
         '''utility to retrieve m2m from m2m site registry'''
-        m2m = self.get_m2ms().get(match[0], None)
+        m2m = self.get_m2ms().get(name, None)
         if m2m is None:
             raise Http404
         return m2m
@@ -342,9 +372,8 @@ class ExtAdminSite(AdminSite):
     # M2M Html views
     #===========================================================================
 
-    def edit_related(self, request, match):
-        m2m = self._get_m2m(match)
-        obj_id = match[1]
+    def edit_related(self, request, m2m_name, obj_id):
+        m2m = self._get_m2m(m2m_name)
         context_data = {
             'verbose_name': m2m['base_model']._meta.verbose_name,
             'instance': get_object_or_404(m2m['base_model'], tree_id=obj_id),
@@ -373,12 +402,11 @@ class ExtAdminSite(AdminSite):
     #===========================================================================
     #  M2M AJAX views
     #===========================================================================
-    def tree_related(self, request, match):
+    def tree_related(self, request, m2m_name, obj_id):
         # m2m tree editor for RelatedField
-        m2m = self._get_m2m(match)
+        m2m = self._get_m2m(m2m_name)
         if m2m is None:
             raise Http404
-        obj_id = match[1]
 
         instance = get_object_or_404(m2m['base_model'], tree_id=obj_id)
         related_manager = getattr(instance, m2m['fk_attr'])
@@ -401,8 +429,8 @@ class ExtAdminSite(AdminSite):
 
 
     @transaction.commit_on_success
-    def add_related(self, request, match):
-        m2m = self._get_m2m(match)
+    def add_related(self, request, m2m_name):
+        m2m = self._get_m2m(m2m_name)
 
         instance_id = request.REQUEST.get('target', None)
         instance = get_object_or_404(m2m['base_model'], tree_id=instance_id)
@@ -420,11 +448,9 @@ class ExtAdminSite(AdminSite):
         return HttpResponse('OK')
 
     @transaction.commit_on_success
-    def save_related(self, request, match):
-        m2m = self._get_m2m(match)
-
-        instance_id = match[1]
-        instance = get_object_or_404(m2m['base_model'], tree_id=instance_id)
+    def save_related(self, request, m2m_name, obj_id):
+        m2m = self._get_m2m(m2m_name)
+        instance = get_object_or_404(m2m['base_model'], tree_id=obj_id)
 
         rel_list = request.REQUEST.get('items', u'').split(',')
         related_manager = getattr(instance, m2m['fk_attr'])
@@ -451,7 +477,7 @@ class ExtAdminSite(AdminSite):
     #===========================================================================
     # render javascript templates 
     #===========================================================================
-    def config_js(self, request, match):
+    def config_js(self, request):
         '''Render ExtJS interface'''
         context_data = {'models': []}
         column_model = {}
@@ -504,11 +530,10 @@ class ExtAdminSite(AdminSite):
 
         return render_to_response('admin/catalog/catalog.js', context_data, mimetype='text/javascript')
 
-    def config_rel_js(self, request, match):
+    def config_rel_js(self, request, m2m_name, obj_id):
         '''Render relation editor js'''
-        m2m = self._get_m2m(match)
-        tree_id = match[1]
-        instance = get_object_or_404(m2m['base_model'], tree_id=tree_id)
+        m2m = self._get_m2m(m2m_name)
+        instance = get_object_or_404(m2m['base_model'], tree_id=obj_id)
         context_data = {
             'm2m': m2m,
             'instance': instance,
@@ -518,4 +543,4 @@ class ExtAdminSite(AdminSite):
 
         return render_to_response('admin/catalog/edit_related.js', context_data, mimetype='text/javascript')
 
-ext_site = ExtAdminSite(name='catalog')
+catalog_admin_site = ExtAdminSite(name='catalog')
