@@ -164,7 +164,10 @@ function delete_items(id_list, sender){
 }
 
 /*********** item context menu ********/
-function get_context_menu(type, panel) {
+function get_context_menu(type, panel, index) {
+	if (index === null){
+		var index = null;
+	}
     var items = [
     {
         text: 'Посмотреть на сайте',
@@ -179,8 +182,15 @@ function get_context_menu(type, panel) {
         icon: '/media/catalog/img/edit.png',
         type: 'all',
         handler: function(){
-            node = tree_panel.getSelectionModel().getSelectedNode();
-            editItem(node.id);
+    		if (panel == 'tree'){
+    			var node = tree_panel.getSelectionModel().getSelectedNode();
+                editItem(node.id);
+    		}
+    		if (panel == 'grid'){
+    			var node = catalog_store.getAt(index);
+    			editItem(node.id);
+    		}
+            
         }
     },
     {{ chunks.context_menu }}

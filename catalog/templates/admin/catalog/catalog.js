@@ -45,7 +45,6 @@ function dismissAddAnotherPopup(win, newId, newRepr) {
 };
 
 function dismissRelatedLookupPopup(win, chosenId) {
-	grid_panel.reload();
     tree_panel.reload();
     win.close();
 };

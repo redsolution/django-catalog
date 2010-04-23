@@ -141,12 +141,13 @@ tree_panel.reload = function() {
     		params: {node: treestate.split('/').reverse()[0]} 
     	});
     	
-    } else
+    } else {
         tree_panel.selModel.select(tree_panel.getRootNode());
         tree_panel.getRootNode().expand();
         catalog_store.load({
             params: {node: 'root'} 
         });
+    }
 }
 
 tree_panel.up = function(){

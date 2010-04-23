@@ -134,7 +134,7 @@ var catalog_col_model = new Ext.grid.ColumnModel({
 var grid_events = {
     rowcontextmenu: function(grid, rowIndex, e) {
                         var item = catalog_store.getAt(rowIndex);
-                        menu = get_context_menu(get_type(item), 'grid'); 
+                        menu = get_context_menu(get_type(item), 'grid', rowIndex); 
                         menu.show(e.target);
                         e.preventDefault();
                         return false;
