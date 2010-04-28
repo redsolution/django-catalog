@@ -22,9 +22,11 @@ class SelectFromSelected(forms.SelectMultiple):
     This widget show SelectMultiple admin input with the difference:
     it show only selected options. This may be useful, when you have
     hundreds of options, resulting page loading is too slow.
-    ''' 
-    
+    '''
+
     def render(self, name, value, attrs=None, choices=[]):
+        if value is None:
+            value = []
         selected_choices = [(el[0], el[1]) for el in self.choices if el[0] in value]
         self.choices = selected_choices
         return super(SelectFromSelected, self).render(name, value, attrs, choices)
