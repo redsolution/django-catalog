@@ -209,7 +209,7 @@ class ExtAdminSite(AdminSite):
         if request.method == 'POST':
             parent = request.REQUEST.get('node', 'root')
 
-            for treeitem in TreeItem.manager.json_children(parent):
+            for treeitem in TreeItem.objects.json_children(parent):
                 data = get_tree_for_model(treeitem.content_object,
                     self._registry.get(treeitem.content_object.__class__))
                 if data is not None:
@@ -224,13 +224,13 @@ class ExtAdminSite(AdminSite):
         if True:
             parent = request.REQUEST.get('node', 'root')
 
-            for treeitem in TreeItem.manager.json_children(parent):
+            for treeitem in TreeItem.objects.json_children(parent):
                 data = get_grid_for_model(treeitem.content_object,
                     self._registry[treeitem.content_object.__class__])
                 if data is not None:
                     grid.append(data)
 
-            parent_treeitem = TreeItem.manager.json(parent)
+            parent_treeitem = TreeItem.objects.json(parent)
             if parent_treeitem is not None:
                 linked_objects = self.get_linked_objects(parent_treeitem.content_object)
                 for link in linked_objects:
@@ -267,15 +267,15 @@ class ExtAdminSite(AdminSite):
             else:
                 position = 'last-child'
 
-            new_parent = TreeItem.manager.json(target_id)
+            new_parent = TreeItem.objects.json(target_id)
             move = []
             for source in sources:
-                this_section = TreeItem.manager.json(source)
+                this_section = TreeItem.objects.json(source)
                 move.append(may_move(this_section, new_parent))
 
             if all(move):
                 for source in sources:
-                    this_section = TreeItem.manager.json(source)
+                    this_section = TreeItem.objects.json(source)
                     this_section.move_to(new_parent, position)
                 return HttpResponse('OK')
             else:
@@ -290,7 +290,7 @@ class ExtAdminSite(AdminSite):
             # remove links' id
             items_list = [el for el in items_list if not el.endswith('-link')]
             if len(items_list) > 0:
-                items_to_delete = TreeItem.manager.filter(id__in=items_list)
+                items_to_delete = TreeItem.objects.filter(id__in=items_list)
                 children_to_delete = 0
                 for item in items_to_delete:
                     children_to_delete += item.get_descendant_count()
@@ -311,7 +311,7 @@ class ExtAdminSite(AdminSite):
         try:
             items_list = request.REQUEST.get('items', '').split(',')
             parent_id = request.REQUEST.get('parent_id', 'root')
-            parent = TreeItem.manager.json(parent_id)
+            parent = TreeItem.objects.json(parent_id)
             # delete objects
             objects_list = [el for el in items_list if not el.endswith('-link')]
             objects_to_delete = TreeItem.objects.filter(id__in=objects_list)
@@ -415,7 +415,7 @@ class ExtAdminSite(AdminSite):
         if request.method == 'POST':
             parent = request.REQUEST.get('node', 'root')
 
-            for treeitem in TreeItem.manager.json_children(parent):
+            for treeitem in TreeItem.objects.json_children(parent):
                 data = get_tree_for_model(treeitem.content_object,
                     self._registry.get(treeitem.content_object.__class__, None))
 

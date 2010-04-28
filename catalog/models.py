@@ -86,7 +86,7 @@ class TreeItem(models.Model):
     if not catalog_settings.CATALOG_MPTT:
         order = models.IntegerField(null=True, default=0)
 
-    manager = TreeItemManager()
+    objects = TreeItemManager()
 
     @permalink
     def get_absolute_url(self):
@@ -130,7 +130,7 @@ class TreeItem(models.Model):
             return u'slug'
 
 try:
-    mptt.register(TreeItem, tree_manager_attr='objects')
+    mptt.register(TreeItem, tree_manager_attr='tree_objects')
 except mptt.AlreadyRegistered:
     pass
 
