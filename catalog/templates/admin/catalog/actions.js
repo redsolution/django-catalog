@@ -17,36 +17,51 @@ function view_on_site(id){
 
 /***** move items on drop *****/
 function move_items(source_list, target_id, point) {
-    tree_panel.showMask('Перемещение товара');
+    var link_regexp = /\d+-link/;
+    var objects_to_move = [];
 
-    Ext.Ajax.request({
-        url: '/admin/catalog/json/move/',
-        timeout: 10000,
-        callback: function() {
-            grid_panel.reload();
-            tree_panel.selModel.selNode.parentNode.reload();
-        },
-        success: function(response, options){
-            tree_panel.hideMask();
-        },
-        failure: function(response, options){
-            tree_panel.hideMask();
-            if (response.staus == '500') {
-                Ext.Msg.alert('Ошибка','Ошибка на сервере');
-                grid_panel.reload();
-                tree_panel.reload();
-            }
-            if (response.isTimeout) {
-                Ext.Msg.alert('Ошибка','Обрыв связи');
-                window.location.reload();
-            }
-        },
-        params: {
-            source: source_list.join(','),
-            target: target_id,
-            point: point
+    for (var i=0; i<source_list.length;i++){
+        var match = String(source_list[i]).match(link_regexp);
+        if (!match) {
+            // silently not move links
+        	objects_to_move.push(source_list[i]);
         }
-    });
+    }
+
+    if (objects_to_move.length){
+        tree_panel.showMask('Перемещение товара');
+    	Ext.Ajax.request({
+            url: '/admin/catalog/json/move/',
+            timeout: 10000,
+            callback: function() {
+                grid_panel.reload();
+                tree_panel.selModel.selNode.parentNode.reload();
+            },
+            success: function(response, options){
+                tree_panel.hideMask();
+            },
+            failure: function(response, options){
+                tree_panel.hideMask();
+                if (response.staus == '500') {
+                    Ext.Msg.alert('Ошибка','Ошибка на сервере');
+                    grid_panel.reload();
+                    tree_panel.reload();
+                }
+                if (response.isTimeout) {
+                    Ext.Msg.alert('Ошибка','Обрыв связи');
+                    window.location.reload();
+                }
+            },
+            params: {
+                source: objects_to_move.join(','),
+                target: target_id,
+                point: point
+            }
+        });
+    } else {
+    	Ext.Msg.alert('Внимание','ссылки переносить нельзя');
+    }
+
 }
 
 /********** add items as relations on drop *******/
