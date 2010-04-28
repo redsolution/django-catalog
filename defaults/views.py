@@ -9,7 +9,7 @@ def visible(request):
     try:
         treeitems_list = request.REQUEST.get('items', '').split(',')
         show = bool(int(request.REQUEST.get('visible', '1')))
-        for treeitem in TreeItem.manager.filter(id__in=treeitems_list):
+        for treeitem in TreeItem.objects.filter(id__in=treeitems_list):
             treeitem.content_object.show = show
             treeitem.content_object.save()
         return HttpResponse('OK')

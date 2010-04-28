@@ -13,7 +13,7 @@ def tree(request, item_id=None, slug=None, model=None):
     if not (item_id or slug or model):
         if catalog_settings.CATALOG_ROOT_PAGE:
             # root page
-            children = TreeItem.manager.json_children(parent='root')
+            children = TreeItem.objects.json_children(parent='root')
 
             return {
                 'treeitem': None,

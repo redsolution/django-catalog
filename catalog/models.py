@@ -164,7 +164,7 @@ def insert_in_tree(sender, instance, **kwrgs):
 
     if created:
         parent = getattr(instance, 'parent')
-        parent_tree_item = TreeItem.manager.json(parent)
+        parent_tree_item = TreeItem.objects.json(parent)
         tree_item = TreeItem(parent=parent_tree_item, content_object=instance)
         tree_item.save()
         instance.save(save_tree_id=True)
