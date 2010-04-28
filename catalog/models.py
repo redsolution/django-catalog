@@ -56,15 +56,23 @@ class TreeItemManager(models.Manager):
         return TreeItem.objects.filter(parent=parent)
 
     def linked(self, treeid):
+        from catalog.admin.ext import catalog_admin_site
+
         if treeid == 'root':
             return []
         treeitem = TreeItem.objects.get(id=treeid)
-        if treeitem.content_type.model == 'section':
-            related_ids = treeitem.content_object.items.values_list('id', flat=True)
-            # FIXME OMG
-            item_ct = ContentType.objects.get_for_model(Item)
-            related = TreeItem.objects.filter(content_type=item_ct, object_id__in=related_ids)
-            return related
+
+        q_object = models.Q()
+
+        for key, m2m in catalog_admin_site._m2ms.iteritems():
+            # For each registered m2m get linked objects
+            if type(treeitem) is m2m['base_model']:
+                related_manager = getattr(treeitem.content_object, m2m['fk_attr'])
+                linked_ids = related_manager.values_list('id', flat=True)
+                linked_ct = ContentType.objects.get_for_model(m2m['rel_model'])
+                q_object |= models.Q(content_type=linked_ct, object_id__in=linked_ids)
+
+        return TreeItem.objects.filter(q_object)
 
 
 class TreeItem(models.Model):
