@@ -46,34 +46,48 @@ class TreeItemManager(models.Manager):
         else:
             return TreeItem.objects.get(id=treeitem_id)
 
-    def json_children(self, parent):
+    def json_children(self, parent, process_queryset=True):
         '''
         Returns children treeitems by their parent id.
         If 'root' given returns root treeitems
         '''
         if parent == 'root':
             parent = None
-        return TreeItem.objects.filter(parent=parent)
+        q_object = models.Q(parent=parent)
+        if process_queryset:
+            return self.get_query_set().filter(q_object)
+        else:
+            return q_object
 
-    def linked(self, treeid):
+    def linked(self, parent, process_queryset=True):
         from catalog.admin.ext import catalog_admin_site
 
-        if treeid == 'root':
+        if parent == 'root':
             return []
-        treeitem = TreeItem.objects.get(id=treeid)
+        treeitem = TreeItem.objects.get(id=parent)
 
         q_object = models.Q()
 
         for key, m2m in catalog_admin_site._m2ms.iteritems():
             # For each registered m2m get linked objects
-            if type(treeitem) is m2m['base_model']:
+            if type(treeitem.content_object) is m2m['base_model']:
                 related_manager = getattr(treeitem.content_object, m2m['fk_attr'])
                 linked_ids = related_manager.values_list('id', flat=True)
                 linked_ct = ContentType.objects.get_for_model(m2m['rel_model'])
                 q_object |= models.Q(content_type=linked_ct, object_id__in=linked_ids)
 
-        return TreeItem.objects.filter(q_object)
+        if process_queryset:
+            return self.get_query_set().filter(q_object)
+        else:
+            return q_object
 
+    def all_children(self, parent):
+        '''
+        Be careful, this method may hit database!
+        '''
+        children_q_object = self.json_children(parent, process_queryset=False)
+        linked_q_object = self.linked(parent, process_queryset=False)
+        return TreeItem.objects.filter(children_q_object | linked_q_object)
 
 class TreeItem(models.Model):
     class Meta:
@@ -130,6 +144,12 @@ class TreeItem(models.Model):
                 'slug': self.slug(),
                 'model': self.content_type.model,
             })
+
+    def all_children(self):
+        return TreeItem.objects.all_children(self.id)
+
+    def all_siblings(self):
+        return TreeItem.objects.all_children(self.parent.id)
 
     def slug(self):
         try:
