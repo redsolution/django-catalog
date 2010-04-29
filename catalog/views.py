@@ -23,15 +23,17 @@ def tree(request, item_id=None, slug=None, model=None):
 
     if catalog_settings.CATALOG_URL_SHEME == 'id':
         treeitem = get_object_or_404(TreeItem, id=item_id)
-        children = treeitem.all_children().all()
     elif catalog_settings.CATALOG_URL_SHEME == 'slug':
         ModelClass = get_object_or_404(ContentType, model=model).model_class()
         instance = get_object_or_404(ModelClass, slug=slug)
         treeitem = instance.tree.get()
-        children = treeitem.all_children().all()
+
+    children = treeitem.all_children().all()
+    siblibgs = treeitem.all_siblings().all()
 
     return {
         'treeitem': treeitem,
         'children': children,
+        'siblibgs': siblibgs,
         'root_page': False,
     }

@@ -62,11 +62,15 @@ class TreeItemManager(models.Manager):
     def linked(self, parent, process_queryset=True):
         from catalog.admin.ext import catalog_admin_site
 
+        # to make empty queryset
+        q_object = models.Q(object_id= -1)
         if parent == 'root':
-            return []
-        treeitem = TreeItem.objects.get(id=parent)
+            if process_queryset:
+                return self.get_empty_query_set()
+            else:
+                return q_object
 
-        q_object = models.Q()
+        treeitem = TreeItem.objects.get(id=parent)
 
         for key, m2m in catalog_admin_site._m2ms.iteritems():
             # For each registered m2m get linked objects
@@ -149,7 +153,10 @@ class TreeItem(models.Model):
         return TreeItem.objects.all_children(self.id)
 
     def all_siblings(self):
-        return TreeItem.objects.all_children(self.parent.id)
+        if self.parent:
+            return TreeItem.objects.all_children(self.parent.id)
+        else:
+            return TreeItem.objects.all_children('root')
 
     def slug(self):
         try:
