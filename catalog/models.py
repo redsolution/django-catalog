@@ -126,12 +126,16 @@ class TreeItem(models.Model):
     def get_absolute_url(self):
         if catalog_settings.CATALOG_ROOT_PAGE and self.is_first_root():
             return reverse('catalog_root_page')
-        if catalog_settings.CATALOG_URL_SHEME == 'id':
+        if catalog_settings.CATALOG_URL_SCHEME == 'id':
+            return reverse('tree', kwargs={
+                'item_id': self.id,
+            })
+        if catalog_settings.CATALOG_URL_SCHEME == 'combo':
             return reverse('tree', kwargs={
                 'item_id': self.id,
                 'slug': self.slug(),
             })
-        elif catalog_settings.CATALOG_URL_SHEME == 'slug':
+        elif catalog_settings.CATALOG_URL_SCHEME == 'slug':
             return reverse('tree', kwargs={
                 'slug': self.slug(),
                 'model': self.content_type.model,

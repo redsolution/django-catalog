@@ -18,8 +18,8 @@ DEFAULT_IMAGEKIT = 'imagekit' in settings.INSTALLED_APPS
 CATALOG_IMAGEKIT = getattr(settings, 'CATALOG_IMAGEKIT', DEFAULT_IMAGEKIT)
 
 # how urls will look like
-# you may set 'id' or 'slug' values 
-CATALOG_URL_SHEME = getattr(settings, 'CATALOG_URL_SHEME', 'id')
+# you may set 'id', 'slug' or 'combo' values
+CATALOG_URL_SCHEME = getattr(settings, 'CATALOG_URL_SCHEME', 'id')
 CATALOG_ROOT_PAGE = getattr(settings, 'CATALOG_ROOT_PAGE', True)
 
 TEST = getattr(settings, 'TEST', None)

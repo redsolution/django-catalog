@@ -19,9 +19,9 @@ def tree(request, item_id=None, slug=None, model=None):
                 raise Http404
         else:
             raise Http404
-    elif catalog_settings.CATALOG_URL_SHEME in 'id':
+    elif catalog_settings.CATALOG_URL_SCHEME in ['id', 'combo']:
         treeitem = get_object_or_404(TreeItem, id=item_id)
-    elif catalog_settings.CATALOG_URL_SHEME == 'slug':
+    elif catalog_settings.CATALOG_URL_SCHEME == 'slug':
         ModelClass = get_object_or_404(ContentType, model=model).model_class()
         instance = get_object_or_404(ModelClass, slug=slug)
         treeitem = instance.tree.get()
