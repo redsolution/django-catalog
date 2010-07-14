@@ -1,9 +1,10 @@
 # -*- conding: utf-8 -*-
+from django.contrib.contenttypes.models import ContentType
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from catalog.models import TreeItem
 from catalog.utils import render_to
 from catalog import settings as catalog_settings
-from django.contrib.contenttypes.models import ContentType
 
 
 @render_to('catalog/treeitem.html')
@@ -12,16 +13,13 @@ def tree(request, item_id=None, slug=None, model=None):
     # root page condition
     if not (item_id or slug or model):
         if catalog_settings.CATALOG_ROOT_PAGE:
-            # root page
-            children = TreeItem.objects.all_children(parent='root')
-
-            return {
-                'treeitem': None,
-                'children': children,
-                'root_page': True,
-            }
-
-    if catalog_settings.CATALOG_URL_SHEME == 'id':
+            try:
+                treeitem = TreeItem.objects.all()[0]
+            except IndexError:
+                raise Http404
+        else:
+            raise Http404
+    elif catalog_settings.CATALOG_URL_SHEME in 'id':
         treeitem = get_object_or_404(TreeItem, id=item_id)
     elif catalog_settings.CATALOG_URL_SHEME == 'slug':
         ModelClass = get_object_or_404(ContentType, model=model).model_class()
@@ -35,5 +33,4 @@ def tree(request, item_id=None, slug=None, model=None):
         'treeitem': treeitem,
         'children': children,
         'siblibgs': siblibgs,
-        'root_page': False,
     }

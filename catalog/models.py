@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from catalog.admin.utils import get_connected_models
 from django.db.models import permalink
+from django.core.urlresolvers import reverse
 
 if catalog_settings.CATALOG_MPTT:
     import mptt
@@ -33,9 +34,8 @@ class Base(models.Model):
         super(Base, self).delete(*args, **kwds)
     delete.alters_data = True
 
-    @permalink
     def get_absolute_url(self):
-        return self.tree.get().get_absolute_url_undecorated()
+        return self.tree.get().get_absolute_url()
 
 class TreeItemManager(models.Manager):
 
@@ -114,9 +114,28 @@ class TreeItem(models.Model):
 
     objects = TreeItemManager()
 
-    @permalink
+    def is_first_root(self):
+        """Return true if the self is the first root object."""
+        if self.parent:
+            return False
+        try:
+            return TreeItem.objects.all()[0].id == self.id
+        except IndexError:
+            return False
+
     def get_absolute_url(self):
-        return self.get_absolute_url_undecorated()
+        if catalog_settings.CATALOG_ROOT_PAGE and self.is_first_root():
+            return reverse('catalog_root_page')
+        if catalog_settings.CATALOG_URL_SHEME == 'id':
+            return reverse('tree', kwargs={
+                'item_id': self.id,
+                'slug': self.slug(),
+            })
+        elif catalog_settings.CATALOG_URL_SHEME == 'slug':
+            return reverse('tree', kwargs={
+                'slug': self.slug(),
+                'model': self.content_type.model,
+            })
 
     def delete(self, *args, **kwds):
         self.content_object.delete()
@@ -137,18 +156,6 @@ class TreeItem(models.Model):
         '''
         return self.level
 
-    def get_absolute_url_undecorated(self):
-        if catalog_settings.CATALOG_URL_SHEME == 'id':
-            return ('tree', (), {
-                'item_id': self.id,
-                'slug': self.slug(),
-            })
-        elif catalog_settings.CATALOG_URL_SHEME == 'slug':
-            return ('tree', (), {
-                'slug': self.slug(),
-                'model': self.content_type.model,
-            })
-
     def all_children(self):
         return TreeItem.objects.all_children(self.id)
 
@@ -163,6 +170,9 @@ class TreeItem(models.Model):
             return self.content_object.slug
         except:
             return u'slug'
+
+    def __unicode__(self):
+        return unicode(self.content_object)
 
 try:
     mptt.register(TreeItem, tree_manager_attr='tree_objects')

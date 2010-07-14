@@ -1,11 +1,9 @@
-{% extends "base.html" %}
+{% extends "catalog/base.html" %}
 {% load i18n %}
 
 {% block content %}
 {% with treeitem.content_object as content_object %}
-<h1>
-{% if root_page %}{% trans "Catalog root section" %}{% else %}{{ content_object.name }}{% endif %}
-</h1>
+<h1>{{ content_object }}</h1>
 
 {% if children %}
     <ul>
