@@ -91,7 +91,7 @@ var related_tree_panel = new Ext.tree.TreePanel({
 
     root: {
         nodeType: 'async',
-        text: 'Каталог',
+        text: 'Каталоги',
         id: 'root',
     }
 
@@ -115,7 +115,7 @@ var section_tree_panel = new Ext.tree.TreePanel({
 
     root: {
         nodeType: 'async',
-        text: 'Каталог',
+        text: 'Каталоги',
         id: 'root',
     }
     

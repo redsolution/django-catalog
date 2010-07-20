@@ -119,7 +119,7 @@ var tree_panel = new Ext.tree.TreePanel({
     dataUrl: '/admin/catalog/json/tree/',
     root: {
         nodeType: 'async',
-        text: 'Каталог',
+        text: 'Каталоги',
         draggable: false,
         id: 'root'
     },
