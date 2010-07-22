@@ -3,9 +3,8 @@ import os.path
 import sys
 
 DEFAULT_CATALOG_CONNECTED_MODELS = [
-    ('defaults.models.Item', 'defaults.admin.ItemAdmin'),
-    ('defaults.models.Section', 'defaults.admin.SectionAdmin'),
-    ('defaults.models.MetaItem', None),
+    ('catalog.defaults.models.Item', 'catalog.defaults.admin.ItemAdmin'),
+    ('catalog.defaults.models.Section', 'catalog.defaults.admin.SectionAdmin'),
 ]
 
 DEFAULT_TINYMCE = 'tinymce' in settings.INSTALLED_APPS
@@ -21,15 +20,3 @@ CATALOG_IMAGEKIT = getattr(settings, 'CATALOG_IMAGEKIT', DEFAULT_IMAGEKIT)
 # you may set 'id', 'slug' or 'combo' values
 CATALOG_URL_SCHEME = getattr(settings, 'CATALOG_URL_SCHEME', 'id')
 CATALOG_ROOT_PAGE = getattr(settings, 'CATALOG_ROOT_PAGE', True)
-
-TEST = getattr(settings, 'TEST', None)
-if TEST is None:
-    if sys.argv[1] == 'test':
-        TEST = True
-    else:
-        TEST = False
-
-if TEST:
-    CATALOG_CONNECTED_MODELS = DEFAULT_CATALOG_CONNECTED_MODELS
-else:
-    CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)
