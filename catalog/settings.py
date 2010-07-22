@@ -6,6 +6,7 @@ DEFAULT_CATALOG_CONNECTED_MODELS = [
     ('catalog.defaults.models.Item', 'catalog.defaults.admin.ItemAdmin'),
     ('catalog.defaults.models.Section', 'catalog.defaults.admin.SectionAdmin'),
 ]
+CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)
 
 DEFAULT_TINYMCE = 'tinymce' in settings.INSTALLED_APPS
 CATALOG_TINYMCE = getattr(settings, 'CATALOG_TINYMCE', DEFAULT_TINYMCE)

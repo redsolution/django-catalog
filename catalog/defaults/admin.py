@@ -18,6 +18,7 @@ class ItemAdmin(CatalogAdmin):
     tree_text_attr = 'name'
     tree_leaf = True
     catalog_fields = ['name', 'slug']
+    m2ms = []
 
 
 class SectionAdmin(admin.ModelAdmin):
@@ -28,8 +29,7 @@ class SectionAdmin(admin.ModelAdmin):
     tree_text_attr = 'name'
     tree_leaf = False
     catalog_fields = ['name', 'slug']
-
+    m2ms = []
 
 register(Item, ItemAdmin)
-register(Line, LineAdmin)
 register(Section, SectionAdmin)

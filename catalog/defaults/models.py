@@ -68,7 +68,7 @@ class CatalogImage(ImageModel):
         spec_module = 'catalog.defaults.ikspec'
         cache_dir = catalog_default_settings.UPLOAD_PATH + 'catalog/cache/'
 
-    image = ImagePreviewField(verbose_name=_('Image'),
+    image = models.ImageField(verbose_name=_('Image'),
         upload_to=catalog_default_settings.UPLOAD_PATH + 'catalog/source')
 
     content_type = models.ForeignKey(ContentType)
