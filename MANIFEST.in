@@ -1,0 +1,8 @@
+recursive-include catalog *.html
+recursive-include catalog *.js
+recursive-include catalog *.cfg
+recursive-include catalog *.py
+recursive-include catalog *.gif
+recursive-include catalog *.png
+recursive-include catalog *.css
+
