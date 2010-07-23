@@ -49,5 +49,5 @@ class Make(BaseMake):
                 join(project_media_dir, 'extjs'),
             )
 
-#        if 'grandma.django-menu-proxy' in self.grandma_settings.installed_packages:
-#            grandma_settings.render_to('settings.py', 'catalog/grandma/settings_menu.py')
+        if 'grandma.django-menu-proxy' in self.grandma_settings.installed_packages:
+            self.grandma_settings.render_to('settings.py', 'catalog/grandma/settings_menu.py')
