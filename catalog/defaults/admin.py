@@ -21,7 +21,7 @@ class ItemAdmin(CatalogAdmin):
     m2ms = []
 
 
-class SectionAdmin(admin.ModelAdmin):
+class SectionAdmin(CatalogAdmin):
     inlines = [ImageInline]
     prepopulated_fields = {'slug': ('name',)}
     model = Section

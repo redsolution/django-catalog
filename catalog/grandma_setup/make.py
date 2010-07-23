@@ -13,3 +13,7 @@ class Make(BaseMake):
         grandma_settings.render_to('urls.py', 'catalog/grandma/urls.py', {
             'catalog_settings': catalog_settings,
         })
+        grandma_settings.render_to(['..', 'templates', 'admin', 'index.html'],
+            'catalog/grandma/admin_index.html', {
+            'catalog_settings': catalog_settings,
+        })
