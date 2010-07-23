@@ -5,7 +5,7 @@ from catalog.models import TreeItem
 from django.contrib.admin.sites import AlreadyRegistered, AdminSite, \
     NotRegistered
 from django.db import models, transaction
-from django.http import HttpResponse, HttpResponseServerError, Http404, \
+from django.http import HttpResponse, HttpResponseForbidden, Http404, \
     HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.utils import simplejson
@@ -247,18 +247,22 @@ class ExtAdminSite(AdminSite):
     @transaction.commit_on_success
     def move_node(self, request):
         '''Move node above, below or into target node'''
-        def may_move(node, parent):
-            if parent is None:
-                return True
-            elif node.content_type.model not in parent.content_object.exclude_children:
-                return True
+        def may_move(source, target, position):
+            if position == 'last-child':
+                if target is None:
+                    return True
+                elif source.content_type.model not in target.content_object.exclude_children:
+                    return True
             else:
-                return False
+                if target is None:
+                    return False
+                elif source.content_type.model not in target.parent.content_object.exclude_children:
+                    return True
+            return False
 
         if request.method == 'POST':
             sources = request.REQUEST.get('source', '').split(',')
-            target = request.REQUEST.get('target', 'root')
-            target_id = target
+            target_id = request.REQUEST.get('target', 'root') # FIXME: id can`t be a string
             point = request.REQUEST.get('point', '')
             if point == 'above':
                 position = 'left'
@@ -267,19 +271,18 @@ class ExtAdminSite(AdminSite):
             else:
                 position = 'last-child'
 
-            new_parent = TreeItem.objects.json(target_id)
+            target = TreeItem.objects.json(target_id) # FIXME: rename json method
             move = []
-            for source in sources:
-                this_section = TreeItem.objects.json(source)
-                move.append(may_move(this_section, new_parent))
+            for source_id in sources:
+                source = TreeItem.objects.json(source_id)
+                move.append(may_move(source, target, position))
 
             if all(move):
-                for source in sources:
-                    this_section = TreeItem.objects.json(source)
-                    this_section.move_to(new_parent, position)
+                for source_id in sources:
+                    source = TreeItem.objects.json(source_id)
+                    source.move_to(target, position)
                 return HttpResponse('OK')
-            else:
-                return HttpResponseServerError('Can not move')
+        return HttpResponseForbidden('Can not move')
 
     def delete_count(self, request):
         try:
@@ -304,7 +307,7 @@ class ExtAdminSite(AdminSite):
                     'all': 0,
                 }))
         except (ValueError, TreeItem.DoesNotExist), e:
-            return HttpResponseServerError('Bad arguments: %s' % e)
+            return HttpResponseForbidden('Bad arguments: %s' % e)
 
     @transaction.commit_on_success
     def delete_items(self, request):
@@ -330,7 +333,7 @@ class ExtAdminSite(AdminSite):
 
             return HttpResponse('OK')
         except ValueError, TreeItem.DoesNotExist:
-            return HttpResponseServerError('Bad arguments')
+            return HttpResponseForbidden('Bad arguments')
 
     #===========================================================================
     # Many to many internal stuff
