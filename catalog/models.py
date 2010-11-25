@@ -6,10 +6,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
-import mptt
+from mptt.models import MPTTModel
 
 
-class TreeItem(models.Model):
+class TreeItem(MPTTModel):
     '''
     Generic model for handle tree organization.
     It can organize different objects into tree without
@@ -30,13 +30,30 @@ class TreeItem(models.Model):
 
     def __unicode__(self):
         return unicode(self.content_object)
+    
+    def delete(self, *args, **kwds):
+        print 'deleting content object', self.content_object
+        self.content_object.delete()
+        super(TreeItem, self).delete(*args, **kwds)
+    delete.alters_data = True
 
 
-try:
-    mptt.register(TreeItem, tree_manager_attr='tree_objects')
-except mptt.AlreadyRegistered:
-    pass
-
+class Link(models.Model):
+    '''
+    Link model allows to publish one model several times in
+    different places in catalog tree
+    '''
+    
+    class Meta:
+        verbose_name = _('Catalog link')
+        verbose_name_plural = _('Catalog links')
+    
+    tree = generic.GenericRelation('TreeItem')
+    
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    
 
 class CatalogBase(models.Model):
     '''
@@ -49,6 +66,7 @@ class CatalogBase(models.Model):
     
     
     tree = generic.GenericRelation('TreeItem')
+    links = generic.GenericRelation('Link')
     parent = None  # default parent for objects. See :meth:`~catalog.models.insert_in_tree`
 
 
@@ -62,14 +80,13 @@ def insert_in_tree(sender, instance, **kwrgs):
 
     if created:
         parent = getattr(instance, 'parent')
-        try:
-            parent_tree_item = TreeItem.objects.get(parent=parent)
-        except ObjectDoesNotExist:
+        if parent is None:
             parent_tree_item = None
+        else:
+            parent_tree_item = TreeItem.objects.get(parent=parent)
         tree_item = TreeItem(parent=parent_tree_item, content_object=instance)
         tree_item.save()
         instance.save()
-        
 
 
 for model_cls, admin_cls in get_connected_models():
