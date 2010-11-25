@@ -2,11 +2,11 @@
 from catalog.utils import get_connected_models
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 import mptt
-
 
 
 class TreeItem(models.Model):
@@ -38,11 +38,16 @@ except mptt.AlreadyRegistered:
     pass
 
 
-class Base(object):
+class CatalogBase(models.Model):
     '''
     Base class for inserted in catalog models.
     It contains mixin attributes and methods, that can be useful in your catalog
     '''
+    
+    class Meta:
+        abstract = True
+    
+    
     tree = generic.GenericRelation('TreeItem')
     parent = None  # default parent for objects. See :meth:`~catalog.models.insert_in_tree`
 
@@ -57,10 +62,14 @@ def insert_in_tree(sender, instance, **kwrgs):
 
     if created:
         parent = getattr(instance, 'parent')
-        parent_tree_item = TreeItem.objects.json(parent)
+        try:
+            parent_tree_item = TreeItem.objects.get(parent=parent)
+        except ObjectDoesNotExist:
+            parent_tree_item = None
         tree_item = TreeItem(parent=parent_tree_item, content_object=instance)
         tree_item.save()
-        instance.save(save_tree_id=True)
+        instance.save()
+        
 
 
 for model_cls, admin_cls in get_connected_models():

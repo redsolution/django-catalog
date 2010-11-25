@@ -1,109 +1,85 @@
 # -*- coding: utf-8 -*-
-from django.db import models
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
-from catalog.fields import RelatedField
-from catalog.models import TreeItem, Base
-
 from catalog import settings as catalog_settings
-
-# fake tinymce
-if catalog_settings.CATALOG_TINYMCE:
+from catalog.contrib.defaults.settings import UPLOAD_ROOT
+from catalog.models import TreeItem, CatalogBase
+from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+from os.path import join
+# fake TinyMCE
+try:
     from tinymce.models import HTMLField
-else:
+except ImportError:
     from django.forms import Textarea as HTMLField
+
 # fake imagekit
-if catalog_settings.CATALOG_IMAGEKIT:
+try:
     from imagekit.models import ImageModel
-else:
+except ImportError:
     from django.db.models import Model as ImageModel
 
 
-class Section(Base):
+class CommonFields(CatalogBase):
     class Meta:
-        verbose_name = u"Раздел каталога"
-        verbose_name_plural = u'Разделы каталога'
-
-    images = generic.GenericRelation('TreeItemImage')
+        abstract = True
+    
+    images = generic.GenericRelation('CatalogImage')
 
     # Display options
-    show = models.BooleanField(verbose_name=u'Отображать', default=True)
+    show = models.BooleanField(verbose_name=_('Show on site'), default=True)
 
+class Section(CommonFields, models.Model):
+    class Meta:
+        verbose_name = _('Catalog section')
+        verbose_name_plural = _('Catalog sections')
+    
     # Primary options
-    slug = models.SlugField(verbose_name=u'Slug', max_length=200, null=True, blank=True)
-    name = models.CharField(verbose_name=u'Наименование', max_length=200, default='')
-    description = models.TextField(verbose_name=u'Описание', null=True, blank=True)
-
-    @models.permalink
-    def get_absolute_url(self):
-        return self.tree.get().get_absolute_url()
+    name = models.CharField(verbose_name=_('Section name'), max_length=200, default='')
+    slug = models.SlugField(verbose_name=_('Slug'), max_length=200, null=True, blank=True)
+    description = models.TextField(verbose_name=_('Section description'), null=True, blank=True)
 
     def __unicode__(self):
         return self.name
 
 
-class MetaItem(Section):
+class Item(CommonFields, models.Model):
     class Meta:
-        verbose_name = u"Метатовар"
-        verbose_name_plural = u'Метатовары'
-
-    images = generic.GenericRelation('TreeItemImage')
-
-    exclude_children = [u'section']
-
-    @models.permalink
-    def get_absolute_url(self):
-        return self.tree.get().get_absolute_url_undecorated()
-
-
-class Item(Base):
-    class Meta:
-        verbose_name = u"Продукт каталога"
-        verbose_name_plural = u'Продукты каталога'
-
-    images = generic.GenericRelation('TreeItemImage')
-
-    # Display options
-    show = models.BooleanField(verbose_name=u'Отображать', default=True)
+        verbose_name = _('Catalog item')
+        verbose_name_plural = _('Catalog items')
 
     # Primary options
-    slug = models.SlugField(verbose_name=u'Slug', max_length=200, null=True, blank=True)
-    name = models.CharField(verbose_name=u'Наименование', max_length=200, default='')
-    description = models.TextField(verbose_name=u'Описание', null=True, blank=True)
-
-    # Item fields
-    # Relation options
-    relative = RelatedField('Item', verbose_name=u'Сопутствующие товары', null=True, blank=True, related_name='relative')
-    sections = RelatedField('Section', verbose_name=u'Разделы', null=True, blank=True, related_name='items')
+    name = models.CharField(verbose_name=_('Item name'), max_length=200, default='')
+    slug = models.SlugField(verbose_name=_('Slug'), max_length=200, null=True, blank=True)
+    description = models.TextField(verbose_name=_('Item description'), null=True, blank=True)
 
     # Sale options
-    price = models.DecimalField(verbose_name=u'Цена', null=True, blank=True, max_digits=12, decimal_places=2)
-    quantity = models.IntegerField(verbose_name=u'Остаток на складе',
-        help_text=u'Введите 0 если на складе нет товара', null=True, blank=True)
-
-    exclude_children = [u'item', u'section', u'metaitem']
-
-    @models.permalink
-    def get_absolute_url(self):
-        return self.tree.get().get_absolute_url_undecorated()
+    price = models.DecimalField(verbose_name=_('Item price'), null=True, blank=True, max_digits=12, decimal_places=2)
+    quantity = models.IntegerField(verbose_name=_('Item quantity'),
+        help_text=_('Enter 0 if you have no items. Item will be automatically hidden'), null=True, blank=True)
 
     def __unicode__(self):
         return self.name
 
-class TreeItemImage(ImageModel):
-    image = models.ImageField(verbose_name=u'Изображение',
-        upload_to='upload/catalog/itemimages/%Y-%m-%d')
 
-    pallete = models.BooleanField(default=False, verbose_name=u'Палитра',
-        help_text=u'Картинка будет отображаться в полном размере после описания')
+class CatalogImage(ImageModel):
+    class Meta:
+        verbose_name = _('Generic catalog image')
+        verbose_name_plural = _('Generic catalog images')
+    
+    image = models.ImageField(verbose_name=_('Image'),
+        upload_to=join(UPLOAD_ROOT, 'catalog'))
 
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
+    # content object points to an object which belongs to the image 
     content_object = generic.GenericForeignKey('content_type', 'object_id')
 
     class IKOptions:
-        cache_dir = 'upload/catalog/cache'
-        spec_module = 'defaults.ikspec'
+        cache_dir = join(UPLOAD_ROOT, 'cache/catalog')
 
     def __unicode__(self):
-        return self.image.url
+        if self.image:
+            return self.image.url
+        else:
+            return 'image deleted'

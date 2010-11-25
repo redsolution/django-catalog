@@ -3,8 +3,8 @@ import os.path
 import sys
 
 DEFAULT_CATALOG_CONNECTED_MODELS = [
-    ('catalog.contrib.defaults.models.Item'),
-    ('catalog.contrib.defaults.models.Section'),
+    ('catalog.contrib.defaults.models.Item', None),
+    ('catalog.contrib.defaults.models.Section', None),
 ]
 CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)
 
