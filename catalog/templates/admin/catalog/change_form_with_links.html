@@ -1,81 +1,28 @@
-{% extends "admin/base_site.html" %}
+{% extends "admin/change_form.html" %}
 {% load i18n admin_modify adminmedia %}
-
-{% block extrahead %}{{ block.super }}
-{% url admin:jsi18n as jsi18nurl %}
-<script type="text/javascript" src="{{ jsi18nurl|default:"../../../jsi18n/" }}"></script>
-{{ media }}
-{% endblock %}
-
-{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% admin_media_prefix %}css/forms.css" />{% endblock %}
-
-{% block coltype %}{% if ordered_objects %}colMS{% else %}colM{% endif %}{% endblock %}
-
-{% block bodyclass %}{{ opts.app_label }}-{{ opts.object_name.lower }} change-form{% endblock %}
-
-{% block breadcrumbs %}{% if not is_popup %}
-<div class="breadcrumbs">
-     <a href="../../../">{% trans "Home" %}</a> &rsaquo;
-     <a href="../../">{{ app_label|capfirst|escape }}</a> &rsaquo; 
-     {% if has_change_permission %}<a href="../">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %} &rsaquo; 
-     {% if add %}{% trans "Add" %} {{ opts.verbose_name }}{% else %}{{ original|truncatewords:"18" }}{% endif %}
-</div>
-{% endif %}{% endblock %}
-
-{% block content %}<div id="content-main">
-{% block object-tools %}
-{% if change %}{% if not is_popup %}
-  <ul class="object-tools"><li><a href="history/" class="historylink">{% trans "History" %}</a></li>
-  {% if has_absolute_url %}<li><a href="../../../r/{{ content_type_id }}/{{ object_id }}/" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif%}
-  </ul>
-{% endif %}{% endif %}
-{% endblock %}
-<form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.module_name }}_form">{% csrf_token %}{% block form_top %}{% endblock %}
-<div>
-{% if is_popup %}<input type="hidden" name="_popup" value="1" />{% endif %}
-{% if save_on_top %}{% submit_row %}{% endif %}
-{% if errors %}
-    <p class="errornote">
-    {% blocktrans count errors|length as counter %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktrans %}
-    </p>
-    {{ adminform.form.non_field_errors }}
-{% endif %}
-
-{% for fieldset in adminform %}
-  {% include "admin/includes/fieldset.html" %}
-{% endfor %}
-
-{% block links %}
-<div class="links">We are links!</div>
 {% load mptt_tags %}
-<p>Main breadcrumb: {{ original.tree.get.get_ancestors|tree_path:">" }}>{{ original.tree.get }}</p>
-<p>Links: <ul>{% for link in original.links.all %}
-    <li>{{ link.tree.get.get_ancestors|tree_path:">" }}>{{ link.tree.get }}</li>
-    {% empty %}
-    <li>No links available</li>
-    {%  endfor %}
-</ul></p>
-<a onclick="return showAddAnotherPopup(this);" id="add_id_groups" class="add-another" href="newlink">
-    <img width="10" height="10" alt="Добавить еще" src="/media/admin/img/admin/icon_addlink.gif">Add link</a>
-{% endblock %}
 
-{% block after_field_sets %}{% endblock %}
-
-{% for inline_admin_formset in inline_admin_formsets %}
-    {% include inline_admin_formset.opts.template %}
-{% endfor %}
-
-{% block after_related_objects %}{% endblock %}
-
-{% submit_row %}
-
-{% if adminform and add %}
-   <script type="text/javascript">document.getElementById("{{ adminform.first_field.auto_id }}").focus();</script>
-{% endif %}
-
-{# JavaScript for prepopulated fields #}
-{% prepopulated_fields_js %}
-
+{% block after_field_sets %}
+{% block links %}
+<fieldset class="module inline-group aligned">
+<h2>{% trans "Object's links" %}</h2>
+<div class="form-row show">
+    <label for="main_breadcrumb">{% trans "Main breadcrumb" %}:</label>
+    <p id="main_breadcrumb">{{ original.tree.get.get_ancestors|tree_path:" &rarr; " }}{{ original.tree.get }}</p>
+</div> 
+<div class="form-row show">
+    <label for="links_breadcrumbs">{% trans "All breadcrumbs" %}:</label>
+    <ul>
+        {% for link in original.links.all %}
+            <li>{{ link.tree.get.get_ancestors|tree_path:" &rarr; " }} &rarr; {{ link.tree.get }}</li>
+            {% empty %}
+            <li>No links available</li>
+        {%  endfor %}
+    </ul>
 </div>
-</form></div>
+<div class="add-row">
+    <a onclick="return showAddAnotherPopup(this);" id="add_id_groups" class="add-another" href="newlink">{% trans 'Add link' %}</a>
+</div>
+</fieldset>
+{% endblock %}
 {% endblock %}
