@@ -1,19 +1,25 @@
 # -*- coding: utf-8 -*-
+from catalog.models import Link
+from django import template
 from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.admin.util import unquote
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
-from django import template
 from django.utils.encoding import force_unicode
+from django.utils.translation import ugettext_lazy as _
 from forms import LinkInsertionForm
 from models import TreeItem
 from mptt.admin import MPTTModelAdmin
-from django.utils.translation import ugettext_lazy as _
 
 
 class CatalogAdmin(admin.ModelAdmin):
+
+    # override to show links
+    add_form_template = 'admin/catalog/change_form_with_links.html'
+    change_form_template = 'admin/catalog/change_form_with_links.html'
+
     
     def add_link(self, request, object_id):
         '''Show new link creation form'''
@@ -35,9 +41,15 @@ class CatalogAdmin(admin.ModelAdmin):
             })
          
         fields = form.base_fields.keys()
-#        fields.remove('content_type')
-#        fields.remove('object_id')
-        fieldsets = [(None, {'fields': fields})]
+        fields.remove('content_type')
+        fields.remove('object_id')
+        fieldsets = [
+            (_('Select position'), {
+                'fields': ('content_type', 'object_id'),
+                'classes': ('collapsed',),
+            }),
+            (None, {'fields': fields}),
+        ]
         # TODO: Make render_link_form function
         # TODO: Make response_link_add function
         context = {
@@ -73,5 +85,13 @@ class CatalogAdmin(admin.ModelAdmin):
         ) + super(CatalogAdmin, self).get_urls()
 
 
+class TreeItemAdmin(MPTTModelAdmin):
+    change_form_template = 'admin/catalog/change_treeiem.html'
+
 # TODO: Remove delete action (we need to call delete() method per-object)
-admin.site.register(TreeItem, MPTTModelAdmin)
+admin.site.register(TreeItem, TreeItemAdmin)
+
+class LinkAdmin(CatalogAdmin):
+    model = Link
+
+admin.site.register(Link, LinkAdmin)

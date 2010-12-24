@@ -15,7 +15,9 @@ class LinkInsertionForm(forms.models.ModelForm):
 
     treeitem = TreeNodeChoiceField(queryset=TreeItem.objects.all())
     position = TreeNodePositionField()
-    content_type = forms.ModelChoiceField(queryset=ContentType.objects.all())
+    # Just in case the user can not edit these fields directly
+    content_type = forms.ModelChoiceField(queryset=ContentType.objects.all(),
+        widget=forms.HiddenInput())
     object_id = forms.IntegerField(widget=forms.HiddenInput())
 
     def save(self, *args, **kwds):
