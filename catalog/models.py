@@ -32,7 +32,6 @@ class TreeItem(MPTTModel):
         return unicode(self.content_object)
     
     def delete(self, *args, **kwds):
-        print 'deleting content object', self.content_object
         self.content_object.delete()
         super(TreeItem, self).delete(*args, **kwds)
     delete.alters_data = True
@@ -53,7 +52,9 @@ class Link(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
-
+    
+    def __unicode__(self):
+        return _('Link to %s') % unicode(self.content_object)
 
 class CatalogBase(models.Model):
     '''

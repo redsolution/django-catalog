@@ -11,3 +11,12 @@
   </ul>
 {% endif %}{% endif %}
 {% endblock %}
+
+{% block after_field_sets %}
+<fieldset class="module inline-group aligned">
+<h2>{% trans "Move tree item" %}</h2>
+<div class="form-row show">
+    <a onclick="return showAddAnotherPopup(this);" href="move">{% trans 'Move' %} {{ original.content_object }}</a>
+</div> 
+</fieldset>
+{% endblock %}
