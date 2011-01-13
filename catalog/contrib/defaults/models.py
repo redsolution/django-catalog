@@ -29,15 +29,17 @@ class CommonFields(CatalogBase):
     # Display options
     show = models.BooleanField(verbose_name=_('Show on site'), default=True)
 
+    # Primary options
+    name = models.CharField(verbose_name=_('Section name'), max_length=200, default='')
+    slug = models.SlugField(verbose_name=_('Slug'), max_length=200, null=True, blank=True)
+    description = models.TextField(verbose_name=_('Section description'), null=True, blank=True)
+
+
 class Section(CommonFields, models.Model):
     class Meta:
         verbose_name = _('Catalog section')
         verbose_name_plural = _('Catalog sections')
     
-    # Primary options
-    name = models.CharField(verbose_name=_('Section name'), max_length=200, default='')
-    slug = models.SlugField(verbose_name=_('Slug'), max_length=200, null=True, blank=True)
-    description = models.TextField(verbose_name=_('Section description'), null=True, blank=True)
 
     def __unicode__(self):
         return self.name
@@ -47,11 +49,6 @@ class Item(CommonFields, models.Model):
     class Meta:
         verbose_name = _('Catalog item')
         verbose_name_plural = _('Catalog items')
-
-    # Primary options
-    name = models.CharField(verbose_name=_('Item name'), max_length=200, default='')
-    slug = models.SlugField(verbose_name=_('Slug'), max_length=200, null=True, blank=True)
-    description = models.TextField(verbose_name=_('Item description'), null=True, blank=True)
 
     # Sale options
     price = models.DecimalField(verbose_name=_('Item price'), null=True, blank=True, max_digits=12, decimal_places=2)
