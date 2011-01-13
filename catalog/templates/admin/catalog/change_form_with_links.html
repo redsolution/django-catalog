@@ -8,7 +8,7 @@
 <h2>{% trans "Object's links" %}</h2>
 <div class="form-row show">
     <label for="main_breadcrumb">{% trans "Main breadcrumb" %}:</label>
-    <p id="main_breadcrumb">{{ original.tree.get.get_ancestors|tree_path:" &rarr; " }}{{ original.tree.get }}</p>
+    <p id="main_breadcrumb">{{ original.tree.get.get_ancestors|tree_path:" &rarr; "|safe }}{{ original.tree.get }}</p>
 </div> 
 <div class="form-row show">
     <label for="links_breadcrumbs">{% trans "All breadcrumbs" %}:</label>
