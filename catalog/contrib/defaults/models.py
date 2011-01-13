@@ -51,6 +51,7 @@ class Item(CommonFields, models.Model):
         verbose_name_plural = _('Catalog items')
 
     # Sale options
+    article = models.CharField(verbose_name=_('Item article'), null=True, blank=True, max_length=30)
     price = models.DecimalField(verbose_name=_('Item price'), null=True, blank=True, max_digits=12, decimal_places=2)
     quantity = models.IntegerField(verbose_name=_('Item quantity'),
         help_text=_('Enter 0 if you have no items. Item will be automatically hidden'), null=True, blank=True)
