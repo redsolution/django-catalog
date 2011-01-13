@@ -1,0 +1,2 @@
+Django generic catalog application. Organize objects in tree structure, allows
+to make links for objects.

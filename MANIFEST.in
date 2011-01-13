@@ -1,0 +1,3 @@
+recursive-include catalog *
+include README README.rst DESCRIPTION INSTALL.txt
+exclude *.orig *.pyc
