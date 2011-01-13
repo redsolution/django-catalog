@@ -82,10 +82,9 @@ def insert_in_tree(sender, instance, **kwrgs):
     if created:
         parent = getattr(instance, 'parent')
         if parent is None:
-            parent_tree_item = None
+            tree_item = TreeItem(parent=None, content_object=instance)
         else:
-            parent_tree_item = TreeItem.objects.get(parent=parent)
-        tree_item = TreeItem(parent=parent_tree_item, content_object=instance)
+            tree_item = TreeItem(parent=parent, content_object=instance)
         tree_item.save()
         instance.save()
 
