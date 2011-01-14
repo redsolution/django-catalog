@@ -1,0 +1,14 @@
+{% extends "catalog/base.html" %}
+
+{% block content %}
+<h1>Catalog root</h1>
+
+{% if object_list %}
+<ul>
+    {% for treeitem in object_list %}
+    <li>{% include "catalog/treeitem_include.html" %}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}

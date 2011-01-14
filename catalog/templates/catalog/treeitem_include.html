@@ -1,0 +1,8 @@
+<div class="treeitem">
+<p>{{ treeitem.content_type.model }}: 
+{% if treeitem.content_object.images.count %}
+    <img src="{{ treeitem.content_object.images.all.0.image.url }}" />
+{% endif %}
+<a href="{{ treeitem.content_object.get_absolute_url }}">{{ treeitem.content_object }}</a>
+</p>
+</div>

@@ -1,0 +1,21 @@
+{% extends "catalog/base.html" %}
+
+{% block content %}
+<h1>{% if object.content_object %}{{ object.content_object }}{% else %}{{ object }}{% endif %}</h1>
+
+Children: 
+    {% if object.content_object %}
+    <ul>
+        {% for treeitem in object.children.all %}
+            {% include "catalog/treeitem_include.html" %}
+        {% endfor %}
+    </ul>
+    {% else %}
+    <ul>
+        {% for treeitem in object.tree.get.children.all %}
+            {% include "catalog/treeitem_include.html" %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+{% endblock %}

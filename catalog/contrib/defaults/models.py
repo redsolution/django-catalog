@@ -4,6 +4,7 @@ from catalog.contrib.defaults.settings import UPLOAD_ROOT
 from catalog.models import TreeItem, CatalogBase
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from os.path import join
@@ -33,7 +34,28 @@ class CommonFields(CatalogBase):
     name = models.CharField(verbose_name=_('Section name'), max_length=200, default='')
     slug = models.SlugField(verbose_name=_('Slug'), max_length=200, null=True, blank=True)
     description = models.TextField(verbose_name=_('Section description'), null=True, blank=True)
-
+    
+    def get_absolute_url(self):
+        try:
+            # test if catalog-by-slug installed
+            reverse('catalog-by-slug', kwargs={'model': 'model', 'slug': 'slug'})
+        except NoReverseMatch:
+            pass
+        else:
+            return reverse('catalog-by-slug', kwargs={
+                'model': self.__class__.__name__.lower(),
+                'slug': self.slug,
+            })
+        try:
+            reverse('catalog-by-id', kwargs={'slug': 'slug', 'object_id': '1'})
+        except NoReverseMatch:
+            pass
+        else:
+            return reverse('catalog-by-id', kwargs={
+                'slug': self.slug,
+                'object_id': self.tree.get().id,
+            })
+        raise NoReverseMatch('No appropriate methods found, take a look in the code')
 
 class Section(CommonFields, models.Model):
     class Meta:
@@ -75,6 +97,8 @@ class CatalogImage(ImageModel):
 
     class IKOptions:
         cache_dir = join(UPLOAD_ROOT, 'cache/catalog')
+        spec_module = 'catalog.contrib.defaults.ikspecs'
+        cache_filename_format = "%(filename)s-%(specname)s.%(extension)s"
 
     def __unicode__(self):
         if self.image:
