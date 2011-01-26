@@ -10,7 +10,7 @@ import csv
 import logging
 from decimal import Decimal
 try:
-    from pinyin import urlify
+    from pinyin.urlify import urlify
 except ImportError:
     from django.template.defaultfilters import slugify as urlify
 
