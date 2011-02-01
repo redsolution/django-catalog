@@ -2,23 +2,28 @@
 {% load adminmedia admin_list i18n %}
 
 {% block extrastyle %}
-    <!-- <link rel="stylesheet" type="text/css" href="http://extjs.cachefly.net/ext-3.2.1/resources/css/ext-all.css"/> -->
+    <link rel="stylesheet" type="text/css" href="http://extjs.cachefly.net/ext-3.2.1/resources/css/ext-all.css"/>
     {% url admin:jsi18n as jsi18nurl %}
     <script type="text/javascript" src="{{ jsi18nurl|default:'../../jsi18n/' }}"></script>
 {% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
-    <!-- <script type="text/javascript" src="http://extjs.cachefly.net/ext-3.2.1/adapter/ext/ext-base.js"></script>
-        <script type="text/javascript" src="http://extjs.cachefly.net/ext-3.2.1/ext-all-debug.js"></script> -->
+    <script type="text/javascript" src="http://extjs.cachefly.net/ext-3.2.1/adapter/ext/ext-base.js"></script>
+    <script type="text/javascript" src="http://extjs.cachefly.net/ext-3.2.1/ext-all-debug.js"></script>
+    <script type="text/javascript" src="/media/catalog/Catalog.Classes.js"></script>
+    <script type="text/javascript" src="/media/catalog/Catalog.Viewport.js"></script>
+
     <script type="text/javascript"> 
-Ext.onReady(function() {
-    Ext.QuickTips.init();
-    var cmp1 = new Ext.Viewport({
-        renderTo: Ext.getBody()
+    
+    Ext.onReady(function() {
+        Ext.QuickTips.init();
+        var catalogEl = Ext.DomHelper.overwrite('content', '<div id="catalog"></div>');
+        var cmp1 = new Catalog.View({
+            renderTo: catalogEl
+        });
+        cmp1.show();
     });
-    cmp1.show();
-});
     </script>
 {% endblock %}
 
