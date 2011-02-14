@@ -406,27 +406,28 @@ class ExtAdminSite(object):
             )
             #retrieve column model from classes
             for field in admin_cls.fields:
-                try:
-                    field_cls = model_cls._meta.get_field_by_name(field)[0]
-                except models.FieldDoesNotExist:
-                    # get verbose name from function attributes
-                    # default type will be string
-                    verbose_name = getattr(getattr(model_cls, field), 'verbose_name', u'')
-                    field_type = getattr(getattr(model_cls, field), 'type', u'string')
-                    field_cls = None
-                else:
-                    verbose_name = field_cls.verbose_name
-                    field_type = 'string'
+                if field is not None:
+                    try:
+                        field_cls = model_cls._meta.get_field_by_name(field)[0]
+                    except models.FieldDoesNotExist:
+                        # get verbose name from function attributes
+                        # default type will be string
+                        verbose_name = getattr(getattr(model_cls, field), 'verbose_name', u'')
+                        field_type = getattr(getattr(model_cls, field), 'type', u'string')
+                        field_cls = None
+                    else:
+                        verbose_name = field_cls.verbose_name
+                        field_type = 'string'
 
-                column_model.update({
-                    field: {
-                        'name': field,
-                        'type': TYPE_MAP.get(type(field_cls), field_type),
-                        'header': verbose_name,
-                        'order': admin_cls.fields.index(field),
-                        #TODO: add more functional here
-                    }
-                })
+                    column_model.update({
+                        field: {
+                            'name': field,
+                            'type': TYPE_MAP.get(type(field_cls), field_type),
+                            'header': verbose_name,
+                            'order': admin_cls.fields.index(field),
+                            #TODO: add more functional here
+                        }
+                    })
             for m2m_name, m2m in self.get_m2ms().iteritems():
                 relations.update({
                     m2m_name: {
@@ -437,7 +438,7 @@ class ExtAdminSite(object):
                         'source': m2m['rel_model'].__name__.lower(),
                     }
                 })
-                
+
             context_data['column_model'] = sorted(column_model.itervalues(), key=lambda x: x['order'])
             context_data['relations'] = relations
             context_data['chunks'] = self.chunks
