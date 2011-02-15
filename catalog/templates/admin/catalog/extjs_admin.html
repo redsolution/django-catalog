@@ -2,15 +2,14 @@
 {% load adminmedia admin_list i18n %}
 
 {% block extrastyle %}
-    <link rel="stylesheet" type="text/css" href="http://extjs.cachefly.net/ext-3.2.1/resources/css/ext-all.css"/>
+    <link rel="stylesheet" type="text/css" href="http://code.google.com/p/extjs-public/source/browse/tags/extjs-3.3.1/release/resources/css/ext-all.css"/>
     {% url admin:jsi18n as jsi18nurl %}
     <script type="text/javascript" src="{{ jsi18nurl|default:'../../jsi18n/' }}"></script>
 {% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
-    <script type="text/javascript" src="http://extjs.cachefly.net/ext-3.2.1/adapter/ext/ext-base.js"></script>
-    <script type="text/javascript" src="http://extjs.cachefly.net/ext-3.2.1/ext-all-debug.js"></script>
+    <script type="text/javascript" src="http://code.google.com/p/extjs-public/source/browse/tags/extjs-3.3.1/include/ext-all-debug.js"></script>
     <script type="text/javascript" src="/media/catalog/Catalog.Classes.js"></script>
     <script type="text/javascript" src="/media/catalog/Catalog.Viewport.js"></script>
 
