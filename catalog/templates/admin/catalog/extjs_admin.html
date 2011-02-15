@@ -9,12 +9,12 @@
 
 {% block extrahead %}
 {{ block.super }}
-    <script type="text/javascript" src="http://code.google.com/p/extjs-public/source/browse/tags/extjs-3.3.1/include/ext-all-debug.js"></script>
+
+    <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/adapter/ext/ext-base.js"></script>
+    <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/include/ext-all-debug.js"></script>
     <script type="text/javascript" src="/media/catalog/Catalog.Classes.js"></script>
     <script type="text/javascript" src="/media/catalog/Catalog.Viewport.js"></script>
-
     <script type="text/javascript"> 
-    
     Ext.onReady(function() {
         Ext.QuickTips.init();
         var catalogEl = Ext.DomHelper.overwrite('content', '<div id="catalog"></div>');
