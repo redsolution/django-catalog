@@ -10,3 +10,6 @@ CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT
 
 DEFAULT_MPTT = 'mptt' in settings.INSTALLED_APPS
 CATALOG_MPTT = getattr(settings, 'CATALOG_MPTT', DEFAULT_MPTT)
+
+# TODO: Extend existing SERIALIZATION_MODULES
+settings.SERIALIZATION_MODULES = {"extdirect" : "extdirect.django.serializer"}

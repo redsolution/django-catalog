@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from catalog.models import Link
+from catalog.ext import provider
 from django import template
 from django.contrib import admin
 from django.contrib.admin import helpers
@@ -90,9 +91,10 @@ class CatalogAdmin(admin.ModelAdmin):
 
     def get_urls(self, *args, **kwds):
         from django.conf.urls.defaults import patterns, url
+        info = self.model._meta.app_label, self.model._meta.module_name
         return patterns('',
             url(r'^(\d+)/newlink/$', self.admin_site.admin_view(self.add_link), 
-                name='add_link')
+                name='%s_%s_add_link' % info),
         ) + super(CatalogAdmin, self).get_urls()
 
 
@@ -159,7 +161,7 @@ class TreeItemAdmin(MPTTModelAdmin):
             extra_context=context)
     
     def changelist_view_wrapper(self, request, extra_context=None):
-        '''Overriding ``changelist_view`` to enable plain html view key in GET'''
+        '''Overrides ``changelist_view`` to enable ``plain`` html view key in GET'''
         if 'plain' in request.GET:
             # small hack, do not consider 'plain' in GET attributes
             copied_get = request.GET.copy()
@@ -174,10 +176,14 @@ class TreeItemAdmin(MPTTModelAdmin):
         
         info = self.model._meta.app_label, self.model._meta.module_name
         return patterns('',
+            url(r'^$', self.admin_site.admin_view(self.changelist_view_wrapper),
+                name='%s_%s_changelist' % info),
             url(r'^(\d+)/move/$', self.admin_site.admin_view(self.move), 
                 name='move_tree_item'),
-            url(r'^$', self.admin_site.admin_view(self.changelist_view_wrapper),
-                name='%s_%s_changelist' % info)
+            url(r'^direct/router/$', self.admin_site.admin_view(provider.router),
+                name='catalog_provider_router'),
+            url(r'^direct/provider.js$', self.admin_site.admin_view(provider.script),
+                name='catalog_provider_script'),
         ) + super(TreeItemAdmin, self).get_urls()
 
 
