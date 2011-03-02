@@ -2,8 +2,7 @@
 {% load adminmedia admin_list i18n %}
 
 {% block extrastyle %}
-    <!-- <link rel="stylesheet" type="text/css" href="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/css/ext-all.css"/> -->
-    <link rel="stylesheet" type="text/css" href="/media/catalog/ext-all.css"/>
+    <link rel="stylesheet" type="text/css" href="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/css/ext-all.css"/>
     {% url admin:jsi18n as jsi18nurl %}
     <script type="text/javascript" src="{{ jsi18nurl|default:'../../jsi18n/' }}"></script>
 {% endblock %}
@@ -14,21 +13,10 @@
     <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/adapter/ext/ext-base.js"></script>
     <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/include/ext-all-debug.js"></script>
 
-    <script type="text/javascript" src="/media/catalog/Catalog.View.js"></script>
-    <script type="text/javascript" src="/media/catalog/Catalog.Store.js"></script>
-    <script type="text/javascript" src="/media/catalog/Catalog.Grid.js"></script>
-
     <script type="text/javascript" src="direct/provider.js"></script>
-    
-    <script type="text/javascript"> 
-    Ext.onReady(function() {
-        Ext.QuickTips.init();
-        var store = new Catalog.GridStore;
-        var l = new Catalog.View({
-            renderTo: Ext.getBody()
-        });
-        l.render(Ext.DomHelper.overwrite('content', {tag: 'div', id: 'catalog-ext'}));
-    });
+    <script type="text/javascript" src="/media/catalog/catalog.js"></script>
+    <script type="text/javascript">
+        Ext.BLANK_IMAGE_URL = 'http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/images/default/s.gif';
     </script>
 
 {% endblock %}
