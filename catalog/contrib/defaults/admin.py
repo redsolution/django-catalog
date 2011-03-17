@@ -25,6 +25,7 @@ class SectionAdmin(CatalogAdmin):
     inlines = [CatalogImageInline]
     prepopulated_fields = {'slug': ('name',)}
     model = Section
+    list_display = ('name', 'slug', 'description')
     
 
 admin.site.register(Item, ItemAdmin)

@@ -8,6 +8,12 @@ DEFAULT_CATALOG_CONNECTED_MODELS = [
 ]
 CATALOG_CONNECTED_MODELS = getattr(settings, 'CATALOG_CONNECTED_MODELS', DEFAULT_CATALOG_CONNECTED_MODELS)
 
+# TODO: migrate to django.db.models.loader rather than import modules manually
+CATALOG_MODELS = [
+    ('defaults', 'Item'),
+    ('defaults', 'Section'),
+]
+
 DEFAULT_MPTT = 'mptt' in settings.INSTALLED_APPS
 CATALOG_MPTT = getattr(settings, 'CATALOG_MPTT', DEFAULT_MPTT)
 
