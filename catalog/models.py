@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from catalog.utils import get_connected_models
+from django.db.models import loading
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 from mptt.models import MPTTModel
+from catalog import settings as catalog_settings
 
 
 class TreeItem(MPTTModel):
@@ -15,7 +16,7 @@ class TreeItem(MPTTModel):
     It can organize different objects into tree without
     modification 3rd party tables. 
     '''
-    
+
     class Meta:
         verbose_name = _('Catalog tree item')
         verbose_name_plural = _('Catalog tree items')
@@ -88,10 +89,13 @@ def insert_in_tree(sender, instance, **kwrgs):
         tree_item.save()
         instance.save()
 
+        self.model_cache = loading.cache
+        self.admin_registry = site._registry
+        self.fields = {}
 
-for model_cls, admin_cls in get_connected_models():
+for app_label, model_name in catalog_settings.CATALOG_MODELS:
+    model_cls = loading.cache.get_model(app_label, model_name)
     # set post_save signals on connected objects:
     # for each connected model connect 
     # automatic TreeItem creation for catalog models
-    model_name = model_cls.__name__.lower()
     post_save.connect(insert_in_tree, model_cls)
