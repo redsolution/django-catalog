@@ -22,13 +22,16 @@ class Column(object):
     xtype = 'gridcolumn'
     type = unicode
     
-    def __init__(self, name, instance, order=0):
+    def __init__(self, name, model_cls, model_admin_cls, order=0):
         '''
         Creates a column with name and order
         Detect type by instance
         '''
         self.name = name
         self.order = order
+        
+        self.header = unicode(admin.util.label_for_field(name, model_cls, model_admin_cls))
+        attr_type = type(admin.util.lookup_field(name, model_cls(), model_admin_cls))
         
         # detect type
         if attr_type is int:
@@ -58,6 +61,16 @@ class Column(object):
             self.order = max(self.order, new_field.order)
             return False
     
+    def serialize(self):
+        '''Serialize Column object to python dict'''
+        serialized = {
+            'header': self.header,
+            'dataIndex': self.name,
+            'xtype': self.xtype,
+        }
+        return serialized
+        
+    
 
 class ColumnModel(object):
     '''Represents python-ExtJS map of types for grid'''
@@ -80,11 +93,18 @@ class ColumnModel(object):
             
             # Run over all 'list_display' properties and fill columns
             for i, field_name in enumerate(list_display):
-                new_field = Column(field_name, model_cls(), i)
+                new_field = Column(field_name, model_cls, admin_cls, i)
                 if field_name not in self.fields:
                     self.fields[field_name] = new_field
                 else:
                     self.fields[field_name].merge(new_field)
+    
+    def serialize(self):
+        '''Serialize ColumnModel object to list of serialized Columns'''
+        serialized = []
+        for column in self.fields.itervalues():
+            serialized.append(column.serialize())
+        return serialized
 
 
 @remoting(provider, action='treeitem', len=1)
@@ -116,9 +136,9 @@ def tree(request):
     return simplejson.dumps(data)
 
 @remoting(provider, action='colmodel')
-def getCM():
+def get_col_model():
     '''
     Returns JSON configuration which should be passed into 
     ext.grid.ColumnModel() constructor
     '''
-    return catalog_registry
+    return simplejson.dumps(ColumnModel(admin.site).serialize())
