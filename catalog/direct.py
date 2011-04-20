@@ -7,9 +7,61 @@ from django.utils import simplejson
 from extdirect.django import ExtDirectStore
 from extdirect.django.decorators import remoting
 from extdirect.django.providers import ExtRemotingProvider
-
+from django.core.serializers import serialize
 provider = ExtRemotingProvider(namespace='Catalog',
     url='/admin/catalog/treeitem/direct/router/', id='catalog_provider')
+
+class  CatalogGridStore(ExtDirectStore):
+
+    def __init__(self, *args, **kwds):
+        # Force model=TreeItem
+        args += (TreeItem,)
+        return super(CatalogGridStore, self).__init__(*args, **kwds)
+
+    def query(self, qs=None, **kw):
+        paginate = False
+        total = None
+        order = False
+
+        if kw.has_key(self.start) and kw.has_key(self.limit):
+            start = kw.pop(self.start)
+            limit = kw.pop(self.limit)
+            paginate = True
+
+        if not qs is None:
+            # Don't use queryset = qs or self.model.objects
+            # because qs could be empty list (evaluate to False)
+            # but it's actually an empty queryset that must have precedence
+            queryset = qs
+        else:
+            queryset = self.model.objects
+
+        queryset = queryset.filter(**kw)
+
+        if not paginate:
+            objects = queryset
+            total = queryset.count()
+        else:
+            paginator = Paginator(queryset, limit)
+            total = paginator.count
+
+            try:
+                page = paginator.page(start + 1)
+            except (EmptyPage, InvalidPage):
+                #out of range, deliver last page of results.
+                page = paginator.page(paginator.num_pages)
+
+            objects = page.object_list
+
+        return self.serialize(objects, total)
+
+    def serialize(self, queryset, total=None):
+        meta = {
+            'root': self.root,
+            'total' : self.total
+        }
+        res = serialize('catalog_extdirect', queryset, meta=meta, extras=self.extras, total=total)
+        return res
 
 
 class Column(object):
@@ -114,7 +166,7 @@ def objects(request):
     Data grid provider
     '''
     data = request.extdirect_post_data[0]
-    items = ExtDirectStore(TreeItem)
+    items = CatalogGridStore()
     return items.query(**data)
 
 @remoting(provider, action='treeitem', len=1)

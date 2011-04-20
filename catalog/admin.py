@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from catalog.direct import provider, ColumnModel
+from catalog.direct import provider
 from catalog.models import Link
 from django import template
 from django.contrib import admin
