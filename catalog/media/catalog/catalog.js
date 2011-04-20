@@ -1,5 +1,5 @@
-;var app={};
-
+;
+/**** Django CSRF workaround ****/
 Ext.Ajax.on('beforerequest', function (conn, options) {
 	   if (!(/^http:.*/.test(options.url) || /^https:.*/.test(options.url))) {
 	     if (typeof(options.headers) == "undefined") {
@@ -10,38 +10,44 @@ Ext.Ajax.on('beforerequest', function (conn, options) {
 	   }
 	}, this);
 
-Ext.onReady(function() {
-    Ext.QuickTips.init();
-    
+var app={};
+
+/**** bind server data events to asynchronous handlers ****/ 
+app.direct_data_listener = function(provider, event){
+	if (event.action === 'colmodel' && event.method === 'get_col_model') {
+		app.direct_handlers.on_get_col_model(provider, event);
+	}
+};
+app.direct_handlers = {
+	on_get_col_model: function(provider, event) {
+		app.colmodel = event.result;
+		app.build_layout();
+	}
+};
+
+
+/**** Catalog app layout building ****/
+app.build_layout = function(){
     app.store = new Ext.data.DirectStore({
         storeId: 'DataStore',
         directFn: Catalog.treeitem.objects,
         autoLoad: true,
         remoteSort: true,
         root: 'records',
-        fields: ['id', 'content_type','object_id','parent','tree_id']
+        fields: ['id', 'content_object','object_id','parent','tree_id']
     });
     
     app.grid = new Ext.grid.GridPanel({
         store: app.store,
-        title: 'Grid!',
+        title: 'Grid',
         sm: new Ext.grid.RowSelectionModel({singleSelect:true}),
         cm:  new Ext.grid.ColumnModel({
-            columns: [{
-                header: 'ID',
-                dataIndex: 'id'
-            },{
-                header: 'Content type',
-                dataIndex: 'content_type'
-            },{
-                header: 'object id',
-                dataIndex: 'object_id'
-            }]
+            columns: app.colmodel
         })
     });
     
     app.tree = new Ext.tree.TreePanel({
-        title: 'Tree!',
+        title: 'Tree',
         root: {
             id: 'root',
             text: 'Catalog'
@@ -72,4 +78,16 @@ Ext.onReady(function() {
         }]
     });
     Ext.DomHelper.overwrite('content', '', false);
+};
+
+/**** Application initialization part ****/
+
+Ext.onReady(function() {
+    Ext.QuickTips.init();
+
+    var provider = Ext.Direct.getProvider('catalog_provider');
+    provider.on('data', app.direct_data_listener);
+
+    Catalog.colmodel.get_col_model();
+
 });

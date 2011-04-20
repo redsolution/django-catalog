@@ -8,7 +8,9 @@ from extdirect.django import ExtDirectStore
 from extdirect.django.decorators import remoting
 from extdirect.django.providers import ExtRemotingProvider
 
-provider = ExtRemotingProvider(namespace='Catalog', url='/admin/catalog/treeitem/direct/router/')
+provider = ExtRemotingProvider(namespace='Catalog',
+    url='/admin/catalog/treeitem/direct/router/', id='catalog_provider')
+
 
 class Column(object):
     _map = {
@@ -69,8 +71,7 @@ class Column(object):
             'xtype': self.xtype,
         }
         return serialized
-        
-    
+
 
 class ColumnModel(object):
     '''Represents python-ExtJS map of types for grid'''
@@ -136,9 +137,9 @@ def tree(request):
     return simplejson.dumps(data)
 
 @remoting(provider, action='colmodel')
-def get_col_model():
+def get_col_model(request):
     '''
     Returns JSON configuration which should be passed into 
     ext.grid.ColumnModel() constructor
     '''
-    return simplejson.dumps(ColumnModel(admin.site).serialize())
+    return ColumnModel(admin.site).serialize()
