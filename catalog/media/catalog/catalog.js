@@ -24,9 +24,46 @@ app.direct_handlers = {
 		app.build_layout();
 	}
 };
+app.callbacks = {
+	on_grid_drop: function(dd, e, data) {
+        var ds = app.store;
+        
+        console.log('Drop event!');
+        console.log(dd, e, data);
+
+        // NOTE:
+        // you may need to make an ajax call
+        // here
+        // to send the new order
+        // and then reload the store
 
 
-/**** Catalog app layout building ****/
+        // alternatively, you can handle the
+		// changes
+        // in the order of the row as
+			// demonstrated below
+
+          // ***************************************
+
+//          var sm = grid.getSelectionModel();
+//          var rows = sm.getSelections();
+//          if(dd.getDragData(e)) {
+//              var cindex=dd.getDragData(e).rowIndex;
+//              if(typeof(cindex) != "undefined") {
+//                  for(i = 0; i <  rows.length; i++) {
+//                  ds.remove(ds.getById(rows[i].id));
+//                  }
+//                  ds.insert(cindex,data.selections);
+//                  sm.clearSelections();
+//               }
+//           }
+
+          // ************************************
+        }
+}
+
+
+/** ** Catalog app layout building *** */
 app.build_layout = function(){
     app.store = new Ext.data.DirectStore({
         storeId: 'DataStore',
@@ -39,11 +76,28 @@ app.build_layout = function(){
     
     app.grid = new Ext.grid.GridPanel({
         store: app.store,
-        title: 'Grid',
-        sm: new Ext.grid.RowSelectionModel({singleSelect:true}),
+        sm: new Ext.grid.RowSelectionModel({singleSelect:false}),
         cm:  new Ext.grid.ColumnModel({
             columns: app.colmodel
-        })
+        }),
+        ddGroup: 'dd',
+        enableDragDrop: true,
+        listeners: {
+        	"render": function() {
+		      // Enable sorting Rows via Drag & Drop
+		      // this drop target listens for a row drop
+		      // and handles rearranging the rows
+	              var ddrow = new Ext.dd.DropTarget(this.container, {
+	                  ddGroup : 'dd',
+	                  copy:false,
+	                  notifyDrop : app.callbacks.on_grid_drop
+	              	});
+
+              // load the grid store
+              // after the grid has been rendered
+             this.store.load();
+        	}
+        }
     });
     
     app.tree = new Ext.tree.TreePanel({
@@ -52,6 +106,8 @@ app.build_layout = function(){
             id: 'root',
             text: 'Catalog'
         },
+        ddGroup: 'dd',
+        enableDD: true,
         loader: new Ext.tree.TreeLoader({
             directFn: Catalog.treeitem.tree
         }),
