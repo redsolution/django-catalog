@@ -34,7 +34,7 @@ app.build_layout = function(){
         autoLoad: true,
         remoteSort: true,
         root: 'records',
-        fields: ['id', 'content_object','object_id','parent','tree_id']
+        fields: app.colmodel
     });
     
     app.grid = new Ext.grid.GridPanel({

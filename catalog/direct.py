@@ -120,6 +120,7 @@ class Column(object):
         serialized = {
             'header': self.header,
             'dataIndex': self.name,
+            'name': self.name,
             'xtype': self.xtype,
         }
         return serialized
