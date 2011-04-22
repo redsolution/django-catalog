@@ -8,6 +8,9 @@ from extdirect.django import ExtDirectStore
 from extdirect.django.decorators import remoting
 from extdirect.django.providers import ExtRemotingProvider
 from django.core.serializers import serialize
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
+
+
 provider = ExtRemotingProvider(namespace='Catalog',
     url='/admin/catalog/treeitem/direct/router/', id='catalog_provider')
 

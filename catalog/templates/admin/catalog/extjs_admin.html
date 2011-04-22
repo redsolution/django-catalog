@@ -3,6 +3,12 @@
 
 {% block extrastyle %}
     <link rel="stylesheet" type="text/css" href="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/css/ext-all.css"/>
+    <style>
+        td, th {
+            border: none !important;
+            border-color: transparent !important;
+        }
+    </style>
     {% url admin:jsi18n as jsi18nurl %}
     <script type="text/javascript" src="{{ jsi18nurl|default:'../../jsi18n/' }}"></script>
 {% endblock %}
