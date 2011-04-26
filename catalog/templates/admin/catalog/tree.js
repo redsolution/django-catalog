@@ -142,12 +142,14 @@ tree_panel.reload = function() {
     	catalog_store.load({
     		params: {node: treestate.split('/').reverse()[0]} 
     	});
-    } else
+    	console.log('selected', treestate.split('/').reverse()[0]);
+    } else {
         tree_panel.selModel.select(tree_panel.getRootNode());
         tree_panel.getRootNode().expand();
         catalog_store.load({
             params: {node: 'root'} 
         });
+    }
 }
 
 tree_panel.showMask = function(message) {
