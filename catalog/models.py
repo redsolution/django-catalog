@@ -89,10 +89,6 @@ def insert_in_tree(sender, instance, **kwrgs):
         tree_item.save()
         instance.save()
 
-        self.model_cache = loading.cache
-        self.admin_registry = site._registry
-        self.fields = {}
-
 for app_label, model_name in catalog_settings.CATALOG_MODELS:
     model_cls = loading.cache.get_model(app_label, model_name)
     # set post_save signals on connected objects:
