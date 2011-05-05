@@ -169,7 +169,11 @@ def objects(request):
     '''
     Data grid provider
     '''
+    
     data = request.extdirect_post_data[0]
+    if data.get('parent') == 'root':
+        data['parent'] = 1
+    
     items = CatalogGridStore()
     return items.query(**data)
 
@@ -184,13 +188,34 @@ def tree(request):
     children = TreeItem.objects.filter(parent=node)
     data = []
     for item in children:
+        leaf = False
+        if item.content_type_id == 10:
+            leaf = True
         data.append({
-            'leaf': bool(item.children.all().count() == 0),
+            'leaf': leaf,
             'id': item.id,
             'text': unicode(item.content_object),
         })
     
     return simplejson.dumps(data)
+
+@remoting(provider, action='treeitem', len=1, form_handler=False)
+def move_to(request):
+    for item in request.extdirect_post_data:
+        source   = item.get('source')
+        target   = item.get('target')
+        
+        if item.get('point') == 'below':
+            position = 'right'
+        elif item.get('point') == 'above':
+            position = 'left'
+        elif item.get('point') == 'append':
+            position = 'last-child'
+        
+        for src_id in source:
+            TreeItem.objects.get(id=src_id).move_to(TreeItem.objects.get(id=target), position)
+    
+    return dict(success=True)
 
 @remoting(provider, action='colmodel')
 def get_col_model(request):
@@ -199,3 +224,4 @@ def get_col_model(request):
     ext.grid.ColumnModel() constructor
     '''
     return ColumnModel(admin.site).serialize()
+

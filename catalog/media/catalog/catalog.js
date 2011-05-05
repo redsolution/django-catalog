@@ -29,6 +29,7 @@ app.direct_data_listener = function(provider, event){
         app.direct_handlers.on_get_col_model(provider, event);
     }
 };
+
 app.direct_handlers = {
     on_get_col_model: function(provider, event) {
         app.colmodel = event.result;
@@ -38,25 +39,91 @@ app.direct_handlers = {
 
 app.callbacks = {
     on_grid_drop: function(source, e, data) {
+    	var dragElements = [];
         if (source.grid) {
-            var i;
-            var dragElements = [];
-            for (i=0;i<source.dragData.selections.length;i++) {
-                dragElements.push(source.dragData.selections[i].id);
+            for (var i = 0; i < source.dragData.selections.length; i++) {
+            	r = source.dragData.selections[i]
+                dragElements.push(r.id);
+                //r.store.remove(r);
             }
-            var index=source.getDragData(e).rowIndex;
+            var index = source.getDragData(e).rowIndex;
             targetElement = source.grid.store.getAt(index);
         } else {
             // Drop from tree not supported yet...
             return false;
         }
-        console.log('insert ' + dragElements + ' at ' + targetElement.id);
+        Catalog.treeitem.move_to({source: dragElements, target: targetElement.id, point: 'above'})
+        
+
         return false;
     },
     on_tree_drop: function(dd, e, data) {
-        console.log('Tree drop event!');
-        console.log(dd, e, data);
-    }
+    	// disables the animated repair
+    	dd.tree.dragZone.proxy.animRepair = false;
+    	
+    	// cancels the drag&drop operation
+    	dd.cancel = true;
+    	
+    	// display the modal confirm dialog
+    	Ext.Msg.confirm('Confirmation', 'Are  you sure you want to move this item?', function(button){
+    		// the animated repair is enabled again
+    		dd.tree.dragZone.proxy.animRepair = true;
+    		
+	        if (button == 'yes') {
+	        	switch (dd.point) {
+	                case "append":
+	                	if (dd.source.tree)
+	                		dd.target.appendChild(dd.dropNode);
+	                    break;
+	                case "above":
+	                	if (dd.source.tree)
+	                    	dd.target.parentNode.insertBefore(dd.dropNode, dd.target);
+	                    break;
+	                case "below":
+	                	if (dd.source.tree)
+	                    	dd.target.parentNode.insertBefore(dd.dropNode, dd.target.nextSibling);
+	                    break;
+	                default:
+	                    debugger;
+	            }
+	        }
+    	});
+    	
+    	var dragElements = [];
+        if (dd.source.tree) {
+        	dragElements.push(dd.data.node.id);
+        } else if (dd.source.grid) {
+    	    for(var i = 0; i < dd.data.selections.length; i++) {
+    	    	var r = dd.data.selections[i];
+    	    	dragElements.push(r.id);
+    	    	r.store.remove(r);
+    	    }
+    	}
+
+		Catalog.treeitem.move_to({source: dragElements, target: dd.target.id, point: dd.point});
+
+		if (dd.source.grid) {
+			var target_node = null;
+	    	if ( dd.point == 'below' || dd.point == 'above' ) {
+	    		target_node = dd.target.parentNode;
+	    	} else {
+	    		target_node = dd.target;
+	    	}
+	    	console.log(dd.point, dd.target.getPath());
+	    	
+	    	app.tree.getRootNode().reload();
+	    	app.tree.expandPath(target_node.getPath());
+	    }
+		return true;
+   	},
+   	on_node_select: function(node, event) {
+   		if (node.leaf == false) {
+   			app.store.load({params: {'parent': node.id}});
+   		} else {
+   			app.store.load({params: {'id': node.id}});
+   		}
+   }
+    
 }
 
 
@@ -65,7 +132,7 @@ app.build_layout = function(){
     app.store = new Ext.data.DirectStore({
         storeId: 'DataStore',
         directFn: Catalog.treeitem.objects,
-        autoLoad: true,
+        autoLoad: false,
         remoteSort: true,
         root: 'records',
         fields: app.colmodel
@@ -80,8 +147,30 @@ app.build_layout = function(){
         ddGroup: 'dd',
         maskDisabled : true,
         enableDragDrop: true,
+        tbar: new Ext.Toolbar({
+        	items: [
+        	{
+	        	text: 'Add',
+	        	handler: function(btn, ev) {
+	            	console.log('add');
+	            },
+	        	cls: 'x-btn-text',
+        	}, '-', {
+	        	text: 'Delete',
+	        	handler: function(btn, ev) {
+	        		console.log('del');
+	        	},
+	        	cls: 'x-btn-text',
+        	}, '-', {
+	        	text: 'Reload',
+	        	handler: function(btn, ev) {
+	            	app.store.load();
+	            },
+	        	cls: 'x-btn-text',
+        	}, '-',]
+        }),
         bbar: new Ext.PagingToolbar({
-            pageSize: 50,
+            pageSize: 10,
             displayInfo: true,
             store: app.store
         }),
@@ -89,16 +178,20 @@ app.build_layout = function(){
             'render': function() {
                 // Enable sorting Rows via Drag & Drop
                 new Ext.dd.DropTarget(this.container, {
-                    ddGroup : 'dd',
-                    copy:false,
-                    notifyDrop : app.callbacks.on_grid_drop
+                    ddGroup: 'dd',
+                    copy: false,
+                    notifyDrop: app.callbacks.on_grid_drop
                 });
             }
-        }
+        },
+
     });
     
     app.tree = new Ext.tree.TreePanel({
         title: 'Tree',
+        useArrows: true,
+        autoScroll: true,
+        containerScroll: true,
         root: {
             id: 'root',
             text: 'Catalog'
@@ -106,10 +199,12 @@ app.build_layout = function(){
         ddGroup: 'dd',
         enableDD: true,
         loader: new Ext.tree.TreeLoader({
+        	preloadChildren:true,
             directFn: Catalog.treeitem.tree
         }),
         listeners: {
-            'beforenodedrop': app.callbacks.on_tree_drop
+            beforenodedrop: app.callbacks.on_tree_drop,
+            click: app.callbacks.on_node_select,
         }
     });
     
@@ -126,12 +221,14 @@ app.build_layout = function(){
             items: app.grid
         },{
             region: 'west',
-            width: 200,
+            width: 300,
             margins: '15 5 5 5',
             layout: 'fit',
             items: app.tree
         }]
     });
+    
+    
     Ext.DomHelper.overwrite('content', '', false);
 };
 
@@ -144,5 +241,4 @@ Ext.onReady(function() {
     provider.on('data', app.direct_data_listener);
 
     Catalog.colmodel.get_col_model();
-
 });
