@@ -13,10 +13,12 @@ from django.shortcuts import render_to_response
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic.simple import direct_to_template
+from django.utils.html import escape
 from forms import LinkInsertionForm
 from models import TreeItem
 from mptt.admin import MPTTModelAdmin
 from mptt.forms import MoveNodeForm
+
 
 
 def context_admin_helper(admin_instance, request, opts, obj):
@@ -41,6 +43,37 @@ class CatalogAdmin(admin.ModelAdmin):
     add_form_template = 'admin/catalog/change_form_with_links.html'
     change_form_template = 'admin/catalog/change_form_with_links.html'
 
+    def response_change(self, request, obj):
+        """
+        Wrapper around Django ModelAdmin method to provide
+        popup close on *edit* item
+        """
+        if ('_continue' not in request.POST) and ('_popup' in request.POST):
+            pk_value = obj._get_pk_val()
+            return HttpResponse('<script type="text/javascript">opener.dismissAddAnotherPopup(window, "%s", "%s");</script>' % \
+                (escape(pk_value), escape(obj))) # escape() calls force_unicode.
+        return super(CatalogAdmin, self).response_change(request, obj)
+
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Redefines get_form ModelAdmin method to add parent attribute to
+        object, but not store it in database. We want to pass it to TreeItem class,
+        which connected to pre_save() signal of each catalog model 
+        """
+        FormClass = super(CatalogAdmin, self).get_form(request, obj, **kwargs)
+
+        class ModelFormCatalogWrapper(FormClass):
+            '''
+            Wrapper around ModelForm class due to redefine save method for ModelForm
+            '''
+            def save(self, *args, **kwds):
+                '''Redefined ModelForm method in order to set parent attribute'''
+                if request.REQUEST.get('parent'):
+                    parent = TreeItem.objects.get(id=request.REQUEST.get('parent'))
+                    self.instance.parent = parent
+                return super(ModelFormCatalogWrapper, self).save(*args, **kwds)
+
+        return ModelFormCatalogWrapper
     
     def add_link(self, request, object_id):
         '''Show new link creation form'''

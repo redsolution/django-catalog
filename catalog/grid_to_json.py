@@ -6,6 +6,7 @@ from django.utils import datetime_safe
 from catalog.models import Link
 from catalog.direct import ColumnModel
 from django.contrib import admin
+from django.core import urlresolvers
 
 LINK_OBJECT = 0
 REAL_OBJECT = 1
@@ -28,6 +29,12 @@ class Serializer(ExtSerializer):
     def handle_field(self, obj, field):
         value = admin.util.lookup_field(field.name, self._content_object, self._admin_cls)[2]
         self._current[field.name] = smart_unicode(value, strings_only=True)
+    
+    def handle_model(self, obj):
+        url = urlresolvers.reverse('admin:%s_%s_change' %
+            (obj.content_object._meta.app_label, obj.content_object._meta.module_name),
+            args=[obj.object_id]) + '?popup=1'
+        self._current['url'] = url
 
     def serialize(self, queryset, **options):
         """
@@ -46,6 +53,7 @@ class Serializer(ExtSerializer):
             self.start_object(obj)
             for field in fields:
                 self.handle_field(obj, field)
+            self.handle_model(obj)
             self.end_object(obj)
         self.end_serialization()
         return self.getvalue()

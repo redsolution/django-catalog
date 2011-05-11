@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from catalog import settings as catalog_settings
 from catalog.models import TreeItem
+from django.core import urlresolvers
 from django.contrib import admin
 from django.db.models import loading
 from django.utils import simplejson
@@ -14,7 +15,7 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 provider = ExtRemotingProvider(namespace='Catalog',
     url='/admin/catalog/treeitem/direct/router/', id='catalog_provider')
 
-class  CatalogGridStore(ExtDirectStore):
+class CatalogGridStore(ExtDirectStore):
 
     def __init__(self, *args, **kwds):
         # Force model=TreeItem
@@ -169,13 +170,29 @@ def objects(request):
     '''
     Data grid provider
     '''
-    
+
     data = request.extdirect_post_data[0]
+    if data.get('root') == 'root':
+        data.pop('root')
+        data['lft'] = 1
+        
+    if data.get('node_id'):
+        data['parent'] = TreeItem.objects.get(id=data.pop('node_id')).parent_id
+    
     if data.get('parent') == 'root':
-        data['parent'] = 1
+        data.pop('parent')
+        data['lft'] = 1
     
     items = CatalogGridStore()
-    return items.query(**data)
+    res = items.query(**data)
+    return res
+
+@remoting(provider, action="treeitem", len=1)
+def remove_objects(request):
+    data = request.extdirect_post_data[0]
+    for object_id in data.get('objects'):
+        TreeItem.objects.get(id=object_id).delete()
+    return True
 
 @remoting(provider, action='treeitem', len=1)
 def tree(request):
@@ -185,6 +202,7 @@ def tree(request):
     node = request.extdirect_post_data[0]
     if node == 'root':
         node = None
+    
     children = TreeItem.objects.filter(parent=node)
     data = []
     for item in children:
@@ -213,9 +231,22 @@ def move_to(request):
             position = 'last-child'
         
         for src_id in source:
-            TreeItem.objects.get(id=src_id).move_to(TreeItem.objects.get(id=target), position)
+            if src_id == target:
+                continue
+            if target == 'root':
+                TreeItem.objects.get(id=src_id).move_to(None, position)
+            else:
+                TreeItem.objects.get(id=src_id).move_to(TreeItem.objects.get(id=target), position)
     
     return dict(success=True)
+
+@remoting(provider, action='colmodel')
+def get_models(request):
+    models = []
+    for app_label, model_name in catalog_settings.CATALOG_MODELS:
+        url = urlresolvers.reverse('admin:%s_%s_add' % (app_label, model_name.lower()))
+        models.append({'app_label': app_label, 'model_name': model_name, 'url': url})
+    return models
 
 @remoting(provider, action='colmodel')
 def get_col_model(request):
@@ -225,3 +256,4 @@ def get_col_model(request):
     '''
     return ColumnModel(admin.site).serialize()
 
+    
