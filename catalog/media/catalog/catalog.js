@@ -46,10 +46,12 @@ app.direct_data_listener = function(provider, event){
     				}
     				
     				if (parent != 'root') {
-    					k.hrefTarget = k.hrefTarget + "?parent=" + parent;
+    					parent = "?parent=" + parent;
+    				} else {
+    					parent = '';
     				}
 	    			var win = window.open(
-	    				k.hrefTarget,
+	    				k.hrefTarget + parent,
 	    				"",
 	    				"menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
 	    			);
