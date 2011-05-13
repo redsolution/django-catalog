@@ -43,11 +43,13 @@ app.direct_data_listener = function(provider, event){
     					} else {
     						parent = app.tree.selModel.selNode.id;
     					}
-    					
-    					parent = "?parent=" + parent; 
+    				}
+    				
+    				if (parent != 'root') {
+    					k.hrefTarget = k.hrefTarget + "?parent=" + parent;
     				}
 	    			var win = window.open(
-	    				k.hrefTarget + parent,
+	    				k.hrefTarget,
 	    				"",
 	    				"menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
 	    			);
@@ -66,7 +68,7 @@ app.direct_handlers = {
 	    	xtype: 'actioncolumn',
 	    	width: 50,
 	    	items: [{
-	    		icon: '/static/js/ext-3.3.1/examples/shared/icons/fam/cog_edit.png',
+	    		icon: '/static/img/cog_edit.png',
 	    		tooltip: 'Изменить',
 	    		handler: function(grid, rowIndex, colIndex) {
 					console.dir(app.store.getAt(rowIndex));
@@ -78,7 +80,7 @@ app.direct_handlers = {
 	    			win.focus();
 	            }
 	    	},{
-	    		icon: '/static/js/ext-3.3.1/examples/shared/icons/fam/delete.gif',
+	    		icon: '/static/img/delete.gif',
 	    		tooltip: 'Удалить',
 	    		handler: function(grid, rowIndex, colIndex) {
 	    			Ext.Msg.confirm('Confirmation', 'Are you sure you want to remove this item?', function(button){
@@ -282,10 +284,6 @@ app.build_layout = function(){
 				});
             }
         },
-    });
-    
-    app.grid.addListener('cellcontextmenu', function(grid, rowIndex, cellIndex, e) {
-    	console.log('test');
     });
     
     app.tree = new Ext.tree.TreePanel({

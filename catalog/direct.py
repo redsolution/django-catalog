@@ -206,11 +206,8 @@ def tree(request):
     children = TreeItem.objects.filter(parent=node)
     data = []
     for item in children:
-        leaf = False
-        if item.content_type_id == 10:
-            leaf = True
         data.append({
-            'leaf': leaf,
+            'leaf': item.content_object.leaf,
             'id': item.id,
             'text': unicode(item.content_object),
         })

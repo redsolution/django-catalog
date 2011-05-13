@@ -57,7 +57,10 @@ class CommonFields(CatalogBase):
             })
         raise NoReverseMatch('No appropriate methods found, take a look in the code')
 
+
 class Section(CommonFields, models.Model):
+    leaf = False
+    
     class Meta:
         verbose_name = _('Catalog section')
         verbose_name_plural = _('Catalog sections')
@@ -68,6 +71,8 @@ class Section(CommonFields, models.Model):
 
 
 class Item(CommonFields, models.Model):
+    leaf = True
+    
     class Meta:
         verbose_name = _('Catalog item')
         verbose_name_plural = _('Catalog items')
