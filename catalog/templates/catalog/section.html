@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% load mptt_tags %}
+
+{% block content %}
+	{% full_tree_for_model catalog.TreeItem as catalog_tree %}
+
+	{% for element,structure in catalog_tree|tree_info %}
+		{% if element == cur_node %}
+			{% for ancestor in element.get_ancestors %}
+				<a href="{{ ancestor.content_object.get_absolute_url }}">{{ ancestor }}</a> {% if not forloop.last %} >> {% else %} >> <a href="{{ cur_node.content_object.get_absolute_url }}">{{ cur_node }}</a>{% endif %}
+			{% endfor %}
+		{% endif %}
+	{% endfor %}
+	
+	<hr />
+	
+	
+	{% for catalog_tree_element,structure in catalog_tree|tree_info %}
+		{% if catalog_tree_element.level != 0 %}
+			{% for cur_node_ancestor in cur_node.get_ancestors %}
+				{% if cur_node_ancestor == catalog_tree_element %}
+					<li style="margin-left: {{ catalog_tree_element.level }}em;">
+						<a href="{{ catalog_tree_element.content_object.get_absolute_url }}">{{ catalog_tree_element }}</a>
+					</li>
+					{% if forloop.last %}
+						<li style="margin-left: {{ cur_node.level }}em;">
+							<a href="{{ cur_node.content_object.get_absolute_url }}">{{ cur_node }}</a>
+						</li>
+						{% for cur_node_child in cur_node.get_children %}
+							<li style="margin-left: {{ cur_node_child.level }}em;">
+								<a href="{{ cur_node_child.content_object.get_absolute_url }}">{{ cur_node_child }}</a>
+							</li>
+						{% endfor %}
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+		{% else %}
+			<li style="margin-left: {{ catalog_tree_element.level }}em;">
+				<a href="{{ catalog_tree_element.content_object.get_absolute_url }}">{{ catalog_tree_element }}</a>
+			</li>
+			{% if cur_node == catalog_tree_element %}
+				{% for cur_node_child in cur_node.get_children %}
+					<li style="margin-left: {{ cur_node_child.level }}em;">
+						<a href="{{ cur_node_child.content_object.get_absolute_url }}">{{ cur_node_child }}</a>
+					</li>
+				{% endfor %}
+			{% endif %}
+		{% endif %}
+	{% endfor %}
+	
+	<hr />
+
+	
+	{% for item in items %}
+		{% if forloop.first %}
+		<h2>Items: </h2>
+		{% endif %}
+		{% if item.content_object.images.count %}
+		    <img src="{{ item.content_object.images.all.0.image.url }}" />
+		{% endif %}
+		<pre>
+			Название: {{ item.content_object.name }}
+			Описание: {{ item.content_object.description|default:"Описание не доступно" }}
+			<a href="{{ item.content_object.get_absolute_url }}">Прямая ссылка на этот товар</a>
+		</pre>
+	{% endfor %}
+	
+	{% for item in sections %}
+		{% if forloop.first %}
+		<h2>Sections: </h2>
+		{% endif %}
+		
+		<pre>
+			<a href="{{ item.content_object.get_absolute_url }}">{{ item.content_object.name }}</a>
+		</pre>
+	{% endfor %}
+{% endblock %}

@@ -7,6 +7,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.db.models import permalink
+
 from os.path import join
 # fake TinyMCE
 try:
@@ -32,7 +34,7 @@ class CommonFields(CatalogBase):
 
     # Primary options
     name = models.CharField(verbose_name=_('Section name'), max_length=200, default='')
-    slug = models.SlugField(verbose_name=_('Slug'), max_length=200, null=True, blank=True)
+    slug = models.SlugField(verbose_name=_('Slug'), max_length=200, unique=True, null=True, blank=True)
     description = models.TextField(verbose_name=_('Section description'), null=True, blank=True)
     
     def get_absolute_url(self):
@@ -68,6 +70,10 @@ class Section(CommonFields, models.Model):
 
     def __unicode__(self):
         return self.name
+    
+    @permalink
+    def get_absolute_url(self):
+        return ('section_details', (str(self.__class__.__name__.lower()), str(self.slug)))
 
 
 class Item(CommonFields, models.Model):
@@ -85,6 +91,10 @@ class Item(CommonFields, models.Model):
 
     def __unicode__(self):
         return self.name
+    
+    @permalink
+    def get_absolute_url(self):
+        return ('item_details', (str(self.__class__.__name__.lower()), str(self.slug)))
 
 
 class CatalogImage(ImageModel):

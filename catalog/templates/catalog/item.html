@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load mptt_tags %}
+
+{% block content %}
+	{% full_tree_for_model catalog.TreeItem as catalog_tree %}
+
+	{% for element,structure in catalog_tree|tree_info %}
+	  {% if element == item %}
+
+		{% for ancestor in element.get_ancestors %}
+			<a href="{{ ancestor.content_object.get_absolute_url }}">{{ ancestor }}</a> {% if not forloop.last %} >> {% else %} >> <a href="{{ item.content_object.get_absolute_url }}">{{ item }}</a>{% endif %}
+		{% endfor %}
+	  	
+	  {% endif %}
+	{% endfor %}
+	
+	{% if item.content_object.images.count %}
+	    <img src="{{ item.content_object.images.all.0.image.url }}" />
+	{% endif %}
+	<pre>
+		Название: {{ item.content_object.name }}
+		Описание: {{ item.content_object.description|default:"Описание не доступно" }}
+		<a href="{{ item.content_object.get_absolute_url }}">Прямая ссылка на этот товар</a>
+	</pre>
+{% endblock %}
