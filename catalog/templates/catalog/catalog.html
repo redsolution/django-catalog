@@ -1,6 +1,7 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% load mptt_tags %}
 
 {% block catalog_tree %}
-	asdf
 	{% include 'catalog/catalog_tree.html' %}
 {% endblock %}

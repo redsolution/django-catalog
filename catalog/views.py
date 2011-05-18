@@ -11,6 +11,10 @@ defaults = {
     'template_name': 'catalog/treeitem.html'
 }
 
+def catalog(request):
+    nodes = TreeItem.objects.all()
+    return render_to_response('catalog/catalog.html', {'nodes': nodes}, RequestContext(request))
+
 def item_details(request, model, slug):
     models = {}
     for app_label, model_name in catalog_settings.CATALOG_MODELS:

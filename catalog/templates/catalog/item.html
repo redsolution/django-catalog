@@ -1,25 +1,70 @@
 {% extends 'base.html' %}
+
 {% load mptt_tags %}
 
-{% block content %}
+{% block catalog_tree %}
 	{% full_tree_for_model catalog.TreeItem as catalog_tree %}
-
-	{% for element,structure in catalog_tree|tree_info %}
-	  {% if element == item %}
-
-		{% for ancestor in element.get_ancestors %}
-			<a href="{{ ancestor.content_object.get_absolute_url }}">{{ ancestor }}</a> {% if not forloop.last %} >> {% else %} >> <a href="{{ item.content_object.get_absolute_url }}">{{ item }}</a>{% endif %}
-		{% endfor %}
-	  	
-	  {% endif %}
+	{% for catalog_tree_element,structure in catalog_tree|tree_info %}
+		{% if catalog_tree_element.level != 0 %}
+			{% for item_ancestor in item.get_ancestors %}
+				{% if item_ancestor == catalog_tree_element %}
+					<li style="margin-left: {{ catalog_tree_element.level }}em;">
+						<a href="{{ catalog_tree_element.content_object.get_absolute_url }}">{{ catalog_tree_element }}</a>
+					</li>
+					{% if forloop.last %}
+						{% for child in item.parent.get_children %}
+							{% if item == child %}
+							<li style="margin-left: {{ child.level }}em;">
+								<strong><a href="{{ child.content_object.get_absolute_url }}">{{ child }}</a></strong>
+							</li>
+							{% else %}
+							<li style="margin-left: {{ child.level }}em;">
+								<a href="{{ child.content_object.get_absolute_url }}">{{ child }}</a>
+							</li>
+							{% endif %}
+						{% endfor %}
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+			{% if item.get_ancestors|length == 1 and item == catalog_tree_element %}
+				{% for item_child in item.parent.get_children %}
+					{% if item == item_child %}
+					<li style="margin-left: {{ item_child.level }}em;">
+						<strong><a href="{{ item_child.content_object.get_absolute_url }}">{{ item_child }}</a></strong>
+					</li>
+					{% else %}
+					<li style="margin-left: {{ item_child.level }}em;">
+						<a href="{{ item_child.content_object.get_absolute_url }}">{{ item_child }}</a>
+					</li>
+					{% endif %}
+				{% endfor %}
+			{% endif %}
+		{% else %}
+			<li style="margin-left: {{ catalog_tree_element.level }}em;">
+				<a href="{{ catalog_tree_element.content_object.get_absolute_url }}">{{ catalog_tree_element }}</a>
+			</li>
+			{% if item == catalog_tree_element %}
+				{% for item_child in item.get_children %}
+					<li style="margin-left: {{ item_child.level }}em;">
+						<a href="{{ item_child.content_object.get_absolute_url }}">{{ item_child }}</a>
+					</li>
+				{% endfor %}
+			{% endif %}
+		{% endif %}
 	{% endfor %}
-	
+{% endblock %}
+
+{% block content %}
+	{% include 'catalog/item_breadcrumbs.html' %}
+	<hr>
+	<div class="span-2">
 	{% if item.content_object.images.count %}
 	    <img src="{{ item.content_object.images.all.0.image.url }}" />
 	{% endif %}
-	<pre>
-		Название: {{ item.content_object.name }}
-		Описание: {{ item.content_object.description|default:"Описание не доступно" }}
+	</div>
+	<div class="span-8 last">
+		Название: {{ item.content_object.name }}<br>
+		Описание: {{ item.content_object.description|default:"Описание не доступно" }}<br>
 		<a href="{{ item.content_object.get_absolute_url }}">Прямая ссылка на этот товар</a>
-	</pre>
+	</div>
 {% endblock %}

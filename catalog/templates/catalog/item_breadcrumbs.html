@@ -1,0 +1,13 @@
+{% load mptt_tags %}
+
+{% full_tree_for_model catalog.TreeItem as catalog_tree %}
+
+<small>
+{% for element,structure in catalog_tree|tree_info %}
+  {% if element == item %}
+	{% for ancestor in element.get_ancestors %}
+		<a href="{{ ancestor.content_object.get_absolute_url }}">{{ ancestor }}</a> {% if not forloop.last %} › {% else %} › <a href="{{ item.content_object.get_absolute_url }}">{{ item }}</a>{% endif %}
+	{% endfor %}
+  {% endif %}
+{% endfor %}
+</small>
