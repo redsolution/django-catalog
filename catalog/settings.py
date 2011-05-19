@@ -3,10 +3,12 @@ import os.path
 import sys
 
 # TODO: migrate to django.db.models.loader rather than import modules manually
-CATALOG_MODELS = [
+DEFAULT_CATALOG_MODELS = [
     ('defaults', 'Item'),
     ('defaults', 'Section'),
 ]
+
+CATALOG_MODELS = getattr(settings, 'CATALOG_MODELS', DEFAULT_CATALOG_MODELS)
 
 DEFAULT_MPTT = 'mptt' in settings.INSTALLED_APPS
 CATALOG_MPTT = getattr(settings, 'CATALOG_MPTT', DEFAULT_MPTT)

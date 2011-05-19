@@ -88,7 +88,7 @@ class Column(object):
         self.name = name
         self.order = order
         
-        self.header = unicode(admin.util.label_for_field(name, model_cls, model_admin_cls))
+        self.header = admin.util.label_for_field(name, model_cls, model_admin_cls)
         attr_type = type(admin.util.lookup_field(name, model_cls(), model_admin_cls))
         
         # detect type
@@ -126,6 +126,7 @@ class Column(object):
             'dataIndex': self.name,
             'name': self.name,
             'xtype': self.xtype,
+            'order': self.order,
         }
         return serialized
 
@@ -162,7 +163,7 @@ class ColumnModel(object):
         serialized = []
         for column in self.fields.itervalues():
             serialized.append(column.serialize())
-        return serialized
+        return sorted(serialized, key=lambda x: x['order'])
 
 
 @remoting(provider, action='treeitem', len=1)

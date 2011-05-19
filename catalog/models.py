@@ -43,33 +43,19 @@ class Link(models.Model):
     Link model allows to publish one model several times in
     different places in catalog tree
     '''
-    
+
     class Meta:
         verbose_name = _('Catalog link')
         verbose_name_plural = _('Catalog links')
-    
+
     tree = generic.GenericRelation('TreeItem')
-    
+
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
-    
+
     def __unicode__(self):
         return _('Link to %s') % unicode(self.content_object)
-
-class CatalogBase(models.Model):
-    '''
-    Base class for inserted in catalog models.
-    It contains mixin attributes and methods, that can be useful in your catalog
-    '''
-    
-    class Meta:
-        abstract = True
-    
-    
-    tree = generic.GenericRelation('TreeItem')
-    links = generic.GenericRelation('Link')
-    parent = None  # default parent for objects. See :meth:`~catalog.models.insert_in_tree`
 
 
 def insert_in_tree(sender, instance, **kwrgs):
