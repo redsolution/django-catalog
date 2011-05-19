@@ -46,8 +46,7 @@ def section_details(request, model, slug):
         else:
             sections.append(child)
     
-    return render_to_response('catalog/section.html', {'items': items, 'sections': sections, 'cur_node': node}, RequestContext(request))
-    
+    return render_to_response('catalog/section.html', {'items': items, 'sections': sections, 'cur_node': node}, RequestContext(request))    
 
 def by_id(request, slug, object_id):
     return object_detail(request, TreeItem.objects.all(), object_id=object_id, **defaults)

@@ -20,11 +20,9 @@
     <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/include/ext-all-debug.js"></script>
 
     <script type="text/javascript" src="direct/provider.js"></script>
-    {% if STATIC_URL %}
-    <script type="text/javascript" src="{{ STATIC_URL }}/catalog/catalog.js"></script>
-    {% else %}
-    <script type="text/javascript" src="/media/catalog/catalog.js"></script>
-    {% endif %}
+
+    <script type="text/javascript" src="{{ STATIC_URL }}catalog/catalog.js"></script>
+
     <script type="text/javascript">
         Ext.BLANK_IMAGE_URL = 'http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/images/default/s.gif';
     </script>
