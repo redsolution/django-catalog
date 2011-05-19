@@ -19,7 +19,7 @@ class TreeItem(MPTTModel):
 
     class Meta:
         verbose_name = _('Catalog tree item')
-        verbose_name_plural = _('Catalog tree items')
+        verbose_name_plural = _('Manage catalog')
         ordering = ['tree_id', 'lft']
 
     parent = models.ForeignKey('self', related_name='children',
