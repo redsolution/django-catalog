@@ -313,11 +313,12 @@ app.build_layout = function(){
     });
     
     app.view = new Ext.Viewport({
+        renderTo: 'container',
         layout: 'border',
         items: [{
             region: 'north',
-            xtype: 'panel',
-            height: 50
+            contentEl: 'header',
+            border: 0
         },{
             region: 'center',
             layout: 'fit',
@@ -332,8 +333,7 @@ app.build_layout = function(){
         }]
     });
     
-    
-    Ext.DomHelper.overwrite('content', '', false);
+    Ext.DomHelper.overwrite('container', '', false);
 };
 
 /** ** Application initialization part *** */
