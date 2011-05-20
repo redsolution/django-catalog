@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from catalog import settings as catalog_settings
 from catalog.contrib.defaults.settings import UPLOAD_ROOT
-from catalog.models import TreeItem, CatalogBase
+#from catalog.models import TreeItem
+from catalog.base import CatalogBase 
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse, NoReverseMatch
@@ -88,6 +89,8 @@ class Item(CommonFields, models.Model):
     price = models.DecimalField(verbose_name=_('Item price'), null=True, blank=True, max_digits=12, decimal_places=2)
     quantity = models.IntegerField(verbose_name=_('Item quantity'),
         help_text=_('Enter 0 if you have no items. Item will be automatically hidden'), null=True, blank=True)
+    
+    new = models.BooleanField(verbose_name=_('Newest'), default=False)
 
     def __unicode__(self):
         return self.name
