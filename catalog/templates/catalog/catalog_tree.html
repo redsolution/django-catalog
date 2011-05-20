@@ -1,6 +1,10 @@
 {% load mptt_tags %}
 
 <ul class="root">
+	<li>
+		<a href="{% url catalog-root %}">Каталог</a>
+	</li>
+	<ul>
     {% recursetree nodes %}
     	{% if node.level == 0 %}
         <li>
@@ -14,4 +18,5 @@
         </li>
         {% endif %}
     {% endrecursetree %}
+    </ul>
 </ul>

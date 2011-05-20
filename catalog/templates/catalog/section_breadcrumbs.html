@@ -3,6 +3,7 @@
 {% full_tree_for_model catalog.TreeItem as catalog_tree %}
 
 <small>
+	<a href="{% url catalog-root %}">Каталог</a> ›
 {% for element,structure in catalog_tree|tree_info %}
 	{% if element == cur_node %}
 		{% for ancestor in element.get_ancestors %}

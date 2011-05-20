@@ -4,6 +4,11 @@
 
 {% block content %}
 	<div class="span-6 colborder">
+		<ul>
+			<li>
+				<a href="{% url catalog-root %}">Каталог</a>
+			</li>
+			<ul>
 	{% block catalog_tree %}
 		{% full_tree_for_model catalog.TreeItem as catalog_tree %}
 		{% for catalog_tree_element,structure in catalog_tree|tree_info %}
@@ -49,9 +54,10 @@
 			{% endif %}
 		{% endfor %}
 	{% endblock %}
+	</ul>
 	</div>
 
-	<div class="span-9 last">
+	<div class="span-15 last">
 		{% include 'catalog/section_breadcrumbs.html' %}
 		<hr>
 		{% for item in items %}

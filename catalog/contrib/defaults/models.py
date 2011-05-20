@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from catalog import settings as catalog_settings
 from catalog.contrib.defaults.settings import UPLOAD_ROOT
-from catalog.models import TreeItem, CatalogBase
+#from catalog.models import TreeItem
+from catalog.base import CatalogBase 
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse, NoReverseMatch
