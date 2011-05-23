@@ -2,7 +2,7 @@
 from django.db.models import loading
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
@@ -77,6 +77,8 @@ def insert_in_tree(sender, instance, **kwrgs):
 
 for app_label, model_name in catalog_settings.CATALOG_MODELS:
     model_cls = loading.cache.get_model(app_label, model_name)
+    if model_cls is None:
+        raise ImproperlyConfigured('Can not import model %s from app %s, check CATALOG_MODELS setting' % (model_name, app_label))
     # set post_save signals on connected objects:
     # for each connected model connect 
     # automatic TreeItem creation for catalog models
