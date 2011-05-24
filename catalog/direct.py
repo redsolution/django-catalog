@@ -213,7 +213,7 @@ def tree(request):
     data = []
     for item in children:
         data.append({
-            'leaf': item.content_object.leaf,
+            'leaf': getattr(item.content_object, 'leaf', False),
             'id': item.id,
             'text': unicode(item.content_object),
         })
