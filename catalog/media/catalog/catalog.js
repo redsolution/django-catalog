@@ -312,13 +312,20 @@ app.build_layout = function(){
         }
     });
     
+    $('#content').html('');
+    
+    // Hack! 
+    $('<div id="wrapper"></div>').prependTo('#container');
+    $('#header').appendTo('#wrapper');
+    $('.breadcrumbs').appendTo('#wrapper');
+    
     app.view = new Ext.Viewport({
-        renderTo: 'container',
         layout: 'border',
         items: [{
             region: 'north',
-            contentEl: 'header',
-            border: 0
+            margins: '0',
+            paddings: '0',
+            contentEl: 'wrapper'
         },{
             region: 'center',
             layout: 'fit',
@@ -332,18 +339,27 @@ app.build_layout = function(){
             items: app.tree
         }]
     });
-    
-    Ext.DomHelper.overwrite('container', '', false);
+
+    /** Hack continue and explanation
+    *
+    * Since I did not figured how to expand Ext.Panel to screen, I used Ext.Vieport
+    * and hacked it to contain all elements that I need in header in 'north' region
+    * North region must contain only one element, so I wrapped all of them with jQuery.
+    * This can be made with Ext.DomHelper but I tired.
+    */ 
+    $('#wrapper').parents('.x-panel-body-noheader').css('overflow', 'visible !important');
+    $('#wrapper').parents('.x-panel-bwrap').css('overflow', 'visible');
+
 };
 
 /** ** Application initialization part *** */
 
 Ext.onReady(function() {
     Ext.QuickTips.init();
-
+    
     var provider = Ext.Direct.getProvider('catalog_provider');
     provider.on('data', app.direct_data_listener);
-
+    
     Catalog.colmodel.get_col_model();
     Catalog.colmodel.get_models();
 });
