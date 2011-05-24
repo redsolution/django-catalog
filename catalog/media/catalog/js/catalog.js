@@ -65,22 +65,19 @@ app.direct_data_listener = function(provider, event){
     			text: event.result[i].model_name,
     			hrefTarget: event.result[i].url,
     			handler: function (k) {
-    				var parent = '';
-    				if ( app.tree.selModel.selNode ) {
+    				var params={};
+    				if (app.tree.selModel.selNode) {
     					if ( app.tree.selModel.selNode.leaf ) {
-    						parent = app.tree.selModel.selNode.parentNode.id;
+    						params.parent = app.tree.selModel.selNode.parentNode.id;
     					} else {
-    						parent = app.tree.selModel.selNode.id;
+    					    params.parent = app.tree.selModel.selNode.id;
     					}
-    				}
-    				
-    				if (parent != 'root') {
-    					parent = "?parent=" + parent;
     				} else {
-    					parent = '';
+    				    params.parent = app.tree.root.id;
     				}
+    				params._popup = 1;
 	    			var win = window.open(
-	    				k.hrefTarget + parent,
+	    				k.hrefTarget + '?' + Ext.urlEncode(params),
 	    				"",
 	    				"menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
 	    			);
@@ -99,22 +96,22 @@ app.direct_handlers = {
 	    	xtype: 'actioncolumn',
 	    	width: 50,
 	    	items: [{
-	    		icon: '/static/img/cog_edit.png',
-	    		tooltip: 'Изменить',
+	    		icon: '/media/catalog/img/cog_edit.png',
+	    		tooltip: gettext('Change'),
 	    		handler: function(grid, rowIndex, colIndex) {
 					console.dir(app.store.getAt(rowIndex));
 	    			var win = window.open(
-	    				app.store.getAt(rowIndex).json.url,
+	    				app.store.getAt(rowIndex).json.url + '?' + Ext.urlEncode({_popup: 1}),
 	    				"",
 	    				"menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
 	    			);
 	    			win.focus();
 	            }
 	    	},{
-	    		icon: '/static/img/delete.gif',
-	    		tooltip: 'Удалить',
+	    		icon: '/media/catalog/img/delete.gif',
+	    		tooltip: gettext('Delete'),
 	    		handler: function(grid, rowIndex, colIndex) {
-	    			Ext.Msg.confirm('Confirmation', 'Are you sure you want to remove this item?', function(button){
+	    			Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to remove this item?'), function(button){
 	    				if (button == 'yes') {
 							Catalog.treeitem.remove_objects({objects: [app.store.getAt(rowIndex).json.id]});
 							app.store.remove(app.store.getById(app.store.getAt(rowIndex).json.id));
@@ -160,7 +157,7 @@ app.callbacks = {
     	dd.cancel = true;
     	
     	// display the modal confirm dialog
-    	Ext.Msg.confirm('Confirmation', 'Are you sure you want to move this item?', function(button){
+    	Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to move this item?'), function(button){
     		// the animated repair is enabled again
     		dd.tree.dragZone.proxy.animRepair = true;
     		
@@ -268,21 +265,21 @@ app.build_layout = function(){
     
     app.gridBar = new Ext.Toolbar({
 	    items: [{
-	    	text: 'Add',
+	    	text: gettext('Add'),
 	    	menu: app.addMenu,
     	},'-',{
-	    	text: 'Reload',
+	    	text: gettext('Reload'),
 	    	handler: function(){
 	    		app.store.reload();
 	    	}
     	},'-',{
-    		text: 'Remove',
+    		text: gettext('Remove'),
     		handler: function(){
     			rows = app.grid.getSelectionModel().getSelections();
     			if (!rows)
     				return false
     			
-    			Ext.Msg.confirm('Confirmation', 'Are you sure you want to remove ' + rows.length + ' items?', function(button){
+    			Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to remove ' + rows.length + ' items?'), function(button){
     				if (button == 'yes') {
 		    			removeObjects = [];
 		    			for ( var i = 0; i < rows.length; i++ ) {
@@ -345,12 +342,20 @@ app.build_layout = function(){
         }
     });
     
+    $('#content').html('');
+    
+    // Hack! 
+    $('<div id="wrapper"></div>').prependTo('#container');
+    $('#header').appendTo('#wrapper');
+    $('.breadcrumbs').appendTo('#wrapper');
+    
     app.view = new Ext.Viewport({
         layout: 'border',
         items: [{
             region: 'north',
-            xtype: 'panel',
-            height: 50
+            margins: '0',
+            paddings: '0',
+            contentEl: 'wrapper'
         },{
             region: 'center',
             layout: 'fit',
@@ -364,21 +369,36 @@ app.build_layout = function(){
             items: app.tree
         }]
     });
-    
-    
-    Ext.DomHelper.overwrite('content', '', false);
+
+    /** Hack continue and explanation
+    *
+    * Since I did not figured how to expand Ext.Panel to screen, I used Ext.Vieport
+    * and hacked it to contain all elements that I need in header in 'north' region
+    * North region must contain only one element, so I wrapped all of them with jQuery.
+    * This can be made with Ext.DomHelper but I tired.
+    */ 
+    $('#wrapper').parents('.x-panel-body-noheader').css('overflow', 'visible !important');
+    $('#wrapper').parents('.x-panel-bwrap').css('overflow', 'visible');
+
 };
 
 /** ** Application initialization part *** */
 
 Ext.onReady(function() {
     Ext.QuickTips.init();
-
+    
     var provider = Ext.Direct.getProvider('catalog_provider');
     provider.on('data', app.direct_data_listener);
-
+    
     Catalog.colmodel.get_col_model();
     Catalog.colmodel.get_models();
     
     //app.tree_panel_reload();
 });
+
+
+/********* Django admin site routines ******/
+function dismissAddAnotherPopup(win, newId, newRepr) {
+    alert('dismissAddAnotherPopup');
+    win.close();
+};

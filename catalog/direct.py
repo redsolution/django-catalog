@@ -79,7 +79,7 @@ class Column(object):
 
     xtype = 'gridcolumn'
     type = unicode
-    
+
     def __init__(self, name, model_cls, model_admin_cls, order=0):
         '''
         Creates a column with name and order
@@ -87,10 +87,15 @@ class Column(object):
         '''
         self.name = name
         self.order = order
-        
-        self.header = admin.util.label_for_field(name, model_cls, model_admin_cls)
+
+        if name == '__str__':
+            header_label = admin.util.label_for_field(name, model_cls, model_admin_cls).decode('utf-8')
+        else:
+            header_label = admin.util.label_for_field(name, model_cls, model_admin_cls)
+
+        self.header = unicode(header_label)
         attr_type = type(admin.util.lookup_field(name, model_cls(), model_admin_cls))
-        
+
         # detect type
         if attr_type is int:
             self.type = int
@@ -208,7 +213,7 @@ def tree(request):
     data = []
     for item in children:
         data.append({
-            'leaf': item.content_object.leaf,
+            'leaf': getattr(item.content_object, 'leaf', False),
             'id': item.id,
             'text': unicode(item.content_object),
         })

@@ -2,14 +2,12 @@
 {% load adminmedia admin_list i18n %}
 
 {% block extrastyle %}
+    {{ block.super }}
     <link rel="stylesheet" type="text/css" href="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/css/ext-all.css"/>
     <style>
         td, th {
             border: none !important;
             border-color: transparent !important;
-        }
-        #content {
-            margin-top: 0px;
         }
         .loading {
             margin: auto;
@@ -19,14 +17,14 @@
             width: 40%;
             text-align: center;
             height: 50px;
-            background: #fcfefd; /* Old browsers */
-            background: -moz-linear-gradient(top, #fcfefd 0%, #f3f9f5 47%, #ebf3ed 100%); /* FF3.6+ */
-            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#fcfefd), color-stop(47%,#f3f9f5), color-stop(100%,#ebf3ed)); /* Chrome,Safari4+ */
-            background: -webkit-linear-gradient(top, #fcfefd 0%,#f3f9f5 47%,#ebf3ed 100%); /* Chrome10+,Safari5.1+ */
-            background: -o-linear-gradient(top, #fcfefd 0%,#f3f9f5 47%,#ebf3ed 100%); /* Opera11.10+ */
-            background: -ms-linear-gradient(top, #fcfefd 0%,#f3f9f5 47%,#ebf3ed 100%); /* IE10+ */
-            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfefd', endColorstr='#ebf3ed',GradientType=0 ); /* IE6-9 */
-            background: linear-gradient(top, #fcfefd 0%,#f3f9f5 47%,#ebf3ed 100%); /* W3C */
+            background: #eeeeef; /* Old browsers */
+            background: -moz-linear-gradient(top, #eeeeef 0%, #ffffff 100%); /* FF3.6+ */
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eeeeef), color-stop(100%,#ffffff)); /* Chrome,Safari4+ */
+            background: -webkit-linear-gradient(top, #eeeeef 0%,#ffffff 100%); /* Chrome10+,Safari5.1+ */
+            background: -o-linear-gradient(top, #eeeeef 0%,#ffffff 100%); /* Opera11.10+ */
+            background: -ms-linear-gradient(top, #eeeeef 0%,#ffffff 100%); /* IE10+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeef', endColorstr='#ffffff',GradientType=0 ); /* IE6-9 */
+            background: linear-gradient(top, #eeeeef 0%,#ffffff 100%); /* W3C */
             -webkit-border-bottom-right-radius: 20px;
             -webkit-border-bottom-left-radius: 20px;
             -moz-border-radius-bottomright: 20px;
@@ -39,21 +37,35 @@
     </style>
     {% url admin:jsi18n as jsi18nurl %}
     <script type="text/javascript" src="{{ jsi18nurl|default:'../../jsi18n/' }}"></script>
+    
 {% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
-
     <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/adapter/ext/ext-base.js"></script>
-    <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/include/ext-all-debug.js"></script>
-
+    <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/include/ext-all.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.1.min.js"></script>
     <script type="text/javascript" src="direct/provider.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}catalog/catalog.js"></script>
+    <script type="text/javascript" src="/media/catalog/js/catalog.js"></script>
     <script type="text/javascript">
         Ext.BLANK_IMAGE_URL = 'http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/images/default/s.gif';
     </script>
-
 {% endblock %}
+
+  {% block breadcrumbs %}
+    <div class="breadcrumbs">
+      <a href="../../">
+        {% trans "Home" %}
+      </a>
+       &rsaquo; 
+       <a href="../">
+         {{ opts.app_label|capfirst }}
+      </a>
+      &rsaquo; 
+      {{ opts.verbose_name_plural|capfirst }}
+    </div>
+  {% endblock %}
 
 {% block content_title %}{% endblock %}
 {% block content %}
