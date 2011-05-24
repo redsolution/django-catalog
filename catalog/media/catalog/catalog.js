@@ -10,6 +10,11 @@ Ext.Ajax.on('beforerequest', function (conn, options) {
        }
     }, this);
 
+new Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
+	path: "/",
+    expires: new Date(new Date().getTime()+(1000*60*60*24*30)), //30 days
+}));
+
 var app={};
 
 /** ExtDirect Exception handling */
@@ -22,6 +27,30 @@ Ext.Direct.on('exception', function(e){
         Ext.Msg.alert(e.message, msg);
     }
 });
+
+app.tree_panel_reload = function() {
+    // expand the tree and grid to saved state
+    var treestate = Ext.state.Manager.get('treestate');
+    var node_id = 'root';
+    if (treestate) {
+    	node_id = treestate.split('/').reverse()[0];
+    	app.tree.selectPath(treestate);
+    	app.store.load({
+    		params: {id: node_id} 
+    	});
+    } else {
+        app.tree.selModel.select(app.tree.getRootNode());
+        app.tree.getRootNode().expand();
+        app.store.load({
+            params: {node: node_id} 
+        });
+    }
+}
+
+app.expand_node = function () {
+	var treestate = Ext.state.Manager.get('treestate');
+	app.tree.selectPath(treestate);
+}
 
 /** ** bind server data events to asynchronous handlers *** */ 
 app.direct_data_listener = function(provider, event){
@@ -215,6 +244,8 @@ app.callbacks = {
    				}
    			});
    		}
+   		
+   		Ext.state.Manager.set('treestate', node.getPath());
     }
 }
 
@@ -309,6 +340,8 @@ app.build_layout = function(){
         listeners: {
             beforenodedrop: app.callbacks.on_tree_drop,
             click: app.callbacks.on_node_select,
+            afterrender: app.tree_panel_reload,
+            load: app.expand_node,
         }
     });
     
@@ -346,4 +379,6 @@ Ext.onReady(function() {
 
     Catalog.colmodel.get_col_model();
     Catalog.colmodel.get_models();
+    
+    //app.tree_panel_reload();
 });

@@ -63,7 +63,7 @@
 	</ul>
 	</div>
 
-	<div class="span-9 last">
+	<div class="span-15 last">
 		{% include 'catalog/item_breadcrumbs.html' %}
 		<hr>
 		<div class="span-2">
@@ -71,10 +71,23 @@
 		    <img src="{{ item.content_object.images.all.0.image.url }}" />
 		{% endif %}
 		</div>
-		<div class="span-7 last">
+		<div class="span-13 last">
 			Название: {{ item.content_object.name }}<br>
 			Описание: {{ item.content_object.description|default:"Описание не доступно" }}<br>
 			<a href="{{ item.content_object.get_absolute_url }}">Прямая ссылка на этот товар</a>
+			<br><br>
+			{% if item.content_object.images > 1 %}
+				<p>Другие изображения товара</p>
+				{% for image in item.content_object.images.all %}
+				{% if forloop.last %}
+				<div class="span-2 last">
+				{% else %}
+				<div class="span-2 colborder">
+				{% endif %}
+					<img src="{{ image.image.url }}" />
+				</div>
+				{% endfor %}
+			{% endif %}
 		</div>
 	</div>
 {% endblock %}
