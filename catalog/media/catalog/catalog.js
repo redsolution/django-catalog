@@ -67,7 +67,7 @@ app.direct_handlers = {
 	    	xtype: 'actioncolumn',
 	    	width: 50,
 	    	items: [{
-	    		icon: '/static/catalog/img/cog_edit.png',
+	    		icon: '/media/catalog/img/cog_edit.png',
 	    		tooltip: gettext('Change'),
 	    		handler: function(grid, rowIndex, colIndex) {
 					console.dir(app.store.getAt(rowIndex));
@@ -79,7 +79,7 @@ app.direct_handlers = {
 	    			win.focus();
 	            }
 	    	},{
-	    		icon: '/static/catalog/img/delete.gif',
+	    		icon: '/media/catalog/img/delete.gif',
 	    		tooltip: gettext('Delete'),
 	    		handler: function(grid, rowIndex, colIndex) {
 	    			Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to remove this item?'), function(button){
