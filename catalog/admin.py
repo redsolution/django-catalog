@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.admin.util import unquote
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -68,21 +68,27 @@ class CatalogAdmin(admin.ModelAdmin):
             '''
             def save(self, *args, **kwds):
                 '''Redefined ModelForm method in order to set parent attribute'''
-                if request.REQUEST.get('parent'):
-                    parent = TreeItem.objects.get(id=request.REQUEST.get('parent'))
+                if 'parent' in request.REQUEST:
+                    if request.REQUEST.get('parent') == 'root':
+                        parent = None
+                    else:
+                        try:
+                            parent = TreeItem.objects.get(id=request.REQUEST.get('parent'))
+                        except ObjectDoesNotExist:
+                            parent = None
                     self.instance.parent = parent
                 return super(ModelFormCatalogWrapper, self).save(*args, **kwds)
 
         return ModelFormCatalogWrapper
-    
+
     def add_link(self, request, object_id):
         '''Show new link creation form'''
         model = self.model
         opts = model._meta
-        
+
         obj = self.get_object(request, unquote(object_id).rstrip('/newlink'))
         content_type = ContentType.objects.get_for_model(obj)
-        
+
         if request.method == 'POST':
             form = LinkInsertionForm(request.POST)
             if form.is_valid():
@@ -93,7 +99,7 @@ class CatalogAdmin(admin.ModelAdmin):
                 'object_id': obj.id,
                 'content_type': content_type.pk,
             })
-         
+
         fields = form.base_fields.keys()
         fields.remove('content_type')
         fields.remove('object_id')

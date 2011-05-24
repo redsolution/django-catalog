@@ -36,22 +36,19 @@ app.direct_data_listener = function(provider, event){
     			text: event.result[i].model_name,
     			hrefTarget: event.result[i].url,
     			handler: function (k) {
-    				var parent = '';
-    				if ( app.tree.selModel.selNode ) {
+    				var params={};
+    				if (app.tree.selModel.selNode) {
     					if ( app.tree.selModel.selNode.leaf ) {
-    						parent = app.tree.selModel.selNode.parentNode.id;
+    						params.parent = app.tree.selModel.selNode.parentNode.id;
     					} else {
-    						parent = app.tree.selModel.selNode.id;
+    					    params.parent = app.tree.selModel.selNode.id;
     					}
-    				}
-    				
-    				if (parent != 'root') {
-    					parent = "?parent=" + parent;
     				} else {
-    					parent = '';
+    				    params.parent = app.tree.root.id;
     				}
+    				params._popup = 1;
 	    			var win = window.open(
-	    				k.hrefTarget + parent,
+	    				k.hrefTarget + '?' + Ext.urlEncode(params),
 	    				"",
 	    				"menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
 	    			);
