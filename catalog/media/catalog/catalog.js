@@ -68,7 +68,7 @@ app.direct_handlers = {
 	    	width: 50,
 	    	items: [{
 	    		icon: '/static/catalog/img/cog_edit.png',
-	    		tooltip: 'Изменить',
+	    		tooltip: gettext('Change'),
 	    		handler: function(grid, rowIndex, colIndex) {
 					console.dir(app.store.getAt(rowIndex));
 	    			var win = window.open(
@@ -80,9 +80,9 @@ app.direct_handlers = {
 	            }
 	    	},{
 	    		icon: '/static/catalog/img/delete.gif',
-	    		tooltip: 'Удалить',
+	    		tooltip: gettext('Delete'),
 	    		handler: function(grid, rowIndex, colIndex) {
-	    			Ext.Msg.confirm('Confirmation', 'Are you sure you want to remove this item?', function(button){
+	    			Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to remove this item?'), function(button){
 	    				if (button == 'yes') {
 							Catalog.treeitem.remove_objects({objects: [app.store.getAt(rowIndex).json.id]});
 							app.store.remove(app.store.getById(app.store.getAt(rowIndex).json.id));
@@ -128,7 +128,7 @@ app.callbacks = {
     	dd.cancel = true;
     	
     	// display the modal confirm dialog
-    	Ext.Msg.confirm('Confirmation', 'Are you sure you want to move this item?', function(button){
+    	Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to move this item?'), function(button){
     		// the animated repair is enabled again
     		dd.tree.dragZone.proxy.animRepair = true;
     		
@@ -234,21 +234,21 @@ app.build_layout = function(){
     
     app.gridBar = new Ext.Toolbar({
 	    items: [{
-	    	text: 'Add',
+	    	text: gettext('Add'),
 	    	menu: app.addMenu,
     	},'-',{
-	    	text: 'Reload',
+	    	text: gettext('Reload'),
 	    	handler: function(){
 	    		app.store.reload();
 	    	}
     	},'-',{
-    		text: 'Remove',
+    		text: gettext('Remove'),
     		handler: function(){
     			rows = app.grid.getSelectionModel().getSelections();
     			if (!rows)
     				return false
     			
-    			Ext.Msg.confirm('Confirmation', 'Are you sure you want to remove ' + rows.length + ' items?', function(button){
+    			Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to remove ' + rows.length + ' items?'), function(button){
     				if (button == 'yes') {
 		    			removeObjects = [];
 		    			for ( var i = 0; i < rows.length; i++ ) {
