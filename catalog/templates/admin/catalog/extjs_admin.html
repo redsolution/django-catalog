@@ -52,6 +52,20 @@
     </script>
 {% endblock %}
 
+  {% block breadcrumbs %}
+    <div class="breadcrumbs">
+      <a href="../../">
+        {% trans "Home" %}
+      </a>
+       &rsaquo; 
+       <a href="../">
+         {{ opts.app_label|capfirst }}
+      </a>
+      &rsaquo; 
+      {{ opts.verbose_name_plural|capfirst }}
+    </div>
+  {% endblock %}
+
 {% block content_title %}{% endblock %}
 {% block content %}
     <div class="loading">

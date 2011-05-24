@@ -208,6 +208,11 @@ class TreeItemAdmin(MPTTModelAdmin):
             request.GET = copied_get
             return super(TreeItemAdmin, self).changelist_view(request, extra_context)
         else:
+            if extra_context is None:
+                extra_context = {}
+            extra_context.update({
+                'opts': self.model._meta,
+            })
             return self.ext_js_config(request, extra_context)
 
     def get_urls(self, *args, **kwds):
