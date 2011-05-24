@@ -108,7 +108,7 @@ class CatalogImage(ImageModel):
     image = models.ImageField(verbose_name=_('Image'),
         upload_to=join(UPLOAD_ROOT, 'catalog'))
 
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, related_name='default_catalogimages')
     object_id = models.PositiveIntegerField()
     # content object points to an object which belongs to the image 
     content_object = generic.GenericForeignKey('content_type', 'object_id')
