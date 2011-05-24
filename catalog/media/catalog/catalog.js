@@ -72,7 +72,7 @@ app.direct_handlers = {
 	    		handler: function(grid, rowIndex, colIndex) {
 					console.dir(app.store.getAt(rowIndex));
 	    			var win = window.open(
-	    				app.store.getAt(rowIndex).json.url,
+	    				app.store.getAt(rowIndex).json.url + '?' + Ext.urlEncode({_popup: 1}),
 	    				"",
 	    				"menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
 	    			);
@@ -360,3 +360,10 @@ Ext.onReady(function() {
     Catalog.colmodel.get_col_model();
     Catalog.colmodel.get_models();
 });
+
+
+/********* Django admin site routines ******/
+function dismissAddAnotherPopup(win, newId, newRepr) {
+    alert('dismissAddAnotherPopup');
+    win.close();
+};

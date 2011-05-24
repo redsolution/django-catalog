@@ -36,7 +36,8 @@ class Serializer(ExtSerializer):
     def handle_model(self, obj):
         url = urlresolvers.reverse('admin:%s_%s_change' %
             (obj.content_object._meta.app_label, obj.content_object._meta.module_name),
-            args=[obj.object_id]) + '?popup=1'
+            args=[obj.object_id],
+        )
         self._current['url'] = url
 
     def serialize(self, queryset, **options):
