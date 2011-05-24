@@ -176,21 +176,14 @@ def objects(request):
     '''
     Data grid provider
     '''
-
     data = request.extdirect_post_data[0]
-    if data.get('root') == 'root':
-        data.pop('root')
-        data['lft'] = 1
-        
-    if data.get('node_id'):
-        data['parent'] = TreeItem.objects.get(id=data.pop('node_id')).parent_id
-    
-    if data.get('parent') == 'root':
-        data.pop('parent')
-        data['lft'] = 1
-    
+
+    parent = data.get('parent', 'root')
+    if parent == 'root':
+        parent = None
+
     items = CatalogGridStore()
-    res = items.query(**data)
+    res = items.query(parent=parent)
     return res
 
 @remoting(provider, action="treeitem", len=1)

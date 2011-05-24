@@ -36,13 +36,13 @@ app.tree_panel_reload = function() {
     	node_id = treestate.split('/').reverse()[0];
     	app.tree.selectPath(treestate);
     	app.store.load({
-    		params: {id: node_id} 
+    		params: {parent: node_id} 
     	});
     } else {
         app.tree.selModel.select(app.tree.getRootNode());
         app.tree.getRootNode().expand();
         app.store.load({
-            params: {node: node_id} 
+            params: {parent: node_id} 
         });
     }
 }
@@ -126,7 +126,6 @@ app.direct_handlers = {
 
 app.callbacks = {
     on_grid_drop: function(source, e, data) {
-    	console.log(e, data);
     	var dragElements = [];
         if (source.grid) {
 	        var sm = source.grid.getSelectionModel();
@@ -191,7 +190,7 @@ app.callbacks = {
 	                    	dd.target.parentNode.insertBefore(dd.dropNode, dd.target);
 	                    }
 
-	                    app.store.load({params: {node_id: dd.target.id}});
+	                    app.store.load({params: {parent: dd.target.id}});
 	                    break;
 	                case "below":
 	                	if (dd.source.grid){
@@ -200,7 +199,7 @@ app.callbacks = {
 	                    	dd.target.parentNode.insertBefore(dd.dropNode, dd.target.nextSibling);
 	                    }
 	                    
-	                    app.store.load({params: {node_id: dd.target.id}});
+	                    app.store.load({params: {parent: dd.target.id}});
 	                    break;
 	                default:
 	                    debugger;
@@ -222,16 +221,16 @@ app.callbacks = {
 		return true;
    	},
    	on_node_select: function(node, event) {
-   		if (node.id == 'root') {
+   		if (node === app.tree.root) {
    			app.store.load({
    				params: {
-   					root: 'root'
+   					parent: 'root'
    				}
    			});
    		} else if (node.leaf) {
    			app.store.load({
    				params: {
-   					id: node.id
+   					parent: node.parentNode.id
    				}
    			});
    		} else {
