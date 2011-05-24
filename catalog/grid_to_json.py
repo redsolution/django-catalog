@@ -27,9 +27,12 @@ class Serializer(ExtSerializer):
         self._admin_cls = admin.site._registry[type(self._content_object)]
 
     def handle_field(self, obj, field):
-        value = admin.util.lookup_field(field.name, self._content_object, self._admin_cls)[2]
+        try:
+            value = admin.util.lookup_field(field.name, self._content_object, self._admin_cls)[2]
+        except AttributeError:
+            value = ''
         self._current[field.name] = smart_unicode(value, strings_only=True)
-    
+
     def handle_model(self, obj):
         url = urlresolvers.reverse('admin:%s_%s_change' %
             (obj.content_object._meta.app_label, obj.content_object._meta.module_name),
