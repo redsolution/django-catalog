@@ -46,8 +46,11 @@
     <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/include/ext-all.js"></script>
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.1.min.js"></script>
     <script type="text/javascript" src="direct/provider.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}catalog/catalog.js"></script>
+    {% if STATIC_URL %}
+    <script type="text/javascript" src="{{ STATIC_URL }}catalog/js/catalog.js"></script>
+    {% else %}
     <script type="text/javascript" src="/media/catalog/js/catalog.js"></script>
+    {% endif %}
     <script type="text/javascript">
         Ext.BLANK_IMAGE_URL = 'http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/images/default/s.gif';
     </script>
