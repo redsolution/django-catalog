@@ -399,6 +399,7 @@ Ext.onReady(function() {
 
 /********* Django admin site routines ******/
 function dismissAddAnotherPopup(win, newId, newRepr) {
-    alert('dismissAddAnotherPopup');
     win.close();
+    app.tree.selModel.getSelectedNode().reload();
+    app.store.reload();
 };
