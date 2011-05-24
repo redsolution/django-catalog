@@ -37,6 +37,7 @@
     </style>
     {% url admin:jsi18n as jsi18nurl %}
     <script type="text/javascript" src="{{ jsi18nurl|default:'../../jsi18n/' }}"></script>
+    
 {% endblock %}
 
 {% block extrahead %}
@@ -45,7 +46,7 @@
     <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/include/ext-all.js"></script>
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.1.min.js"></script>
     <script type="text/javascript" src="direct/provider.js"></script>
-    <script type="text/javascript" src="/media/catalog/catalog.js"></script>
+    <script type="text/javascript" src="/media/catalog/js/catalog.js"></script>
     <script type="text/javascript">
         Ext.BLANK_IMAGE_URL = 'http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/images/default/s.gif';
     </script>
