@@ -28,9 +28,18 @@ Ext.Direct.on('exception', function(e){
     }
 });
 
-app.expand_node = function () {
+app.expand_tree = function () {
 	var treestate = Ext.state.Manager.get('treestate');
 	app.tree.selectPath(treestate);
+}
+
+app.reload_selected_node = function() {
+    // if selected node is leaf, than reload parent node
+    var selected_node = app.tree.selModel.getSelectedNode();
+    if (selected_node.leaf) {
+        selected_node = selected_node.parentNode;
+    }
+    selected_node.reload();
 }
 
 /** ** bind server data events to asynchronous handlers *** */ 
@@ -61,7 +70,7 @@ app.direct_handlers = {
 							Catalog.treeitem.remove_objects({objects: [app.store.getAt(rowIndex).json.id]});
 							// remove item from store & grid
 							app.store.remove(app.store.getById(app.store.getAt(rowIndex).json.id));
-							reload_selected_node();
+							app.reload_selected_node();
 	    				}
 	    			});
 	            }
@@ -290,7 +299,7 @@ app.build_layout = function(){
 		    				app.store.remove(app.store.getById(rows[i].id));
 		    			}
 						Catalog.treeitem.remove_objects({objects: removeObjects});
-						reload_selected_node();
+						app.reload_selected_node();
     				}
     			});
     		}
@@ -342,7 +351,7 @@ app.build_layout = function(){
             beforenodedrop: app.callbacks.on_tree_drop,
             click: app.callbacks.on_node_select,
             afterrender: app.callbacks.tree_panel_reload,
-            load: app.expand_node,
+            load: app.expand_tree,
         }
     });
     
@@ -393,19 +402,11 @@ Ext.onReady(function() {
     var provider = Ext.Direct.getProvider('catalog_provider');
     provider.on('data', app.direct_handlers.direct_data_listener);
     
+    // Fire ExtDirect functions to initialize interface
     Catalog.colmodel.get_col_model();
     Catalog.colmodel.get_models();
 });
 
-function reload_selected_node() {
-	// if selected node is leaf, than reload parent node
-	var selected_node = app.tree.selModel.getSelectedNode();
-	if (selected_node.leaf) {
-		selected_node = selected_node.parentNode;
-	}
-	
-	selected_node.reload();
-}
 
 /********* Django admin site routines ******/
 function dismissAddAnotherPopup(win, newId, newRepr) {
