@@ -347,12 +347,12 @@ app.build_layout = function(){
         }
     });
     
-    $('#content').html('');
+    jQuery('#content').html('');
     
     // Hack! 
-    $('<div id="wrapper"></div>').prependTo('#container');
-    $('#header').appendTo('#wrapper');
-    $('.breadcrumbs').appendTo('#wrapper');
+    jQuery('<div id="wrapper"></div>').prependTo('#container');
+    jQuery('#header').appendTo('#wrapper');
+    jQuery('.breadcrumbs').appendTo('#wrapper');
     
     app.view = new Ext.Viewport({
         layout: 'border',
@@ -381,10 +381,9 @@ app.build_layout = function(){
     * and hacked it to contain all elements that I need in header in 'north' region
     * North region must contain only one element, so I wrapped all of them with jQuery.
     * This can be made with Ext.DomHelper but I tired.
-    */ 
-    $('#wrapper').parents('.x-panel-body-noheader').css('overflow', 'visible !important');
-    $('#wrapper').parents('.x-panel-bwrap').css('overflow', 'visible');
-
+    */
+    jQuery('#wrapper').parents('.x-panel-body').css('overflow','visible');
+    jQuery('#wrapper').parents('.x-panel-bwrap').css('overflow','visible');
 };
 
 /** ** Application initialization part *** */
