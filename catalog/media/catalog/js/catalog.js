@@ -97,7 +97,7 @@ app.direct_handlers = {
 	    	xtype: 'actioncolumn',
 	    	width: 50,
 	    	items: [{
-	    		icon: '/static/catalog/img/cog_edit.png',
+	    		icon: __static_media_prefix__ + 'catalog/img/cog_edit.png',
 	    		tooltip: gettext('Change'),
 	    		handler: function(grid, rowIndex, colIndex) {
 	    			var win = window.open(
@@ -108,7 +108,7 @@ app.direct_handlers = {
 	    			win.focus();
 	            }
 	    	},{
-	    		icon: '/static/catalog/img/delete.gif',
+	    		icon: __static_media_prefix__ + 'catalog/img/delete.gif',
 	    		tooltip: gettext('Delete'),
 	    		handler: function(grid, rowIndex, colIndex) {
 	    			Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to remove this item?'), function(button){
@@ -349,12 +349,12 @@ app.build_layout = function(){
         }
     });
     
-    $('#content').html('');
+    jQuery('#content').html('');
     
     // Hack! 
-    $('<div id="wrapper"></div>').prependTo('#container');
-    $('#header').appendTo('#wrapper');
-    $('.breadcrumbs').appendTo('#wrapper');
+    jQuery('<div id="wrapper"></div>').prependTo('#container');
+    jQuery('#header').appendTo('#wrapper');
+    jQuery('.breadcrumbs').appendTo('#wrapper');
     
     app.view = new Ext.Viewport({
         layout: 'border',
@@ -383,10 +383,9 @@ app.build_layout = function(){
     * and hacked it to contain all elements that I need in header in 'north' region
     * North region must contain only one element, so I wrapped all of them with jQuery.
     * This can be made with Ext.DomHelper but I tired.
-    */ 
-    $('#wrapper').parents('.x-panel-body-noheader').css('overflow', 'visible !important');
-    $('#wrapper').parents('.x-panel-bwrap').css('overflow', 'visible');
-
+    */
+    jQuery('#wrapper').parents('.x-panel-body').css('overflow','visible');
+    jQuery('#wrapper').parents('.x-panel-bwrap').css('overflow','visible');
 };
 
 /** ** Application initialization part *** */

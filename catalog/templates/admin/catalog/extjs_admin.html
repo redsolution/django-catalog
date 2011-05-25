@@ -37,11 +37,13 @@
     </style>
     {% url admin:jsi18n as jsi18nurl %}
     <script type="text/javascript" src="{{ jsi18nurl|default:'../../jsi18n/' }}"></script>
-    {% if STATIC_URL %}
     <script type="text/javascript">
-    var __static_media_prefix__ = '{{ STATIC_URL }}';
-    </script>
+    {% if STATIC_URL %}
+        var __static_media_prefix__ = '{{ STATIC_URL }}';
+    {% else %}
+        var __static_media_prefix__ = '/media/';
     {% endif %}
+    </script>
     
 {% endblock %}
 
