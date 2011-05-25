@@ -96,7 +96,7 @@ app.direct_handlers = {
 	    	xtype: 'actioncolumn',
 	    	width: 50,
 	    	items: [{
-	    		icon: '/media/catalog/img/cog_edit.png',
+	    		icon: '/static/catalog/img/cog_edit.png',
 	    		tooltip: gettext('Change'),
 	    		handler: function(grid, rowIndex, colIndex) {
 					console.dir(app.store.getAt(rowIndex));
@@ -108,13 +108,18 @@ app.direct_handlers = {
 	    			win.focus();
 	            }
 	    	},{
-	    		icon: '/media/catalog/img/delete.gif',
+	    		icon: '/static/catalog/img/delete.gif',
 	    		tooltip: gettext('Delete'),
 	    		handler: function(grid, rowIndex, colIndex) {
 	    			Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to remove this item?'), function(button){
 	    				if (button == 'yes') {
+	    					// remove TreeItem from database
 							Catalog.treeitem.remove_objects({objects: [app.store.getAt(rowIndex).json.id]});
+							
+							// remove item from store & grid
 							app.store.remove(app.store.getById(app.store.getAt(rowIndex).json.id));
+							
+							reload_selected_node();
 	    				}
 	    			});
 	            }
@@ -286,6 +291,7 @@ app.build_layout = function(){
 		    				app.store.remove(app.store.getById(rows[i].id));
 		    			}
 						Catalog.treeitem.remove_objects({objects: removeObjects});
+						reload_selected_node();
     				}
     			});
     		}
@@ -391,10 +397,17 @@ Ext.onReady(function() {
     
     Catalog.colmodel.get_col_model();
     Catalog.colmodel.get_models();
-    
-    //app.tree_panel_reload();
 });
 
+function reload_selected_node(rowIndex) {
+	// if selected node is leaf, than reload parent node
+	var selected_node = app.tree.selModel.getSelectedNode();
+	if (selected_node.leaf) {
+		selected_node = selected_node.parentNode;
+	}
+	
+	selected_node.reload();
+}
 
 /********* Django admin site routines ******/
 function dismissAddAnotherPopup(win, newId, newRepr) {
