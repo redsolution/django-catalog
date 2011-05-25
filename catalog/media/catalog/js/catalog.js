@@ -16,6 +16,7 @@ new Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
 }));
 
 var app={};
+var zzz;
 
 /** ExtDirect Exception handling */
 Ext.Direct.on('exception', function(e){
@@ -99,7 +100,6 @@ app.direct_handlers = {
 	    		icon: '/static/catalog/img/cog_edit.png',
 	    		tooltip: gettext('Change'),
 	    		handler: function(grid, rowIndex, colIndex) {
-					console.dir(app.store.getAt(rowIndex));
 	    			var win = window.open(
 	    				app.store.getAt(rowIndex).json.url + '?' + Ext.urlEncode({_popup: 1}),
 	    				"",
@@ -184,6 +184,7 @@ app.callbacks = {
 	                		dd.target.reload();
 	                	} else {
 	                		dd.target.appendChild(dd.dropNode);
+	                		app.tree.selModel.select(dd.target);
 	                	}
 	                	
 	                	app.store.load({params: {parent: dd.target.id}});
@@ -193,6 +194,7 @@ app.callbacks = {
 	                		dd.target.parentNode.reload();
 	                	} else {
 	                    	dd.target.parentNode.insertBefore(dd.dropNode, dd.target);
+	                    	app.tree.selModel.select(dd.target.parentNode);
 	                    }
 
 	                    app.store.load({params: {parent: dd.target.id}});
@@ -202,6 +204,7 @@ app.callbacks = {
 	                		dd.target.parentNode.reload();
 	                	} else {
 	                    	dd.target.parentNode.insertBefore(dd.dropNode, dd.target.nextSibling);
+	                    	app.tree.selModel.select(dd.target.parentNode);
 	                    }
 	                    
 	                    app.store.load({params: {parent: dd.target.id}});
@@ -218,7 +221,6 @@ app.callbacks = {
 			    		target_node = dd.target;
 			    	}
 			    	app.tree.expandPath(target_node.getPath());
-			    	//target_node.reload();
 			    }
 	        }
     	});
@@ -399,7 +401,7 @@ Ext.onReady(function() {
     Catalog.colmodel.get_models();
 });
 
-function reload_selected_node(rowIndex) {
+function reload_selected_node() {
 	// if selected node is leaf, than reload parent node
 	var selected_node = app.tree.selModel.getSelectedNode();
 	if (selected_node.leaf) {
@@ -415,3 +417,5 @@ function dismissAddAnotherPopup(win, newId, newRepr) {
     app.tree.selModel.getSelectedNode().reload();
     app.store.reload();
 };
+
+
