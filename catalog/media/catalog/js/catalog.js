@@ -16,7 +16,6 @@ new Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
 }));
 
 var app={};
-var zzz;
 
 /** ExtDirect Exception handling */
 Ext.Direct.on('exception', function(e){
@@ -29,67 +28,12 @@ Ext.Direct.on('exception', function(e){
     }
 });
 
-app.tree_panel_reload = function() {
-    // expand the tree and grid to saved state
-    var treestate = Ext.state.Manager.get('treestate');
-    var node_id = 'root';
-    if (treestate) {
-    	node_id = treestate.split('/').reverse()[0];
-    	app.tree.selectPath(treestate);
-    	app.store.load({
-    		params: {parent: node_id} 
-    	});
-    } else {
-        app.tree.selModel.select(app.tree.getRootNode());
-        app.tree.getRootNode().expand();
-        app.store.load({
-            params: {parent: node_id} 
-        });
-    }
-}
-
 app.expand_node = function () {
 	var treestate = Ext.state.Manager.get('treestate');
 	app.tree.selectPath(treestate);
 }
 
 /** ** bind server data events to asynchronous handlers *** */ 
-app.direct_data_listener = function(provider, event){
-    if (event.action === 'colmodel' && event.method === 'get_col_model') {
-        app.direct_handlers.on_get_col_model(provider, event);
-    }
-    
-    if (event.action === 'colmodel' && event.method === 'get_models') {
-    	var items = [];
-    	for (var i = 0; i < event.result.length; i++) {
-    		items.push({
-    			text: event.result[i].model_name,
-    			hrefTarget: event.result[i].url,
-    			handler: function (k) {
-    				var params={};
-    				if (app.tree.selModel.selNode) {
-    					if ( app.tree.selModel.selNode.leaf ) {
-    						params.parent = app.tree.selModel.selNode.parentNode.id;
-    					} else {
-    					    params.parent = app.tree.selModel.selNode.id;
-    					}
-    				} else {
-    				    params.parent = app.tree.root.id;
-    				}
-    				params._popup = 1;
-	    			var win = window.open(
-	    				k.hrefTarget + '?' + Ext.urlEncode(params),
-	    				"",
-	    				"menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
-	    			);
-	    			win.focus();
-    			}
-    		});
-    	}
-    	app.addMenu.add(items);
-    }
-};
-
 app.direct_handlers = {
     on_get_col_model: function(provider, event) {
         app.colmodel = event.result;
@@ -115,17 +59,52 @@ app.direct_handlers = {
 	    				if (button == 'yes') {
 	    					// remove TreeItem from database
 							Catalog.treeitem.remove_objects({objects: [app.store.getAt(rowIndex).json.id]});
-							
 							// remove item from store & grid
 							app.store.remove(app.store.getById(app.store.getAt(rowIndex).json.id));
-							
 							reload_selected_node();
 	    				}
 	    			});
 	            }
 	    	}]
 	    });
+        
+        /*** Build application layout after column model recieved from server ***/
         app.build_layout();
+    },
+    direct_data_listener: function(provider, event){
+        if (event.action === 'colmodel' && event.method === 'get_col_model') {
+            app.direct_handlers.on_get_col_model(provider, event);
+        }
+        
+        if (event.action === 'colmodel' && event.method === 'get_models') {
+            var items = [];
+            for (var i = 0; i < event.result.length; i++) {
+                items.push({
+                    text: event.result[i].model_name,
+                    hrefTarget: event.result[i].url,
+                    handler: function (k) {
+                        var params={};
+                        if (app.tree.selModel.selNode) {
+                            if ( app.tree.selModel.selNode.leaf ) {
+                                params.parent = app.tree.selModel.selNode.parentNode.id;
+                            } else {
+                                params.parent = app.tree.selModel.selNode.id;
+                            }
+                        } else {
+                            params.parent = app.tree.root.id;
+                        }
+                        params._popup = 1;
+                        var win = window.open(
+                            k.hrefTarget + '?' + Ext.urlEncode(params),
+                            "",
+                            "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
+                        );
+                        win.focus();
+                    }
+                });
+            }
+            app.addMenu.add(items);
+        }
     }
 };
 
@@ -249,6 +228,24 @@ app.callbacks = {
    		}
    		
    		Ext.state.Manager.set('treestate', node.getPath());
+    },
+    tree_panel_reload: function() {
+        // expand the tree and grid to saved state
+        var treestate = Ext.state.Manager.get('treestate');
+        var node_id = 'root';
+        if (treestate) {
+            node_id = treestate.split('/').reverse()[0];
+            app.tree.selectPath(treestate);
+            app.store.load({
+                params: {parent: node_id} 
+            });
+        } else {
+            app.tree.selModel.select(app.tree.getRootNode());
+            app.tree.getRootNode().expand();
+            app.store.load({
+                params: {parent: node_id} 
+            });
+        }
     }
 }
 
@@ -344,7 +341,7 @@ app.build_layout = function(){
         listeners: {
             beforenodedrop: app.callbacks.on_tree_drop,
             click: app.callbacks.on_node_select,
-            afterrender: app.tree_panel_reload,
+            afterrender: app.callbacks.tree_panel_reload,
             load: app.expand_node,
         }
     });
@@ -394,7 +391,7 @@ Ext.onReady(function() {
     Ext.QuickTips.init();
     
     var provider = Ext.Direct.getProvider('catalog_provider');
-    provider.on('data', app.direct_data_listener);
+    provider.on('data', app.direct_handlers.direct_data_listener);
     
     Catalog.colmodel.get_col_model();
     Catalog.colmodel.get_models();
