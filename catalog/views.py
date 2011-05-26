@@ -46,19 +46,23 @@ def section_details(request, model, slug):
             items.append(child)
         else:
             sections.append(child)
-    
-    return render_to_response('catalog/section.html', {'items': items, 'sections': sections, 'cur_node': node}, RequestContext(request))    
 
-def by_id(request, slug, object_id):
-    return object_detail(request, TreeItem.objects.all(), object_id=object_id, **defaults)
+    return render_to_response('catalog/section.html', {'items': items, 'sections': sections, 'cur_node': node}, RequestContext(request))
+
+#===============================================================================
+# I will leave onlu these views, all views above should be deleted
+#===============================================================================
 
 def by_slug(request, model, slug):
-    models = {}
-    for model_cls, admin_cls in get_connected_models():
-        models[model_cls.__name__.lower()] = model_cls
-    ModelClass = models[model]
-    return object_detail(request, ModelClass.objects.all(), slug=slug, **defaults)
+    ModelClass = None
+    for model_cls in connected_models():
+        if model_cls._meta.module_name == model:
+            ModelClass = model_cls
+    if ModelClass is not None:
+        return object_detail(request, ModelClass.objects.all(), slug=slug, **defaults)
+    else:
+        raise HttpResponseNotFound(_('Model %s does not registered' % model))
 
 def root(request):
-    return object_list(request, TreeItem.objects.filter(parent=None), 
+    return object_list(request, TreeItem.objects.filter(parent=None),
         template_name='catalog/root.html')
