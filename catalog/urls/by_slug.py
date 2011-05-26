@@ -7,5 +7,5 @@ handler404
 handler500
 
 urlpatterns += patterns('',
-    url(r'^(?P<model>\w+)/(?P<slug>[\w\d]+)$', 'catalog.views.by_slug', name='catalog-by-slug'),
+    url(r'^(?P<model>\w+)/(?P<slug>[\w\d]+)/$', 'catalog.views.item_view', name='catalog-by-slug'),
 )

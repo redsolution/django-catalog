@@ -5,7 +5,7 @@ from catalog.utils import connected_models
 from django.db.models import loading
 from django.http import Http404, HttpResponseNotFound
 from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.template import RequestContext, loader
 from django.views.generic.list_detail import object_detail, object_list
 
 defaults = {
@@ -53,15 +53,34 @@ def section_details(request, model, slug):
 # I will leave onlu these views, all views above should be deleted
 #===============================================================================
 
-def by_slug(request, model, slug):
+def item_view(request, model, slug=None, object_id=None):
     ModelClass = None
     for model_cls in connected_models():
         if model_cls._meta.module_name == model:
             ModelClass = model_cls
     if ModelClass is not None:
-        return object_detail(request, ModelClass.objects.all(), slug=slug, **defaults)
+        # select template
+        try:
+            opts = model_cls._meta
+            t = loader.select_template([
+                'catalog/%s/%s.html' % (opts.app_label, opts.module_name),
+                'catalog/%s.html' % opts.module_name,
+                '%s/%s_in_catalog.html' % (opts.app_label, opts.module_name),
+            ])
+            defaults.update({
+                'template_name': t.name,
+            })
+        except loader.TemplateDoesNotExist:
+            pass
+        if slug is not None:
+            return object_detail(request, ModelClass.objects.all(), slug=slug, **defaults)
+        elif id is not None:
+            return object_detail(request, ModelClass.objects.all(), object_id=object_id, **defaults)
+        else:
+            return HttpResponseNotFound(_('No object data specified'))
+
     else:
-        raise HttpResponseNotFound(_('Model %s does not registered' % model))
+        return HttpResponseNotFound(_('Model %s does not registered' % model))
 
 def root(request):
     return object_list(request, TreeItem.objects.filter(parent=None),

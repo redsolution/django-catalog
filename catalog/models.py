@@ -31,7 +31,10 @@ class TreeItem(MPTTModel):
 
     def __unicode__(self):
         return unicode(self.content_object)
-    
+
+    def get_absolute_url(self):
+        return self.content_object.get_absolute_url()
+
     def delete(self, *args, **kwds):
         self.content_object.delete()
         super(TreeItem, self).delete(*args, **kwds)
