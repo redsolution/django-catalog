@@ -35,6 +35,26 @@ app.expand_tree = function () {
 	});
 }
 
+app.grid_open_edit_window = function(grid, rowIndex, colIndex) {
+    var win = window.open(
+        app.store.getAt(rowIndex).json.url + '?' + Ext.urlEncode({_popup: 1}),
+        "",
+        "menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
+    );
+    win.focus();
+}
+
+app.grid_renderYesNo = function(value){
+    if (value) 
+        return '<div class="show-yes"></div>'
+    else 
+        return '<div class="show-no"></div>'
+}
+
+app.grid_renderType = function(value){
+    return '<div class="' + value + '"></div>'
+}
+
 app.reload_selected_node = function() {
     // if selected node is leaf, than reload parent node
     var selected_node = app.tree.selModel.getSelectedNode();
@@ -46,7 +66,7 @@ app.reload_selected_node = function() {
 
 app.after_move = [];
 
-/** ** bind server data events to asynchronous handlers *** */ 
+/**** bind server data events to asynchronous handlers ****/ 
 app.direct_handlers = {
     on_get_col_model: function(provider, event) {
         app.colmodel = event.result;
@@ -56,16 +76,9 @@ app.direct_handlers = {
 	    	items: [{
 	    		icon: __static_media_prefix__ + 'catalog/img/cog_edit.png',
 	    		tooltip: gettext('Change'),
-	    		handler: function(grid, rowIndex, colIndex) {
-	    			var win = window.open(
-	    				app.store.getAt(rowIndex).json.url + '?' + Ext.urlEncode({_popup: 1}),
-	    				"",
-	    				"menubar=no,width=800,height=730,toolbar=no,scrollbars=yes"
-	    			);
-	    			win.focus();
-	            }
+	    		handler: app.grid_open_edit_window
 	    	},{
-	    		icon: __static_media_prefix__ + 'catalog/img/delete.gif',
+	    		icon: __static_media_prefix__ + 'catalog/img/delete.png',
 	    		tooltip: gettext('Delete'),
 	    		handler: function(grid, rowIndex, colIndex) {
 	    			Ext.Msg.confirm(gettext('Confirmation'), gettext('Are you sure you want to remove this item?'), function(button){
@@ -142,6 +155,9 @@ app.callbacks = {
                 
                 app.store.remove(app.store.getById(rows[i].id));
                 app.store.insert(cindex,rows[i]);
+                app.after_move.push(function(){
+                    app.reload_selected_node();
+                });
             }
         } else {
             // Drop from tree not supported yet...
@@ -375,7 +391,8 @@ app.build_layout = function(){
 				    ddGroup : 'dd',
 				    notifyDrop : app.callbacks.on_grid_drop
 				});
-            }
+            },
+            'rowdblclick': app.grid_open_edit_window
         },
     });
     
