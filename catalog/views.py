@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from catalog.utils import get_connected_models
+from catalog import settings as catalog_settings
 from catalog.models import TreeItem
-from django.views.generic.list_detail import object_detail, object_list
+from catalog.utils import connected_models
 from django.db.models import loading
+from django.http import Http404, HttpResponseNotFound
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from catalog import settings as catalog_settings
+from django.views.generic.list_detail import object_detail, object_list
 
 defaults = {
     'template_name': 'catalog/treeitem.html'

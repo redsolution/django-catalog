@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from catalog import settings as catalog_settings
 from catalog.models import TreeItem
-from django.core import urlresolvers
+from catalog.utils import connected_models
 from django.contrib import admin
+from django.core import urlresolvers
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.core.serializers import serialize
 from django.db.models import loading
 from django.utils import simplejson
 from extdirect.django import ExtDirectStore
 from extdirect.django.decorators import remoting
 from extdirect.django.providers import ExtRemotingProvider
-from django.core.serializers import serialize
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
 
 provider = ExtRemotingProvider(namespace='Catalog',
@@ -138,7 +138,7 @@ class Column(object):
 
 class ColumnModel(object):
     '''Represents python-ExtJS map of types for grid'''
-    
+
     def __init__(self, site):
         '''
         Creates column model singletone. 
@@ -147,14 +147,13 @@ class ColumnModel(object):
         self.model_cache = loading.cache
         self.admin_registry = site._registry
         self.fields = {}
-        
-        for app_label, model_name in catalog_settings.CATALOG_MODELS:
-            model_cls = self.model_cache.get_model(app_label, model_name)
+
+        for model_cls in connected_models():
             admin_cls = self.admin_registry[model_cls]
-            
+
             list_display = list(admin_cls.list_display)
             list_display.remove('action_checkbox')
-            
+
             # Run over all 'list_display' properties and fill columns
             for i, field_name in enumerate(list_display):
                 new_field = Column(field_name, model_cls, admin_cls, i)
@@ -162,7 +161,7 @@ class ColumnModel(object):
                     self.fields[field_name] = new_field
                 else:
                     self.fields[field_name].merge(new_field)
-    
+
     def serialize(self):
         '''Serialize ColumnModel object to list of serialized Columns'''
         serialized = []
@@ -233,15 +232,16 @@ def move_to(request):
                 TreeItem.objects.get(id=src_id).move_to(None, position)
             else:
                 TreeItem.objects.get(id=src_id).move_to(TreeItem.objects.get(id=target), position)
-    
+
     return dict(success=True)
 
 @remoting(provider, action='colmodel')
 def get_models(request):
     models = []
-    for app_label, model_name in catalog_settings.CATALOG_MODELS:
-        url = urlresolvers.reverse('admin:%s_%s_add' % (app_label, model_name.lower()))
-        models.append({'app_label': app_label, 'model_name': model_name, 'url': url})
+    for model_cls in connected_models():
+        opts = model_cls._meta
+        url = urlresolvers.reverse('admin:%s_%s_add' % (opts.app_label, opts.module_name))
+        models.append({'app_label': opts.app_label, 'model_name': opts.verbose_name, 'url': url})
     return models
 
 @remoting(provider, action='colmodel')
