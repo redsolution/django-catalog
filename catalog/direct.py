@@ -94,7 +94,7 @@ class Column(object):
             header_label = admin.util.label_for_field(name, model_cls, model_admin_cls)
 
         self.header = unicode(header_label)
-        attr_type = type(admin.util.lookup_field(name, model_cls(), model_admin_cls))
+        attr_type = type(admin.util.lookup_field(name, model_cls(), model_admin_cls)[2])
 
         # detect type
         if attr_type is int:
