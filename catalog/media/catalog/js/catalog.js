@@ -42,6 +42,8 @@ app.reload_selected_node = function() {
     selected_node.reload();
 }
 
+app.after_move = [];
+
 /** ** bind server data events to asynchronous handlers *** */ 
 app.direct_handlers = {
     on_get_col_model: function(provider, event) {
@@ -114,6 +116,13 @@ app.direct_handlers = {
             }
             app.addMenu.add(items);
         }
+        
+        if (event.action === 'treeitem' && event.method === 'move_to') {
+            for (var i=0; i<app.after_move.length;i++){
+                app.after_move[i]();
+            }
+            app.after_move = [];
+        }
     }
 };
 
@@ -166,50 +175,58 @@ app.callbacks = {
 		    	
 		    	Catalog.treeitem.move_to({source: dragElements, target: dd.target.id, point: dd.point});
 		    	
+		    	if (dd.source.grid) {
+		    	    app.after_move.push(function(){
+		    	        for (var i=0; i<dragElements.length;i++){
+		    	            var node = app.tree.getNodeById(dragElements[i]);
+		    	            if (node){
+		    	                node.destroy();
+		    	            }
+		    	        }
+		    	    });
+		    	}
+		    	
 	        	switch (dd.point) {
 	                case "append":
 	                	if (dd.source.grid){
-	                		dd.target.reload();
+                	        dd.target.reload(function(){
+                	            app.tree.selModel.select(dd.target);
+                	        });
 	                	} else {
-	                		dd.target.appendChild(dd.dropNode);
-	                		app.tree.selModel.select(dd.target);
+	                	    app.tree.selModel.select(dd.target);
+	                	    dd.target.appendChild(dd.dropNode);
+	                	    dd.target.expand();
 	                	}
-	                	
 	                	app.store.load({params: {parent: dd.target.id}});
-	                    break;
+	                    
+	                	break;
 	                case "above":
 	                	if (dd.source.grid){
-	                		dd.target.parentNode.reload();
+	                	    dd.target.parentNode.reload(function(){
+	                	        app.tree.selModel.select(dd.target.parentNode);
+	                	    });
 	                	} else {
-	                    	dd.target.parentNode.insertBefore(dd.dropNode, dd.target);
-	                    	app.tree.selModel.select(dd.target.parentNode);
-	                    }
-
+	                	    app.tree.selModel.select(dd.target.parentNode);
+	                	    dd.target.parentNode.insertBefore(dd.dropNode, dd.target);
+	                	}
 	                    app.store.load({params: {parent: dd.target.id}});
+	                    
 	                    break;
 	                case "below":
 	                	if (dd.source.grid){
-	                		dd.target.parentNode.reload();
+	                	    dd.target.parentNode.reload(function(){
+	                	        app.tree.selModel.select(dd.target.parentNode);
+	                	    });
 	                	} else {
-	                    	dd.target.parentNode.insertBefore(dd.dropNode, dd.target.nextSibling);
-	                    	app.tree.selModel.select(dd.target.parentNode);
-	                    }
-	                    
+	                	    app.tree.selModel.select(dd.target.parentNode);
+	                	    dd.target.parentNode.insertBefore(dd.dropNode, dd.target.nextSibling);
+	                	}
 	                    app.store.load({params: {parent: dd.target.id}});
+
 	                    break;
 	                default:
 	                    debugger;
 	            }
-
-				if (dd.source.grid) {
-					var target_node = null;
-			    	if ( dd.point == 'below' || dd.point == 'above' ) {
-			    		target_node = dd.target.parentNode;
-			    	} else {
-			    		target_node = dd.target;
-			    	}
-			    	app.tree.expandPath(target_node.getPath());
-			    }
 	        }
     	});
 
@@ -349,7 +366,7 @@ app.build_layout = function(){
             draggable: false,
             nodeType: 'async',
         },
-        rootVisible: false,
+        rootVisible: true,
         ddGroup: 'dd',
         enableDD: true,
         loader: new Ext.tree.TreeLoader({
