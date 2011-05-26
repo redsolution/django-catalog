@@ -30,7 +30,9 @@ Ext.Direct.on('exception', function(e){
 
 app.expand_tree = function () {
 	var treestate = Ext.state.Manager.get('treestate');
-	app.tree.selectPath(treestate);
+	app.tree.selectPath(treestate, null, function(){
+	    app.tree.selModel.selNode.expand();
+	});
 }
 
 app.reload_selected_node = function() {
@@ -151,6 +153,33 @@ app.callbacks = {
         return false;
     },
     on_tree_drop: function(dd, e, data) {
+        
+        // Collect drag elements
+        var dragElements = [];
+        if (dd.source.tree) {
+            dragElements.push(dd.data.node.id);
+        } else if (dd.source.grid) {
+            for(var i = 0; i < dd.data.selections.length; i++) {
+                var r = dd.data.selections[i];
+                dragElements.push(r.id);
+            }
+        }
+        
+        // Do not allow drag object on itself
+        if (dd.source.grid && dd.point==='append') {
+            for (var i=0; i<dragElements.length;i++){
+                if (dragElements[i] === dd.target.id) {
+                    return false;
+                }
+            }
+        } else if (dd.source.grid && ( dd.point==='above') || (dd.point === 'below')){
+            for (var i=0; i<dragElements.length;i++){
+                if (dragElements[i] === dd.target.parentNode.id) {
+                    return false;
+                }
+            }
+        }
+        
     	// disables the animated repair
     	dd.tree.dragZone.proxy.animRepair = false;
     	
@@ -163,18 +192,8 @@ app.callbacks = {
     		dd.tree.dragZone.proxy.animRepair = true;
     		
 	        if (button == 'yes') {
-		    	var dragElements = [];
-		        if (dd.source.tree) {
-		        	dragElements.push(dd.data.node.id);
-		        } else if (dd.source.grid) {
-		    	    for(var i = 0; i < dd.data.selections.length; i++) {
-		    	    	var r = dd.data.selections[i];
-		    	    	dragElements.push(r.id);
-		    	    }
-		    	}
-		    	
 		    	Catalog.treeitem.move_to({source: dragElements, target: dd.target.id, point: dd.point});
-		    	
+		    	// Deferred callback, will be executed one time after server responds
 		    	if (dd.source.grid) {
 		    	    app.after_move.push(function(){
 		    	        for (var i=0; i<dragElements.length;i++){
@@ -191,37 +210,42 @@ app.callbacks = {
 	                	if (dd.source.grid){
                 	        dd.target.reload(function(){
                 	            app.tree.selModel.select(dd.target);
+                	            app.store.load({params: {parent: app.tree.selModel.selNode.id}});
                 	        });
 	                	} else {
 	                	    app.tree.selModel.select(dd.target);
 	                	    dd.target.appendChild(dd.dropNode);
 	                	    dd.target.expand();
+	                	    app.store.load({params: {parent: dd.target.id}});
 	                	}
-	                	app.store.load({params: {parent: dd.target.id}});
 	                    
 	                	break;
 	                case "above":
 	                	if (dd.source.grid){
 	                	    dd.target.parentNode.reload(function(){
-	                	        app.tree.selModel.select(dd.target.parentNode);
+	                	        var targetNode = app.tree.getNodeById(dd.target.id);
+	                	        app.tree.selModel.select(targetNode.parentNode);
+	                	        app.store.load({params: {parent: app.tree.selModel.selNode.id}});
 	                	    });
 	                	} else {
 	                	    app.tree.selModel.select(dd.target.parentNode);
 	                	    dd.target.parentNode.insertBefore(dd.dropNode, dd.target);
+	                	    app.store.load({params: {parent: dd.target.id}});
 	                	}
-	                    app.store.load({params: {parent: dd.target.id}});
 	                    
 	                    break;
 	                case "below":
 	                	if (dd.source.grid){
 	                	    dd.target.parentNode.reload(function(){
-	                	        app.tree.selModel.select(dd.target.parentNode);
+	                	        var targetNode = app.tree.getNodeById(dd.target.id);
+                                app.tree.selModel.select(targetNode.parentNode);
+                                app.store.load({params: {parent: app.tree.selModel.selNode.id}});
 	                	    });
 	                	} else {
 	                	    app.tree.selModel.select(dd.target.parentNode);
 	                	    dd.target.parentNode.insertBefore(dd.dropNode, dd.target.nextSibling);
+	                	    app.store.load({params: {parent: dd.target.id}});
 	                	}
-	                    app.store.load({params: {parent: dd.target.id}});
 
 	                    break;
 	                default:
