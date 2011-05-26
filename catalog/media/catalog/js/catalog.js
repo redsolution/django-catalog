@@ -280,7 +280,7 @@ app.build_layout = function(){
 	    	text: gettext('Add'),
 	    	menu: app.addMenu,
     	},'-',{
-	    	text: gettext('Reload'),
+	    	text: gettext('Refresh'),
 	    	handler: function(){
 	    		app.store.reload();
 	    	}
@@ -304,6 +304,15 @@ app.build_layout = function(){
     			});
     		}
     	}]
+    });
+    
+    app.treeBar = new Ext.Toolbar({
+        items: [{
+            text: gettext('Refresh'),
+            handler: function(){
+                app.tree.root.reload();
+            }
+        }]
     });
     
     app.grid = new Ext.grid.GridPanel({
@@ -330,7 +339,6 @@ app.build_layout = function(){
     });
     
     app.tree = new Ext.tree.TreePanel({
-        title: 'Tree',
         useArrows: true,
         autoScroll: true,
         containerScroll: true,
@@ -341,12 +349,13 @@ app.build_layout = function(){
             draggable: false,
             nodeType: 'async',
         },
-        rootVisible: true,
+        rootVisible: false,
         ddGroup: 'dd',
         enableDD: true,
         loader: new Ext.tree.TreeLoader({
             directFn: Catalog.treeitem.tree
         }),
+        tbar: app.treeBar,
         listeners: {
             beforenodedrop: app.callbacks.on_tree_drop,
             click: app.callbacks.on_node_select,
