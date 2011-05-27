@@ -58,10 +58,11 @@ def item_view(request, model, slug=None, object_id=None):
     for model_cls in connected_models():
         if model_cls._meta.module_name == model:
             ModelClass = model_cls
+    
     if ModelClass is not None:
         # select template
         try:
-            opts = model_cls._meta
+            opts = ModelClass._meta
             t = loader.select_template([
                 'catalog/%s/%s.html' % (opts.app_label, opts.module_name),
                 'catalog/%s.html' % opts.module_name,
