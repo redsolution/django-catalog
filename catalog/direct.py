@@ -241,7 +241,7 @@ def get_models(request):
     for model_cls in connected_models():
         opts = model_cls._meta
         url = urlresolvers.reverse('admin:%s_%s_add' % (opts.app_label, opts.module_name))
-        models.append({'app_label': opts.app_label, 'model_name': opts.verbose_name, 'url': url})
+        models.append({'app_label': opts.app_label, 'model_name': unicode(opts.verbose_name), 'url': url})
     return models
 
 @remoting(provider, action='colmodel')
@@ -252,4 +252,3 @@ def get_col_model(request):
     '''
     return ColumnModel(admin.site).serialize()
 
-    
