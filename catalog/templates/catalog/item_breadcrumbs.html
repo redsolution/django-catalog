@@ -5,9 +5,9 @@
 <small>
 	<a href="{% url catalog-root %}">Каталог</a> ›
 {% for element,structure in catalog_tree|tree_info %}
-  {% if element == item %}
+  {% if element == object.tree.get %}
 	{% for ancestor in element.get_ancestors %}
-		<a href="{{ ancestor.content_object.get_absolute_url }}">{{ ancestor }}</a> {% if not forloop.last %} › {% else %} › <a href="{{ item.content_object.get_absolute_url }}">{{ item }}</a>{% endif %}
+		<a href="{{ ancestor.content_object.get_absolute_url }}">{{ ancestor }}</a> {% if not forloop.last %} › {% else %} › <a href="{{ object.get_absolute_url }}">{{ object }}</a>{% endif %}
 	{% endfor %}
   {% endif %}
 {% endfor %}

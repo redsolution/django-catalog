@@ -13,16 +13,16 @@
 		{% full_tree_for_model catalog.TreeItem as catalog_tree %}
 		{% for catalog_tree_element,structure in catalog_tree|tree_info %}
 			{% if catalog_tree_element.level != 0 %}
-				{% for cur_node_ancestor in cur_node.get_ancestors %}
+				{% for cur_node_ancestor in object.tree.get.get_ancestors %}
 					{% if cur_node_ancestor == catalog_tree_element %}
 						<li style="margin-left: {{ catalog_tree_element.level }}em;">
 							<a href="{{ catalog_tree_element.content_object.get_absolute_url }}">{{ catalog_tree_element }}</a>
 						</li>
 						{% if forloop.last %}
-							<li style="margin-left: {{ cur_node.level }}em;">
-								<a href="{{ cur_node.content_object.get_absolute_url }}">{{ cur_node }}</a>
+							<li style="margin-left: {{ object.tree.get.level }}em;">
+								<a href="{{ object.get_absolute_url }}">{{ object.tree.get }}</a>
 							</li>
-							{% for cur_node_child in cur_node.get_children %}
+							{% for cur_node_child in object.tree.get.get_children %}
 								<li style="margin-left: {{ cur_node_child.level }}em;">
 									<a href="{{ cur_node_child.content_object.get_absolute_url }}">{{ cur_node_child }}</a>
 								</li>
@@ -30,11 +30,11 @@
 						{% endif %}
 					{% endif %}
 				{% endfor %}
-				{% if cur_node.get_ancestors|length == 1 and cur_node == catalog_tree_element %}
-					<li style="margin-left: {{ cur_node.level }}em;">
-						<a href="{{ cur_node.content_object.get_absolute_url }}">{{ cur_node }}</a>
+				{% if object.tree.get.get_ancestors|length == 1 and object.tree.get == catalog_tree_element %}
+					<li style="margin-left: {{ object.tree.get.level }}em;">
+						<a href="{{ object.tree.get.get_absolute_url }}">{{ object.tree.get }}</a>
 					</li>
-					{% for cur_node_child in cur_node.get_children %}
+					{% for cur_node_child in object.tree.get.get_children %}
 						<li style="margin-left: {{ cur_node_child.level }}em;">
 							<a href="{{ cur_node_child.content_object.get_absolute_url }}">{{ cur_node_child }}</a>
 						</li>
@@ -44,8 +44,8 @@
 				<li style="margin-left: {{ catalog_tree_element.level }}em;">
 					<a href="{{ catalog_tree_element.content_object.get_absolute_url }}">{{ catalog_tree_element }}</a>
 				</li>
-				{% if cur_node == catalog_tree_element %}
-					{% for cur_node_child in cur_node.get_children %}
+				{% if object.tree.get == catalog_tree_element %}
+					{% for cur_node_child in object.tree.get.get_children %}
 						<li style="margin-left: {{ cur_node_child.level }}em;">
 							<a href="{{ cur_node_child.content_object.get_absolute_url }}">{{ cur_node_child }}</a>
 						</li>
@@ -60,7 +60,7 @@
 	<div class="span-15 last">
 		{% include 'catalog/section_breadcrumbs.html' %}
 		<hr>
-		{% for item in items %}
+		{% for item in object.tree.get.children.all %}
 			<div class="span-2">
 			{% if item.content_object.images.count %}
 			    <img src="{{ item.content_object.images.all.0.image.url }}" />
