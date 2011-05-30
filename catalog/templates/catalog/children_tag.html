@@ -1,0 +1,10 @@
+<ul>
+{% for treeitem in children_queryset %}
+{% with treeitem.content_object as object %}
+    <li>{{ object }}</li>
+{% endwith %}
+{% empty %}
+    {% load i18n %}
+    <li>{% trans 'No children' %}</li>
+{% endfor %}
+</ul>
