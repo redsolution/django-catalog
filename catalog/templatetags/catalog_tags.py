@@ -47,7 +47,7 @@ class CatalogChildren(Tag):
 
     def render_tag(self, context, object, children_type, varname):
         treeitem = object.tree.get()
-        children_qs = treeitem.children.all()
+        children_qs = treeitem.children.published()
         if children_type:
             children_qs = children_qs.filter(content_type__model=children_type)
 

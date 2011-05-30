@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from catalog.models import TreeItem
-from catalog.utils import connected_models, get_data_appnames
+from catalog.utils import connected_models, get_data_appnames, get_q_filters
 from django.http import HttpResponseNotFound
 from django.template import loader
 from django.views.generic.list_detail import object_detail, object_list
@@ -66,6 +66,11 @@ def item_view(request, model, slug=None, object_id=None):
             ModelClass = model_cls
 
     if ModelClass is not None:
+        model_filter = get_q_filters()[ModelClass] 
+        if model_filter is not None:
+            model_queryset = ModelClass.objects.filter(model_filter)
+        else:
+            model_queryset = ModelClass.objects.all()
         # select template
         try:
             opts = ModelClass._meta
@@ -81,9 +86,9 @@ def item_view(request, model, slug=None, object_id=None):
         except loader.TemplateDoesNotExist:
             pass
         if slug is not None:
-            return object_detail(request, ModelClass.objects.all(), slug=slug, **extra_context)
+            return object_detail(request, model_queryset, slug=slug, **extra_context)
         elif id is not None:
-            return object_detail(request, ModelClass.objects.all(), object_id=object_id, **extra_context)
+            return object_detail(request, model_queryset, object_id=object_id, **extra_context)
         else:
             return HttpResponseNotFound(_('No object data specified'))
 
@@ -140,4 +145,4 @@ def root(request):
         'template_name': t.name,
     }
 
-    return object_list(request, TreeItem.objects.filter(parent=None), **extra_context)
+    return object_list(request, TreeItem.objects.published().filter(parent=None), **extra_context)
