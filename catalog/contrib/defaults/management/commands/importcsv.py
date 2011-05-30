@@ -1,18 +1,23 @@
 # -*- coding: utf-8 -*-
-from optparse import make_option
-from django.core.management.base import BaseCommand, CommandError
-from catalog.models import TreeItem
 from catalog.contrib.defaults.models import Section, Item
+from catalog.models import TreeItem
+from decimal import Decimal
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.db.utils import IntegrityError
+from optparse import make_option
 from time import time
-import mptt
 import csv
 import logging
-from decimal import Decimal
+import mptt
+
 try:
     from pinyin.urlify import urlify
 except ImportError:
-    from django.template.defaultfilters import slugify as urlify
+    try:
+        from pytils.translit import slugify as urlify
+    except ImportError:
+        from django.template.defaultfilters import slugify as urlify
 
 
 class Command(BaseCommand):
@@ -137,7 +142,12 @@ class Command(BaseCommand):
         else:
             item = Item(**options)
             item.parent = parent
-            item.save()
+            try:
+                item.save()
+            except IntegrityError:
+                from random import randint
+                item.slug = item.slug + '%d' % randint(0,9)
+                item.save()
 
             self.cache['item_by_article'].update({item.article: item})
             logging.debug('[S] %s' % item.name)
