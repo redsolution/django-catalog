@@ -1,12 +1,19 @@
-from classytags.arguments import Argument
+from classytags.arguments import Argument, ChoiceArgument
 from classytags.core import Tag, Options
+from classytags.helpers import InclusionTag
 from django import template
 from django.template import loader
 from django.template.loader import render_to_string
 from catalog.utils import get_data_appnames
 from catalog.models import TreeItem
+from django.utils.translation import ugettext_lazy as _
 
 register = template.Library()
+
+TREE_TYPE_EXPANDED = 'expanded'
+TREE_TYPE_COLLAPSED = 'collapsed'
+TREE_TYPE_DRILLDOWN = 'drilldown'
+
 
 class CatalogChildren(Tag):
     '''
@@ -75,3 +82,95 @@ def breadcrumbs(context):
     context.update({'breadcrumbs': path})
     return context
 
+class CatalogTree(Tag):
+    '''
+    Render catalog tree menu
+        
+    **Usage**::
+    
+        {% render_catalog_tree [activate active_treeitem] [type type] [current current_treeitem] %}
+    
+    **Parameters**:
+        active_treeitem
+            Activate element in tree, highlight or select it
+        type
+            Menu type. Three types available:
+            
+            * ``drilldown`` - enabled by default. It will expand only active 
+                path in tree
+            * ``collapsed`` - menu will be collapsed only to dislpay root elements
+            * ``expanded`` - all menu nodes will be expanded
+        current_treeitem
+            Argument for internal usage, for recursion organization
+    
+    **Magic**
+    
+        Templatetag casts a spell a bit. If context has ``object`` variable,
+        it will try to fetch ``object.tree.get()`` automatically, and if it find
+        ``TreeItem`` instance as result of object.tree.get(), it will set
+        active_treeitem = obejct.tree.get() silently.
+    
+    **Template**
+    
+        {% render_catalog_tree %} use ``catalog/tree.html`` template to render menu
+    
+    **Examples**
+    
+    1. Render full catalog tree ::
+       
+        {% render_catalog_tree type 'expanded' %}
+    
+    2. Render drill-down catalog tree ::
+
+            {% render_catalog_tree %}
+        
+      same results can be achieved by specifying arguments directly and without *magic*::
+        
+            {% render_catalog_tree activate object.tree.get type 'drilldown' %}
+    
+    3. Render only root nodes::
+    
+            {% render_catalog_tree type 'collapsed' %}
+
+    '''
+    name = 'render_catalog_tree'
+    template = 'catalog/tree.html'
+
+    options = Options(
+        'activate',
+        Argument('active', required=False),
+        'type',
+        Argument('tree_type', required=False, resolve=True, default=TREE_TYPE_DRILLDOWN),
+        'current',
+        Argument('current', required=False),
+    )
+
+    def render_tag(self, context, active, tree_type, current):
+        context.push()
+        if current is not None:
+            children = current.children.published()
+        else:
+            children = TreeItem.objects.published().filter(parent=None)
+        if active is None:
+            # Try to resolve ``object`` from context
+            if (getattr(context['object'], 'tree'), None):
+                obj = context['object']
+                if (hasattr(obj.tree, 'get') and callable(obj.tree.get)):
+                    # Check that object.tree.get() returns TreeItem instance
+                    if (isinstance(context['object'].tree.get(), TreeItem)):
+                        active = obj.tree.get()
+
+        if active is not None:
+            context['breadcrumbs'] = [active]
+            context['breadcrumbs'].extend(active.get_ancestors())
+
+        context['object_list'] = children
+        context['type'] = tree_type
+        context['active'] = active
+        context['current'] = current
+
+        output = render_to_string(self.template, context)
+        context.pop()
+        return output
+
+register.tag(CatalogTree)

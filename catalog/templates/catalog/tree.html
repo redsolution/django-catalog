@@ -1,0 +1,32 @@
+{% load catalog_tags %}
+{% if object_list %}
+    {% for treeitem in object_list %}
+        {% with treeitem.content_object as object %}
+            <li>
+                {% if treeitem in breadcrumbs %}
+                <strong>
+                <a href="{{ object.get_absolute_url }}">{{ object }}</a>
+                </strong>
+                {% else %}
+                <a href="{{ object.get_absolute_url }}">{{ object }}</a>
+                {% endif %}
+            </li>
+        {% endwith %}
+            {% if type == 'expanded' %}
+            <ul>
+                {% render_catalog_tree activate active type type current treeitem %}
+            </ul>
+            {% endif %}
+            
+            {% if type == 'collapsed' %}
+            {% endif %}
+            
+            {% if type == 'drilldown' %}
+            {% if treeitem in breadcrumbs %}
+                <ul>
+                    {% render_catalog_tree activate active type type current treeitem %}
+                </ul>
+            {% endif %}
+            {% endif %}
+    {% endfor %}
+{% endif %}
