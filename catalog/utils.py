@@ -26,12 +26,10 @@ def get_q_filters():
             # Apply filter per-model
             for model_str, model_filter in CATALOG_FILTERS.iteritems():
                 model_cls = loading.cache.get_model(*model_str.split('.'))
-                print '%s = Q(%s)' % (model_cls, model_filter)
                 q_filters[model_cls] = Q(**model_filter)
         else:
             # Apply filter to all models
             global_filter = CATALOG_FILTERS
             for key in q_filters.iterkeys():
-                print '%s = Q(%s)' % (key, global_filter)
                 q_filters[key] = Q(**global_filter)
     return q_filters
