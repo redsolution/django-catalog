@@ -153,7 +153,7 @@ class CatalogTree(Tag):
             children = TreeItem.objects.published().filter(parent=None)
         if active is None:
             # Try to resolve ``object`` from context
-            if (getattr(context['object'], 'tree'), None):
+            if 'object' in context and (getattr(context['object'], 'tree'), None):
                 obj = context['object']
                 if (hasattr(obj.tree, 'get') and callable(obj.tree.get)):
                     # Check that object.tree.get() returns TreeItem instance
