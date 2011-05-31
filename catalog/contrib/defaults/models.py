@@ -67,14 +67,9 @@ class Section(CommonFields, models.Model):
     class Meta:
         verbose_name = _('Catalog section')
         verbose_name_plural = _('Catalog sections')
-    
 
     def __unicode__(self):
         return self.name
-    
-    @permalink
-    def get_absolute_url(self):
-        return ('section_details', (str(self.__class__.__name__.lower()), str(self.slug)))
 
 
 class Item(CommonFields, models.Model):
@@ -94,11 +89,6 @@ class Item(CommonFields, models.Model):
 
     def __unicode__(self):
         return self.name
-    
-    @permalink
-    def get_absolute_url(self):
-        return ('item_details', (str(self.__class__.__name__.lower()), str(self.slug)))
-
 
 class CatalogImage(ImageModel):
     class Meta:

@@ -6,7 +6,12 @@
 {% if object_list %}
 <ul>
     {% for treeitem in object_list %}
-    <li>{% include "catalog/treeitem_include.html" %}</li>
+    {% with treeitem.content_object as object %}
+        <li><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+    {% endwith %}
+    {% empty %}
+    {% load i18n %}
+    {% trans "Catalog is empty" %}
     {% endfor %}
 </ul>
 {% endif %}

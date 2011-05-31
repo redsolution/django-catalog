@@ -17,3 +17,16 @@ CATALOG_MPTT = getattr(settings, 'CATALOG_MPTT', DEFAULT_MPTT)
 settings.SERIALIZATION_MODULES = {
     'catalog_extdirect' : 'catalog.grid_to_json',
 }
+
+# CATALOG_FILTERS
+#Acceptable values:
+#For all models:
+#    
+#    CATALOG_FILTER = Q(show=True)
+#
+#Or per-model:
+#    
+#    CATALOG_FILTER = {
+#        'defauls.Section': Q(show=True),
+#        'defauls.Item': Q(hidden=False), 
+#    }

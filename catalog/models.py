@@ -1,14 +1,27 @@
 # -*- coding: utf-8 -*-
-from django.db.models import loading
+from catalog import settings as catalog_settings
+from catalog.utils import connected_models, get_q_filters
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
+from django.db.models import Q, loading
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 from mptt.models import MPTTModel
-from catalog import settings as catalog_settings
 
+
+class TreeItemManager(models.Manager):
+    
+    def published(self):
+        display_q = Q(show=True)
+        tree_q = Q()
+        
+        for model_cls, model_filter in get_q_filters().iteritems():
+            ct = ContentType.objects.get_for_model(model_cls)
+            object_ids = model_cls.objects.filter(model_filter)
+            tree_q |= Q(object_id__in=object_ids, content_type=ct)
+        return self.get_query_set().filter(tree_q)
 
 class TreeItem(MPTTModel):
     '''
@@ -28,6 +41,8 @@ class TreeItem(MPTTModel):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
+    
+    objects = TreeItemManager()
 
     def __unicode__(self):
         return unicode(self.content_object)
