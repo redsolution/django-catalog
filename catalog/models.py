@@ -12,15 +12,16 @@ from mptt.models import MPTTModel
 
 
 class TreeItemManager(models.Manager):
-    
+
     def published(self):
         display_q = Q(show=True)
         tree_q = Q()
-        
+
         for model_cls, model_filter in get_q_filters().iteritems():
-            ct = ContentType.objects.get_for_model(model_cls)
-            object_ids = model_cls.objects.filter(model_filter)
-            tree_q |= Q(object_id__in=object_ids, content_type=ct)
+            if model_filter is not None:
+                ct = ContentType.objects.get_for_model(model_cls)
+                object_ids = model_cls.objects.filter(model_filter)
+                tree_q |= Q(object_id__in=object_ids, content_type=ct)
         return self.get_query_set().filter(tree_q)
 
 class TreeItem(MPTTModel):
@@ -41,7 +42,7 @@ class TreeItem(MPTTModel):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
-    
+
     objects = TreeItemManager()
 
     def __unicode__(self):
