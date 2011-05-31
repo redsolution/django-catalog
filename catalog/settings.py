@@ -22,11 +22,11 @@ settings.SERIALIZATION_MODULES = {
 #Acceptable values:
 #For all models:
 #    
-#    CATALOG_FILTER = Q(show=True)
+#    CATALOG_FILTER = dict(show=True)
 #
 #Or per-model:
 #    
 #    CATALOG_FILTER = {
-#        'defauls.Section': Q(show=True),
-#        'defauls.Item': Q(hidden=False), 
+#        'defauls.Section': dict(show=True),
+#        'defauls.Item': dict(hidden=False), 
 #    }
