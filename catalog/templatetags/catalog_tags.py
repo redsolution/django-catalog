@@ -4,6 +4,7 @@ from django import template
 from django.template import loader
 from django.template.loader import render_to_string
 from catalog.utils import get_data_appnames
+from catalog.models import TreeItem
 
 register = template.Library()
 
@@ -60,3 +61,17 @@ class CatalogChildren(Tag):
             return render_to_string(self.templates, context)
 
 register.tag(CatalogChildren)
+
+
+@register.inclusion_tag('catalog/breadcrumbs.html', takes_context=True)
+def breadcrumbs(context):
+    path = []
+    tree = TreeItem.objects.all()
+    for item in tree:
+        if item == context['object'].tree.get():
+            for ancestor in item.get_ancestors():
+                path.append(ancestor)
+            path.append(item)
+    context.update({'breadcrumbs': path})
+    return context
+

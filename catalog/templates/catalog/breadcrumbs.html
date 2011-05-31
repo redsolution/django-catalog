@@ -1,0 +1,6 @@
+<span class="breadcrumbs">
+{% for crumb in breadcrumbs %}
+	<a href="{{ crumb.content_object.get_absolute_url }}" class="crumb">{{ crumb }}</a>
+	{% if not forloop.last %}<span class="crumb-separator">›</span>{% endif %}
+{% endfor %}
+</span>
