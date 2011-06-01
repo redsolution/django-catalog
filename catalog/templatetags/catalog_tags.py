@@ -70,17 +70,24 @@ class CatalogChildren(Tag):
 register.tag(CatalogChildren)
 
 
-@register.inclusion_tag('catalog/breadcrumbs.html', takes_context=True)
-def catalog_breadcrumbs(context):
-    path = []
-    tree = TreeItem.objects.all()
-    for item in tree:
-        if item == context['object'].tree.get():
-            for ancestor in item.get_ancestors():
-                path.append(ancestor)
-            path.append(item)
-    context.update({'breadcrumbs': path})
-    return context
+class BreadcrumbTag(InclusionTag):
+    name = 'catalog_breadcrumbs'
+    template = 'catalog/breadcrumbs.html'
+
+    def get_context(self, context, **kwargs):
+        # Try to resolve ``object`` from context
+        if 'object' in context and (getattr(context['object'], 'tree'), None):
+            obj = context['object']
+            if (hasattr(obj.tree, 'get') and callable(obj.tree.get)):
+                # Check that object.tree.get() returns TreeItem instance
+                if (isinstance(context['object'].tree.get(), TreeItem)):
+                     treeitem = obj.tree.get()
+                     ancestors = list(treeitem.get_ancestors())
+
+                     return {'breadcrumbs': ancestors + [treeitem, ] }
+        return {}
+
+register.tag(BreadcrumbTag)
 
 class CatalogTree(Tag):
     '''
