@@ -29,6 +29,7 @@ def get_treeitem_from_context(context, silent=True):
             # Check that object.tree.get() returns TreeItem instance
             if (isinstance(context['object'].tree.get(), TreeItem)):
                 treeitem = obj.tree.get()
+                return treeitem
     if silent:
         return None
     else:
