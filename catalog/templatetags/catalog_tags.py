@@ -71,7 +71,7 @@ register.tag(CatalogChildren)
 
 
 @register.inclusion_tag('catalog/breadcrumbs.html', takes_context=True)
-def breadcrumbs(context):
+def catalog_breadcrumbs(context):
     path = []
     tree = TreeItem.objects.all()
     for item in tree:
