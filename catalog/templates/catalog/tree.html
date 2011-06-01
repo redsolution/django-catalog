@@ -23,9 +23,11 @@
             
             {% if type == 'drilldown' %}
             {% if treeitem in breadcrumbs %}
+            	{% if treeitem.get_children %}
                 <ul>
                     {% render_catalog_tree activate active type type current treeitem %}
                 </ul>
+                {% endif %}
             {% endif %}
             {% endif %}
     {% endfor %}
