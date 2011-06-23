@@ -212,3 +212,64 @@ class CatalogTree(Tag):
         return output
 
 register.tag(CatalogTree)
+
+
+class GetTreeitem(Tag):
+    '''
+    Returns TreeItem object by content type and slug or by treeitem's id.
+    
+    **Usage**::
+    
+        {% get_treeitem [type 'mymodel' slug 'new-one'] [treeid 4] as varname %}
+    
+    You can get TreeItem by content objects's model name and slug or by ``id`` attribute of the treeitem object.
+    
+    **Parameters**:
+    
+    type
+        Model name, use class name in lowercase, for example, ``mysection``.
+    slug
+        Content object's slug.
+    treeid
+        Treeitem's ``id`` attribute. Do not confute is with content object's attribute!
+    varname
+        Store treeitem object in context variable with this name. If object doesn't found, variable will be ``None``
+    
+    **Examples**
+    
+    1. Get catalog section::
+    
+        {% get_treeitem type 'section' slug 'catalog' as catalog_treeitem %}
+        {% if catalog_treeitem %}
+        Chlidren:
+            <ul>
+            {% for child in catalog_section.children.published %}
+                <li>{{ chlid.contento_object.name }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    
+    2. Get special treeitem::
+    
+        {% get_treeitem treeid 4 as special %}
+        {% if special %}
+            <a href="{{ special.content_object.get_absolute_url }}">{{ special.content_object }}</a>
+        {% endif %}
+    '''
+    name = 'get_treeitem'
+
+    options = Options(
+        'type',
+        Argument('type', required=False),
+        'slug',
+        Argument('slug', required=False),
+        'treeid',
+        Argument('object_id', required=False),
+        'as',
+        Argument('varname', required=True),
+    )
+
+    def render_tag(self, context, type, slug, object_id, varname):
+        pass
+
+register.tag(GetTreeitem)
