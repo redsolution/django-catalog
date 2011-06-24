@@ -53,6 +53,9 @@ class CatalogChildren(Tag):
         it will try to fetch ``object.tree.get()`` automatically, and if it find
         ``TreeItem`` instance as result of object.tree.get(), it will 
         show children for it.
+        
+        If you specify ``'root'`` as *for* paramenter, tag will giev you catalog 
+        root elements. 
     
     **Examples**
         
@@ -71,7 +74,10 @@ class CatalogChildren(Tag):
         3. Render children only with type ``item`` for ``my_section`` ::
         
             {% catalog_children for my_section type item %}
+
+        4. Render all root sections ::
         
+            {% catalog_children for 'root' type section %}        
 
     '''
     name = 'catalog_children'
@@ -88,10 +94,13 @@ class CatalogChildren(Tag):
 
     def render_tag(self, context, instance, children_type, varname):
         if instance is not None:
-            try:
-                treeitem = instance.tree.get()
-            except AttributeError:
-                raise TemplateSyntaxError('Instance argument must have `tree` attribute')
+            if instance == 'root':
+                treeitem = None
+            else:
+                try:
+                    treeitem = instance.tree.get()
+                except AttributeError:
+                    raise TemplateSyntaxError('Instance argument must have `tree` attribute')
         else:
             # try to guess
             treeitem = get_treeitem_from_context(context)
