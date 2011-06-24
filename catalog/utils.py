@@ -2,19 +2,46 @@
 from django.db.models import loading, Q
 from catalog import settings as catalog_settings
 from django.conf import settings
+import warnings
 
 
 def connected_models():
-    for app_label, model_name in catalog_settings.CATALOG_MODELS:
-        yield loading.cache.get_model(app_label, model_name)
+    for model_str in catalog_settings.CATALOG_MODELS:
+        if type(model_str) in (list, tuple):
+            applabel = model_str[0]
+            model_name = model_str[1]
+            warnings.warn(
+                'CATALOG_MODELS setting should have new format, like: ("defaults.Item", "defaults.Section")',
+                DeprecationWarning
+            )
+            yield loading.cache.get_model(applabel, model_name)
+        else:
+            yield loading.cache.get_model(*model_str.split('.'))
 
 def get_data_appnames():
+    '''
+    Returns app labales from connected models, for example:
+    ['defaults',] or ['custom_catalog',] or ['defaults', 'custom_catalog']
+    '''
     app_labels = set()
-    for app_label, model_name in catalog_settings.CATALOG_MODELS:
+    for model_str in catalog_settings.CATALOG_MODELS:
+        if type(model_str) in (list, tuple):
+            app_label = model_str[0]
+            warnings.warn(
+                'CATALOG_MODELS setting should have new format, like: ("defaults.Item", "defaults.Section")',
+                PendingDeprecationWarning
+            )
+        else:
+            app_label, _ = model_str.split('.')
         app_labels.update([app_label, ])
     return app_labels
 
 def get_q_filters():
+    '''
+    Internal utility, returns dictionary with following content:
+    {'app_label.model_name': model_query}
+    where model_query is django ``Q`` object
+    '''
     q_filters = {}
     for model_cls in connected_models():
         q_filters[model_cls] = None
