@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
 from catalog.models import TreeItem
 from catalog.utils import get_data_appnames
 from classytags.arguments import Argument, ChoiceArgument
 from classytags.core import Tag, Options
 from classytags.helpers import InclusionTag
 from django import template
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import loading
 from django.template import loader, TemplateSyntaxError
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
@@ -220,14 +223,14 @@ class GetTreeitem(Tag):
     
     **Usage**::
     
-        {% get_treeitem [type 'mymodel' slug 'new-one'] [treeid 4] as varname %}
+        {% get_treeitem [model 'mymodel' slug 'new-one'] [treeid 4] as varname %}
     
     You can get TreeItem by content objects's model name and slug or by ``id`` attribute of the treeitem object.
     
     **Parameters**:
     
-    type
-        Model name, use class name in lowercase, for example, ``mysection``.
+    model
+        App label and model name, as they appear in settings, for example, ``custom_catalog.mysection``.
     slug
         Content object's slug.
     treeid
@@ -239,7 +242,7 @@ class GetTreeitem(Tag):
     
     1. Get catalog section::
     
-        {% get_treeitem type 'section' slug 'catalog' as catalog_treeitem %}
+        {% get_treeitem model 'defaults.section' slug 'catalog' as catalog_treeitem %}
         {% if catalog_treeitem %}
         Chlidren:
             <ul>
@@ -259,17 +262,32 @@ class GetTreeitem(Tag):
     name = 'get_treeitem'
 
     options = Options(
-        'type',
-        Argument('type', required=False),
+        'model',
+        Argument('model_str', required=False, resolve=False),
         'slug',
-        Argument('slug', required=False),
+        Argument('slug', required=False, resolve=False),
         'treeid',
-        Argument('object_id', required=False),
+        Argument('tree_id', required=False, resolve=False),
         'as',
-        Argument('varname', required=True),
+        Argument('varname', required=True, resolve=False),
     )
 
-    def render_tag(self, context, type, slug, object_id, varname):
-        pass
+    def render_tag(self, context, model_str, slug, tree_id, varname):
+        treeitem = None
+        import pydevd; pydevd.settrace())
+        if type is not None and slug is not None:
+            model_cls = loading.cache.get_model(*model_str.split('.'))
+            try:
+                content_object = model_cls.objects.get(slug=slug)
+                context[varname] = content_object.tree.get()
+            except ObjectDoesNotExist:
+                pass
+        elif tree_id is not None:
+            try:
+                treeitem = TreeItem.objects.get(id=tree_id)
+            except ObjectDoesNotExist:
+                pass
+        context[varname] = treeitem
+        return ''
 
 register.tag(GetTreeitem)
