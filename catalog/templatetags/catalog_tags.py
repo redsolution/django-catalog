@@ -274,12 +274,11 @@ class GetTreeitem(Tag):
 
     def render_tag(self, context, model_str, slug, tree_id, varname):
         treeitem = None
-        import pydevd; pydevd.settrace()
         if type is not None and slug is not None:
             model_cls = loading.cache.get_model(*model_str.split('.'))
             try:
                 content_object = model_cls.objects.get(slug=slug)
-                context[varname] = content_object.tree.get()
+                treeitem = content_object.tree.get()
             except ObjectDoesNotExist:
                 pass
         elif tree_id is not None:
