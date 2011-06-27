@@ -49,13 +49,13 @@ class CatalogChildren(Tag):
 
     **Magic**
     
-        If context has ``object`` variable and *for* paramenter is not specified,
-        it will try to fetch ``object.tree.get()`` automatically, and if it find
-        ``TreeItem`` instance as result of object.tree.get(), it will 
-        show children for it.
         
-        If you specify ``'root'`` as *for* paramenter, tag will giev you catalog 
-        root elements. 
+        If you specify ``'root'`` as *for* paramenter, tag will show you catalog 
+        root elements.
+         
+        If you specify ``'guess'`` as *for* paramenter, tag it will try to fetch
+        ``object.tree.get()`` automatically, and if it find ``TreeItem`` 
+        instance as result of object.tree.get(), it will show children for it.
     
     **Examples**
         
@@ -79,6 +79,11 @@ class CatalogChildren(Tag):
         
             {% catalog_children for 'root' type section %}        
 
+        5. Render children for ``object`` ::
+        
+            {% catalog_children for 'guess' %}        
+
+
     '''
     name = 'catalog_children'
     templates = ['catalog/children_tag.html', ]
@@ -93,17 +98,19 @@ class CatalogChildren(Tag):
     )
 
     def render_tag(self, context, instance, children_type, varname):
-        if instance is not None:
-            if instance == 'root':
-                treeitem = None
-            else:
-                try:
-                    treeitem = instance.tree.get()
-                except AttributeError:
-                    raise TemplateSyntaxError('Instance argument must have `tree` attribute')
-        else:
+#        if instance is not None:
+        if instance == 'root':
+            treeitem = None
+        elif instance == 'guess':
             # try to guess
             treeitem = get_treeitem_from_context(context)
+        elif instance is None:
+            treeitem = None
+        else:
+            try:
+                treeitem = instance.tree.get()
+            except AttributeError:
+                raise TemplateSyntaxError('Instance argument must have `tree` attribute')
 
         children_qs = TreeItem.objects.published().filter(parent=treeitem)
         if children_type:
