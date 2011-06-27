@@ -47,15 +47,20 @@ class CatalogChildren(Tag):
     
         {% catalog_children [for my_section] [type children_type] [as varname] %}
 
-    **Magic**
-    
+    **Magic "for" argument**
         
-        If you specify ``'root'`` as *for* paramenter, tag will show you catalog 
+        If you specify ``'root'`` as *for* parameter, tag will show you catalog 
         root elements.
          
-        If you specify ``'guess'`` as *for* paramenter, tag it will try to fetch
-        ``object.tree.get()`` automatically, and if it find ``TreeItem`` 
+        If you specify ``'guess'`` as *for* parameter, tag it will try to fetch
+        ``object.tree.get()`` from context automatically, and if it find ``TreeItem`` 
         instance as result of object.tree.get(), it will show children for it.
+        
+        Do not worry about call ``catalog_children`` with TreeItem or
+        it's content object, *for* argument. 
+        When tag receive children list, first it will check  if
+        ``my_section`` is TreeItem instance, than try to get
+        ``my_section.tree.get()`` and raise AttributeError if nothing didn't work.
     
     **Examples**
         
@@ -107,10 +112,13 @@ class CatalogChildren(Tag):
         elif instance is None:
             treeitem = None
         else:
-            try:
-                treeitem = instance.tree.get()
-            except AttributeError:
-                raise TemplateSyntaxError('Instance argument must have `tree` attribute')
+            if isinstance(instance, TreeItem):
+                treeitem = instance
+            else:
+                try:
+                    treeitem = instance.tree.get()
+                except AttributeError:
+                    raise TemplateSyntaxError('Instance argument must have `tree` attribute')
 
         children_qs = TreeItem.objects.published().filter(parent=treeitem)
         if children_type:
