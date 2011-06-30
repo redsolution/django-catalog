@@ -173,12 +173,16 @@ class CatalogTree(Tag):
         current_treeitem
             Argument for internal usage, for recursion organization
     
-    **Magic**
+    **Magic "activate" parameter**
     
-        Templatetag casts a spell a bit. If context has ``object`` variable,
-        it will try to fetch ``object.tree.get()`` automatically, and if it find
+        By default, ``active_treeitem`` should be ``TreeItem`` instance. But 
+        it can accept a several special arguments.
+        With {% ... activate 'none' ... %} tag will render tree without 
+        active element.
+        With {% ... activate 'guess' ... %} tag will try to fetch ``object``
+        variable from context, and if success, and if it find
         ``TreeItem`` instance as result of object.tree.get(), it will set
-        active_treeitem = obejct.tree.get() silently.
+        active_treeitem = object.tree.get() silently.
     
     **Template**
     
@@ -192,15 +196,15 @@ class CatalogTree(Tag):
     
     2. Render drill-down catalog tree ::
 
-            {% render_catalog_tree %}
-        
+        {% render_catalog_tree %}
+
       same results can be achieved by specifying arguments directly and without *magic*::
-        
-            {% render_catalog_tree activate object.tree.get type 'drilldown' %}
+
+        {% render_catalog_tree activate object.tree.get type 'drilldown' %}
     
     3. Render only root nodes::
     
-            {% render_catalog_tree type 'collapsed' %}
+        {% render_catalog_tree type 'collapsed' %}
 
     '''
     name = 'render_catalog_tree'
@@ -221,7 +225,10 @@ class CatalogTree(Tag):
             children = current.children.published()
         else:
             children = TreeItem.objects.published().filter(parent=None)
-        if active is None:
+
+        if active == 'none':
+            active = None
+        elif active == 'guess':
             # Try to resolve ``object`` from context
             active = get_treeitem_from_context(context)
 
