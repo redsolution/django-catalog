@@ -96,10 +96,9 @@ def insert_in_tree(sender, instance, **kwrgs):
         tree_item.save()
         instance.save()
 
-for app_label, model_name in catalog_settings.CATALOG_MODELS:
-    model_cls = loading.cache.get_model(app_label, model_name)
+for model_cls in connected_models():
     if model_cls is None:
-        raise ImproperlyConfigured('Can not import model %s from app %s, check CATALOG_MODELS setting' % (model_name, app_label))
+        raise ImproperlyConfigured('Can not import model %s from app %s, check CATALOG_MODELS setting' % (model_cls.__name__, model_cls._meta.app_label))
     # set post_save signals on connected objects:
     # for each connected model connect 
     # automatic TreeItem creation for catalog models
