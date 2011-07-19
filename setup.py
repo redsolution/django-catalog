@@ -38,7 +38,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary',
     ],
     packages=find_packages(exclude=['example', 'example.*']),
-    install_requires=['extdirect.django', 'django-classy-tags'],
+    install_requires=['extdirect.django', 'django-classy-tags', 'django-mptt'],
     include_package_data=True,
     zip_safe=False,
     long_description=read('README'),
