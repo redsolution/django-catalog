@@ -1,5 +1,5 @@
 ================
-django-catalog
+Django-catalog
 ================
 
 Application allows to organize objects in tree hierarhy.
@@ -7,44 +7,60 @@ Application allows to organize objects in tree hierarhy.
 This Documentation is poor for now, but it contains instructions 
 how to set up application with default settings. 
 
-Install:
---------
+Download & Install:
+--------------------
 
-1. Download ``django-catalog`` and include it into python path.
- 
-2. Edit your ``settings.py`` this way: ::
+**Download**
+
+#) From python package index:::
+
+    pip install djang-catalog
+
+#) From github:::
+
+    pip install -e git://github.com/redsolution/django-catalog.git@2.0.0#egg=Django-catalog
+
+**Quick install**
+
+#) Include applications into ``INSTALLED_APPS``::
 
     INSTALLED_APPS += [
-        'catalog',
-        'catalog.contrib.defaults',
-    ]
-  
-And insert one of this strings into ``urlconf.py``: :: 
+    ...
+    'mptt',
+    'catalog',
+    'catalog.contrib.defaults',
+    ...
+    ]    
 
-    urlpatterns += patterns('', 
-        (r'^catalog/', include('catalog.urls.by_id')),
+#) Include catalog in ``urls.py``::
+
+    urlpatterns += patterns('',
+        url(r'^catalog/', include('catalog.urls.by_slug')),
     )
 
-or ::
+#) Run ``manage.py syncdb``
 
-    urlpatterns += patterns('', 
-        (r'^catalog/', include('catalog.urls.by_slug')),
-    )
+For more complicated installation options look into documentation.
 
-Method ``by_id`` will configure views to display tree items urls like this:
-``http://example.com/catalog/my-item-47/``. Where ``my-item`` is object's slug,
-and ``47`` is TreeItem id attribute.
+Features
+---------
 
-Method ``by_slug`` will configure views to display tree items urls like this:
-``http://example.com/catalog/item-my-item/``. Where ``my-item`` is object's slug,
-and ``item`` is Item models name.
+* Nice admin interface with drag-n-grop manipulations.
+* Generic model relationship architechture (any model can be included in catalog tree)
+* Useful templatetags library
+* Hightly customizable
 
-Notice, that when you use method ``by_slug``, every object **MUST** have ``slug`` 
-attribute.
 
-Classifiers:
--------------
+Screenshot:
 
-`Frontpage handlers`_
+|catalog-admin|
 
-.. _`Frontpage handlers`: http://www.redsolutioncms.org/classifiers/frontpage
+.. |catalog-admin|  image:: http://github.com/redsolution/django-catalog/raw/2.0.0/docs/admin-screenshot.png
+
+
+Redsolution CMS classifiers:
+----------------------------
+
+`Content plugins`_
+
+.. _`Content plugins`: http://www.redsolutioncms.org/classifiers/content
