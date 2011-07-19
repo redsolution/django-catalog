@@ -13,7 +13,7 @@ def read(fname):
         return ''
 
 setup(
-    name="redsolutioncms.django-catalog",
+    name="django-catalog",
     version=__import__('catalog').__version__,
     description=read('DESCRIPTION'),
     license="GPL",
