@@ -13,15 +13,8 @@
 <div class="form-row show">
     <label for="links_breadcrumbs">{% trans "All breadcrumbs" %}:</label>
     <ul>
-        {% for link in original.links.all %}
-            <li>{{ link.tree.get.get_ancestors|tree_path:" &rarr; " }} &rarr; {{ link.tree.get }}</li>
-            {% empty %}
-            <li>No links available</li>
-        {%  endfor %}
+        <li>Under constrution</li>
     </ul>
-</div>
-<div class="add-row">
-    <a onclick="return showAddAnotherPopup(this);" id="add_id_groups" class="add-another" href="newlink">{% trans 'Add link' %}</a>
 </div>
 </fieldset>
 {% endblock %}

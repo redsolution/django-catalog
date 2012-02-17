@@ -3,13 +3,9 @@ from extdirect.django.serializer import Serializer as ExtSerializer
 from StringIO import StringIO
 from django.utils.encoding import smart_str, smart_unicode
 from django.utils import datetime_safe
-from catalog.models import Link
 from catalog.direct import ColumnModel
 from django.contrib import admin
 from django.core import urlresolvers
-
-LINK_OBJECT = 0
-REAL_OBJECT = 1
 
 
 class Serializer(ExtSerializer):
@@ -18,12 +14,7 @@ class Serializer(ExtSerializer):
     """
     def start_object(self, obj):
         self._current = {}
-        if type(obj) is Link:
-            self._content_object = obj.content_object.content_object
-            self._type = LINK_OBJECT
-        else:
-            self._content_object = obj.content_object
-            self._type = REAL_OBJECT
+        self._content_object = obj.content_object
         self._admin_cls = admin.site._registry[type(self._content_object)]
 
     def handle_field(self, obj, field):

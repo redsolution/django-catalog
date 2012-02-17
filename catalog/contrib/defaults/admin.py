@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from catalog.forms import LinkInsertionForm
-from catalog.models import Link
 from django.contrib import admin
 from django.contrib.contenttypes import generic
 from models import Item, Section, CatalogImage
@@ -10,10 +8,6 @@ class CatalogImageInline(generic.GenericTabularInline):
     model = CatalogImage
     extra = 1
 
-
-class LinkInline(generic.GenericTabularInline):
-    model = Link
-    form = LinkInsertionForm
 
 class ItemAdmin(CatalogAdmin):
     inlines = [CatalogImageInline]

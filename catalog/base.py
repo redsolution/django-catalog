@@ -17,5 +17,4 @@ class CatalogBase(models.Model):
 
 
     tree = generic.GenericRelation('catalog.TreeItem')
-    links = generic.GenericRelation('catalog.Link')
     parent = None  # default parent for objects. See :meth:`~catalog.models.insert_in_tree`

@@ -43,7 +43,7 @@ class TreeItem(MPTTModel):
 
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    content_object = generic.GenericForeignKey()
 
     objects = TreeItemManager()
 
@@ -57,26 +57,6 @@ class TreeItem(MPTTModel):
         self.content_object.delete()
         super(TreeItem, self).delete(*args, **kwds)
     delete.alters_data = True
-
-
-class Link(models.Model):
-    '''
-    Link model allows to publish one model several times in
-    different places in catalog tree
-    '''
-
-    class Meta:
-        verbose_name = _('Catalog link')
-        verbose_name_plural = _('Catalog links')
-
-    tree = generic.GenericRelation('TreeItem')
-
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
-
-    def __unicode__(self):
-        return _('Link to %s') % unicode(self.content_object)
 
 
 def insert_in_tree(sender, instance, **kwrgs):
