@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from catalog.models import TreeItem
-from catalog.utils import get_data_appnames
+from catalog.utils import get_data_appnames, connected_models, get_q_filters
 from classytags.arguments import Argument, ChoiceArgument
 from classytags.core import Tag, Options
 from classytags.helpers import InclusionTag
@@ -28,9 +28,9 @@ def get_treeitem_from_context(context, silent=True):
     # Try to resolve ``object`` from context
     if 'object' in context and (getattr(context['object'], 'tree'), None):
         obj = context['object']
-        if (hasattr(obj.tree, 'get') and callable(obj.tree.get)):
+        if hasattr(obj.tree, 'get') and callable(obj.tree.get):
             # Check that object.tree.get() returns TreeItem instance
-            if (isinstance(context['object'].tree.get(), TreeItem)):
+            if isinstance(context['object'].tree.get(), TreeItem):
                 treeitem = obj.tree.get()
                 return treeitem
     if silent:
@@ -120,13 +120,26 @@ class CatalogChildren(Tag):
                 except AttributeError:
                     raise TemplateSyntaxError('Instance argument must have `tree` attribute')
 
-        children_qs = TreeItem.objects.published().filter(parent=treeitem)
         if children_type:
-            children_qs = children_qs.filter(content_type__model=children_type)
+            ModelClass = None
+            for model_cls in connected_models():
+                if model_cls._meta.module_name == children_type:
+                    ModelClass = model_cls
+            if ModelClass is not None:
+                model_filter = get_q_filters()[ModelClass]
+                if model_filter is not None:
+                    queryset = ModelClass.objects.filter(model_filter)
+                else:
+                    queryset = ModelClass.objects.all()
+            else:
+                # Empty
+                queryset = []
+        else:
+            queryset = TreeItem.objects.published().filter(parent=treeitem)
 
         if varname:
-            context[varname] = children_qs
-            return ''
+            context[varname] = queryset
+            return u''
         else:
             self.templates[0:0] = ['%s/children_tag.html' % app_name for app_name in get_data_appnames()]
             context['children_queryset'] = children_qs
