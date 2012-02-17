@@ -132,7 +132,7 @@ class CatalogChildren(Tag):
                 else:
                     queryset = ModelClass.objects.all()
                 allowed_ids = TreeItem.objects.published().filter(parent=treeitem,
-                    content_type__model=children_type).values_list('id', flat=True)
+                    content_type__model=children_type).values_list('object_id', flat=True)
                 queryset = queryset.filter(id__in=allowed_ids)
             else:
                 # Empty
