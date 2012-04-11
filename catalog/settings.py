@@ -24,7 +24,7 @@ CATALOG_ROOT_PAGE = getattr(settings, 'CATALOG_ROOT_PAGE', True)
 
 TEST = getattr(settings, 'TEST', None)
 if TEST is None:
-    if sys.argv[1] == 'test':
+    if 'test' in sys.argv:
         TEST = True
     else:
         TEST = False
