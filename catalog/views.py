@@ -2,7 +2,7 @@
 from catalog.models import TreeItem
 from catalog.utils import connected_models, get_data_appnames, get_q_filters
 from django.utils.translation import ugettext_lazy as _
-from django.http import HttpResponseNotFound
+from django.http import Http404
 from django.template import loader
 from django.views.generic.list_detail import object_detail, object_list
 
