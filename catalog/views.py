@@ -9,12 +9,12 @@ from django.utils.translation import ugettext_lazy as _
 
 
 def item_view(request, model, slug=None, object_id=None):
-    '''
+    """
     Render catalog page for object
     
     Url variables:
         model:
-            mdoel name
+            model name
         slug:
             object's slug
         object_id
@@ -24,44 +24,17 @@ def item_view(request, model, slug=None, object_id=None):
     
     Templates:
         'catalog/<app_label>/<model_name>.html'
-        
+
         'catalog/<model_name>.html'
-        
+
         '<app_label>/<model_name>_in_catalog.html'
-        
+
         'catalog/treeitem.html',
     
-    Context taken from ``object_list`` method from ``django.views.generic.list_detail``:
-        object_list
-            list of objects
-        is_paginated
-            are the results paginated?
-        results_per_page
-            number of objects per page (if paginated)
-        has_next
-            is there a next page?
-        has_previous
-            is there a prev page?
-        page
-            the current page
-        next
-            the next page
-        previous
-            the previous page
-        pages
-            number of pages, total
-        hits
-            number of objects, total
-        last_on_page
-            the result number of the last of object in the
-            object_list (1-indexed)
-        first_on_page
-            the result number of the first object in the
-            object_list (1-indexed)
-        page_range:
-            A list of the page numbers (1-indexed).
-    
-    '''
+    Context taken from ``object_detail`` method from ``django.views.generic.list_detail``:
+        object
+            the object
+    """
     ModelClass = None
     for model_cls in connected_models():
         if model_cls._meta.module_name == model:
@@ -93,22 +66,22 @@ def item_view(request, model, slug=None, object_id=None):
             return object_detail(request, model_queryset, object_id=object_id, **extra_context)
         else:
             raise Http404(_('No object data specified'))
-
     else:
         raise Http404(_('Model %s does not registered' % model))
 
+
 def root(request):
-    '''
+    """
     Render catalog root page.
     
     Templates:
         ``<app_label>/catalog_root.html``
         
-        ``catalog/catalog_root.html``
+        ``catalog/root.html``
     
     Parameter ``app_label`` looked up in ``CATALOG_MDOELS`` setting in settings.py
     
-    Context taken from ``object_detail`` method from ``django.views.generic.list_detail``:
+    Context taken from ``object_list`` method from ``django.views.generic.list_detail``:
         object_list:
             list of objects
         is_paginated:
@@ -137,8 +110,7 @@ def root(request):
             object_list (1-indexed)
         page_range:
             A list of the page numbers (1-indexed).
-
-    '''
+    """
 
     templates_list = ['%s/catalog_root.html' % app_name for app_name in get_data_appnames()]
     templates_list.append('catalog/root.html')
