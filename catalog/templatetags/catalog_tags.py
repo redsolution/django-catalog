@@ -145,7 +145,7 @@ class CatalogChildren(Tag):
             return u''
         else:
             self.templates[0:0] = ['%s/children_tag.html' % app_name for app_name in get_data_appnames()]
-            context['children_queryset'] = children_qs
+            context['children_queryset'] = queryset
             return render_to_string(self.templates, context)
 
 register.tag(CatalogChildren)
