@@ -152,7 +152,8 @@ class ColumnModel(object):
             admin_cls = self.admin_registry[model_cls]
 
             list_display = list(admin_cls.list_display)
-            list_display.remove('action_checkbox')
+            if 'action_checkbox' in list_display:
+                list_display.remove('action_checkbox')
 
             # Run over all 'list_display' properties and fill columns
             for i, field_name in enumerate(list_display):

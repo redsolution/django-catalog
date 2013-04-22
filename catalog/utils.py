@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-from django.db.models import loading, Q
-from catalog import settings as catalog_settings
-from django.conf import settings
 import warnings
+
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.db.models import loading, Q
+
+from catalog import settings as catalog_settings
 
 
 def connected_models():
@@ -14,9 +17,17 @@ def connected_models():
                 'CATALOG_MODELS setting should have new format, like: ("defaults.Item", "defaults.Section")',
                 DeprecationWarning
             )
-            yield loading.cache.get_model(applabel, model_name)
+            model_cls = loading.cache.get_model(applabel, model_name)
         else:
-            yield loading.cache.get_model(*model_str.split('.'))
+            model_cls = loading.cache.get_model(*model_str.split('.'))
+
+        if model_cls is None:
+            warnings.warn(
+                'Can not import model %s from app %s, '
+                'check CATALOG_MODELS setting, **YOU MAY LOSE DATA!**' % (
+                    model_cls.__name__, model_cls._meta.app_label))
+        yield model_cls
+
 
 def get_data_appnames():
     '''

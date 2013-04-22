@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from catalog.models import TreeItem
 from catalog.utils import connected_models, get_data_appnames, get_q_filters
-from django.http import HttpResponseNotFound
+from django.utils.translation import ugettext_lazy as _
+from django.http import Http404
 from django.template import loader
 from django.views.generic.list_detail import object_detail, object_list
 from django.utils.translation import ugettext_lazy as _
@@ -91,10 +92,10 @@ def item_view(request, model, slug=None, object_id=None):
         elif id is not None:
             return object_detail(request, model_queryset, object_id=object_id, **extra_context)
         else:
-            return HttpResponseNotFound(_('No object data specified'))
+            raise Http404(_('No object data specified'))
 
     else:
-        return HttpResponseNotFound(_('Model %s does not registered' % model))
+        raise Http404(_('Model %s does not registered' % model))
 
 def root(request):
     '''

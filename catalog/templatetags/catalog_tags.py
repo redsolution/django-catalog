@@ -312,7 +312,7 @@ class GetTreeitem(Tag):
         'model',
         Argument('model_str', required=False, resolve=False),
         'slug',
-        Argument('slug', required=False, resolve=False),
+        Argument('slug', required=False, resolve=True),
         'treeid',
         Argument('tree_id', required=False, resolve=False),
         'as',
