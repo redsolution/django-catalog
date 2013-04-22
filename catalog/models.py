@@ -3,7 +3,6 @@ from catalog import settings as catalog_settings
 from catalog.utils import connected_models, get_q_filters
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models import Q, loading
 from django.db.models.signals import post_save
@@ -97,8 +96,6 @@ def insert_in_tree(sender, instance, **kwrgs):
         instance.save()
 
 for model_cls in connected_models():
-    if model_cls is None:
-        raise ImproperlyConfigured('Can not import model %s from app %s, check CATALOG_MODELS setting' % (model_cls.__name__, model_cls._meta.app_label))
     # set post_save signals on connected objects:
     # for each connected model connect 
     # automatic TreeItem creation for catalog models
