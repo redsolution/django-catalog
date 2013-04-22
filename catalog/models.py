@@ -73,7 +73,6 @@ def insert_in_tree(sender, instance, **kwargs):
         else:
             tree_item = TreeItem(parent=parent, content_object=instance)
         tree_item.save()
-        instance.save()
 
 for model_cls in connected_models():
     # set post_save signals on connected objects:
