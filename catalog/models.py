@@ -58,13 +58,13 @@ class TreeItem(MPTTModel):
     delete.alters_data = True
 
 
-def insert_in_tree(sender, instance, **kwrgs):
-    '''
+def insert_in_tree(sender, instance, **kwargs):
+    """
     Insert newly created object in catalog tree.
     If no parent provided, insert object in tree root 
-    '''
+    """
     # to avoid recursion save, process only for new instances
-    created = kwrgs.pop('created', False)
+    created = kwargs.pop('created', False)
 
     if created:
         parent = getattr(instance, 'parent', None)
