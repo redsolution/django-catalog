@@ -39,14 +39,12 @@ class Testmaker(TestCase):
         self.assertEqual(unicode(r.context[-1]['app_path']), u'/admin/catalog/treeitem/')
         self.assertEqual(unicode(r.context[-1]['title']), u'Log in')
         self.assertEqual(unicode(r.context[-1]['root_path']), u'None')
-        self.assertEqual(unicode(r.context[-1]['next']), u'/admin/catalog/treeitem/')
     def test_admincatalogtreeitemdirectproviderjs_130678730598(self):
         r = self.client.get('/admin/catalog/treeitem/direct/provider.js', {})
         self.assertEqual(r.status_code, 200)
         self.assertEqual(unicode(r.context[-1]['app_path']), u'/admin/catalog/treeitem/direct/provider.js')
         self.assertEqual(unicode(r.context[-1]['title']), u'Log in')
         self.assertEqual(unicode(r.context[-1]['root_path']), u'None')
-        self.assertEqual(unicode(r.context[-1]['next']), u'/admin/catalog/treeitem/direct/provider.js')
     def test_admincatalogtreeitemdirectrouter_130678730642(self):
         r = self.client.post('/admin/catalog/treeitem/direct/router/', {'[{"action":"colmodel","method":"get_col_model","data":null,"type":"rpc","tid":2},{"action":"colmodel","method":"get_models","data":null,"type":"rpc","tid":3}]': '', })
     def test_admincatalogtreeitemdirectrouter_130678730655(self):
@@ -67,7 +65,6 @@ class Testmaker(TestCase):
         self.assertEqual(unicode(r.context[-1]['app_path']), u'/admin/defaults/item/2/?_popup=1')
         self.assertEqual(unicode(r.context[-1]['title']), u'Log in')
         self.assertEqual(unicode(r.context[-1]['root_path']), u'None')
-        self.assertEqual(unicode(r.context[-1]['next']), u'/admin/defaults/item/2/?_popup=1')
     def test_admindefaultsitem2_130678732178(self):
         r = self.client.post('/admin/defaults/item/2/', {'defaults-catalogimage-content_type-object_id-0-id': '', 'description': '', '_save': 'Save', 'defaults-catalogimage-content_type-object_id-__prefix__-id': '', 'price': '250', 'defaults-catalogimage-content_type-object_id-__prefix__-image': '', 'defaults-catalogimage-content_type-object_id-TOTAL_FORMS': '1', '_popup': '1', 'defaults-catalogimage-content_type-object_id-0-image': '', 'defaults-catalogimage-content_type-object_id-INITIAL_FORMS': '0', 'defaults-catalogimage-content_type-object_id-MAX_NUM_FORMS': '', 'article': '2', 'csrfmiddlewaretoken': '2dab25ff69e42a285812adf92949bbb7', 'quantity': '', 'slug': 'shou-mej-cha-chzhuan-chajnyij-kirpich-brovi-dolgoletiya-', 'name': 'Шоу Мэй Ча Чжуань (Чайный кирпич Брови долголетия). ', '_popup': '1', })
     def test_admincatalogtreeitemdirectrouter_130678732217(self):
@@ -82,11 +79,8 @@ class Testmaker(TestCase):
         r = self.client.get('/admin/defaults/item/1/', {'_popup': '1', })
         self.assertEqual(r.status_code, 200)
         self.assertEqual(unicode(r.context[-1]['app_path']), u'/admin/defaults/item/1/?_popup=1')
-        self.assertEqual(unicode(r.context[-1]['site_name']), u'example.com')
         self.assertEqual(unicode(r.context[-1]['title']), u'Log in')
         self.assertEqual(unicode(r.context[-1]['root_path']), u'None')
-        self.assertEqual(unicode(r.context[-1]['site']), u'example.com')
-        self.assertEqual(unicode(r.context[-1]['next']), u'/admin/defaults/item/1/?_popup=1')
     def test_admindefaultsitem1_130678733575(self):
         r = self.client.post('/admin/defaults/item/1/', {'defaults-catalogimage-content_type-object_id-0-id': '', 'description': '', '_save': 'Save', 'defaults-catalogimage-content_type-object_id-__prefix__-id': '', 'price': '100', 'defaults-catalogimage-content_type-object_id-__prefix__-image': '', 'defaults-catalogimage-content_type-object_id-TOTAL_FORMS': '1', '_popup': '1', 'defaults-catalogimage-content_type-object_id-0-image': '', 'defaults-catalogimage-content_type-object_id-INITIAL_FORMS': '0', 'defaults-catalogimage-content_type-object_id-MAX_NUM_FORMS': '', 'article': '1', 'csrfmiddlewaretoken': '2dab25ff69e42a285812adf92949bbb7', 'quantity': '', 'slug': 'shou-mej-to-cha-', 'name': 'Шоу Мэй То Ча ', '_popup': '1', })
     def test_admincatalogtreeitemdirectrouter_130678733607(self):
@@ -102,7 +96,6 @@ class Testmaker(TestCase):
         self.assertEqual(unicode(r.context[-1]['app_path']), u'/admin/defaults/section/2/?_popup=1')
         self.assertEqual(unicode(r.context[-1]['title']), u'Log in')
         self.assertEqual(unicode(r.context[-1]['root_path']), u'None')
-        self.assertEqual(unicode(r.context[-1]['next']), u'/admin/defaults/section/2/?_popup=1')
     def test_admindefaultssection2_130678735557(self):
         r = self.client.post('/admin/defaults/section/2/', {'defaults-catalogimage-content_type-object_id-0-id': '', 'description': '', '_save': 'Save', 'defaults-catalogimage-content_type-object_id-__prefix__-id': '', 'defaults-catalogimage-content_type-object_id-__prefix__-image': '', 'defaults-catalogimage-content_type-object_id-TOTAL_FORMS': '1', '_popup': '1', 'defaults-catalogimage-content_type-object_id-INITIAL_FORMS': '0', 'defaults-catalogimage-content_type-object_id-MAX_NUM_FORMS': '', 'defaults-catalogimage-content_type-object_id-0-image': '', 'csrfmiddlewaretoken': '2dab25ff69e42a285812adf92949bbb7', 'slug': 'belyij-chaj-baj-cha-', 'name': 'Белый Чай (Бай Ча) ', '_popup': '1', })
     def test_admincatalogtreeitemdirectrouter_130678735594(self):
