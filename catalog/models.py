@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from catalog import settings as catalog_settings
 from catalog.utils import connected_models, get_q_filters
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Q, loading
+from django.db.models import Q
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 from mptt.models import MPTTModel
@@ -25,19 +24,21 @@ class TreeItemManager(models.Manager):
 
         return self.get_query_set().filter(tree_q)
 
+
 class TreeItem(MPTTModel):
-    '''
+    """
     Generic model for handle tree organization.
     It can organize different objects into tree without
     modification 3rd party tables. 
-    '''
+    """
 
     class Meta:
         verbose_name = _('Catalog tree item')
         verbose_name_plural = _('Manage catalog')
         ordering = ['tree_id', 'lft']
 
-    parent = models.ForeignKey('self', related_name='children',
+    parent = models.ForeignKey(
+        'self', related_name='children',
         verbose_name=_('Parent node'), null=True, blank=True, editable=False)
 
     content_type = models.ForeignKey(ContentType)
@@ -52,9 +53,11 @@ class TreeItem(MPTTModel):
     def get_absolute_url(self):
         return self.content_object.get_absolute_url()
 
-    def delete(self, *args, **kwds):
+    def delete(self, *args, **kwargs):
+        for child in self.get_children():
+            child.delete()
         self.content_object.delete()
-        super(TreeItem, self).delete(*args, **kwds)
+        super(TreeItem, self).delete(*args, **kwargs)
     delete.alters_data = True
 
 
