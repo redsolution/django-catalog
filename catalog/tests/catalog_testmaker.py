@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from catalog.models import TreeItem
 from django.test import TestCase
 from django.test import Client
 from django import template
@@ -12,7 +13,9 @@ class Testmaker(TestCase):
         r = self.client.get('/catalog/', {})
         self.assertEqual(r.status_code, 200)
         self.assertEqual(unicode(r.context[-1]['paginator']), u'None')
-        self.assertEqual(unicode(r.context[-1]['object_list']), u'[<TreeItem: Импорт>]')
+        self.assertEqual(len(r.context[-1]['object_list']), 41)
+        self.assertTrue(isinstance(r.context[-1]['object_list'][0], TreeItem))
+        self.assertEqual(unicode(r.context[-1]['object_list'][0]), u'Импорт')
         self.assertEqual(unicode(r.context[-1]['is_paginated']), u'False')
         self.assertEqual(unicode(r.context[-1]['page_obj']), u'None')
     def test_catalogsectionimport_130678729379(self):
