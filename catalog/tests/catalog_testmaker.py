@@ -87,7 +87,7 @@ class Testmaker(TestCase):
         r = self.client.post('/admin/catalog/treeitem/direct/router/', {'[{"action":"treeitem","method":"tree","data":[2],"type":"rpc","tid":15},{"action":"treeitem","method":"objects","data":[{"parent":2}],"type":"rpc","tid":16}]': '', })
     def test_catalogitemshou_mej_to_cha__13067873376(self):
         r = self.client.get('/catalog/item/shou-mej-to-cha-/', {})
-        self.assertEqual(r.status_code, 404)
+        self.assertEqual(r.status_code, 200)
     def test_admincatalogtreeitemdirectrouter_130678735248(self):
         r = self.client.post('/admin/catalog/treeitem/direct/router/', {'{"action":"treeitem","method":"objects","data":[{"parent":"root"}],"type":"rpc","tid":17}': '', })
     def test_admindefaultssection2_130678735356(self):
@@ -102,7 +102,7 @@ class Testmaker(TestCase):
         r = self.client.post('/admin/catalog/treeitem/direct/router/', {'[{"action":"treeitem","method":"tree","data":["root"],"type":"rpc","tid":18},{"action":"treeitem","method":"objects","data":[{"parent":"root"}],"type":"rpc","tid":19}]': '', })
     def test_catalogsectionbelyij_chaj_baj_cha__130678735753(self):
         r = self.client.get('/catalog/section/belyij-chaj-baj-cha-/', {})
-        self.assertEqual(r.status_code, 404)
+        self.assertEqual(r.status_code, 200)
     def test_admincatalogtreeitemdirectrouter_130678736272(self):
         r = self.client.post('/admin/catalog/treeitem/direct/router/', {'[{"action":"treeitem","method":"remove_objects","data":[{"objects":[2]}],"type":"rpc","tid":20},{"action":"treeitem","method":"tree","data":["root"],"type":"rpc","tid":21}]': '', })
     def test_admincatalogtreeitemdirectrouter_130678736568(self):
