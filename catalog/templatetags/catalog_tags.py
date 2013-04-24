@@ -40,53 +40,61 @@ def get_treeitem_from_context(context, silent=True):
 
 class CatalogChildren(Tag):
     """
-    Render or get chlidren for given object. Object must be registered in 
+    Render or get chlidren for given object. Object must be registered in
     catalog tree and have the ``tree.get()`` attribute.
-    
+
     **Usage**::
-    
-        {% catalog_children [for my_section] [type children_type] [as varname] %}
+
+        {% catalog_children [for instance] [model 'app_name.model'] [as varname] %}
+
+    **Parameters**:
+        for
+            Element in tree.
+        model
+            App label and model name, as they appear in settings.
+        var_name
+            Name of context variable with result.
 
     **Magic "for" argument**
-        
-        If you specify ``'root'`` as *for* parameter, tag will show you catalog 
+
+        If you specify ``'root'`` as *for* parameter, tag will show you catalog
         root elements.
-         
+
         If you specify ``'guess'`` as *for* parameter, tag it will try to fetch
-        ``object.tree.get()`` from context automatically, and if it find ``TreeItem`` 
+        ``object.tree.get()`` from context automatically, and if it find ``TreeItem``
         instance as result of object.tree.get(), it will show children for it.
-        
+
         Do not worry about call ``catalog_children`` with TreeItem or
-        it's content object, *for* argument. 
+        it's content object, *for* argument.
         When tag receive children list, first it will check  if
         ``my_section`` is TreeItem instance, than try to get
         ``my_section.tree.get()`` and raise AttributeError if nothing didn't work.
-    
+
     **Examples**
-        
-        1. Render children for ``my_section`` context object. ::
-           
+
+        1. Render children tree items for ``my_section`` context object ::
+
             {% catalog_children for my_section %}
-            
-          or render children for ``object`` in context ::
-          
-            {% catalog_children for my_section %}
-        
-        2. Render children for ``my_section`` into ``children`` context variable. ::
-    
+
+        2. Render children tree items for ``treeitem`` ::
+
+            {% catalog_children for treeitem %}
+
+        3. Render children tree items for ``my_section`` into ``children`` context variable ::
+
             {% catalog_children for my_section as children %}
-        
-        3. Render children only with type ``item`` for ``my_section`` ::
-        
-            {% catalog_children for my_section type item %}
 
-        4. Render all root sections ::
-        
-            {% catalog_children for 'root' type section %}        
+        4. Render children tree item with content type ``my_app.Item`` for ``my_section`` ::
 
-        5. Render children for ``object`` ::
-        
-            {% catalog_children for 'guess' %}        
+            {% catalog_children for my_section model my_app.Item %}
+
+        5. Render all root section tree items ::
+
+            {% catalog_children for 'root' model my_app.Section %}
+
+        6. Render children for ``object`` content object::
+
+            {% catalog_children for 'guess' %}
     """
     name = 'catalog_children'
     templates = ['catalog/children_tag.html', ]
@@ -94,13 +102,15 @@ class CatalogChildren(Tag):
     options = Options(
         'for',
         Argument('instance', required=False),
+        'model',
+        Argument('model_str', required=False),
         'type',
         Argument('children_type', required=False, resolve=False),
         'as',
         Argument('varname', required=False, resolve=False)
     )
 
-    def render_tag(self, context, instance, children_type, varname):
+    def render_tag(self, context, instance, model_str, children_type, varname):
         if instance == 'root':
             treeitem = None
         elif instance == 'guess':
@@ -137,6 +147,10 @@ class CatalogChildren(Tag):
                 queryset = []
         else:
             queryset = TreeItem.objects.published().filter(parent=treeitem)
+
+        if model_str:
+            model_class = loading.cache.get_model(*model_str.split('.'))
+            queryset = queryset.for_model(model_class)
 
         if varname:
             context[varname] = queryset
