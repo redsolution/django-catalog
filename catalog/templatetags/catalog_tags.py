@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from catalog.models import TreeItem
-from catalog.utils import get_data_appnames, connected_models, get_q_filters
+from catalog.utils import get_data_appnames, connected_models, get_q_filters, get_content_objects
 from classytags.arguments import Argument
 from classytags.core import Tag, Options
 from classytags.helpers import InclusionTag
@@ -161,6 +161,48 @@ class CatalogChildren(Tag):
             return render_to_string(self.templates, context)
 
 register.tag(CatalogChildren)
+
+
+def filter_content_objects(treeitems, model_str=None):
+    """
+    Retrieve content objects for tree items in original order.
+
+    **Usage**::
+
+        {{ tree_items|get_content_objects[:'app_name.model'] }}
+
+    **Parameters**:
+        model
+            Optional content object model filter.
+
+    **Examples**
+
+        1. Render context object for ``treeitems`` queryset ::
+
+            {% for content_object in treeitems|get_content_objects %}
+                {{ content_object }}
+            {% endfor %}
+
+        2. Render context object with type my_app.Section for ``treeitems`` queryset ::
+
+            {% for content_object in treeitems|get_content_objects:"my_app.Section" %}
+                {{ content_object }}
+            {% endfor %}
+
+        3. Render children context object with type my_app.Item for ``my_section`` ::
+
+            {% catalog_children for my_section as children %}
+            {% for content_object in children|get_content_objects:"my_app.Item" %}
+                {{ content_object }}
+            {% endfor %}
+    """
+    if model_str:
+        model_class = loading.cache.get_model(*model_str.split('.'))
+    else:
+        model_class = None
+    return get_content_objects(treeitems, model_class)
+
+register.filter('get_content_objects', filter_content_objects)
 
 
 class BreadcrumbTag(InclusionTag):
