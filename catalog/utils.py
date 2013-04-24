@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+
 import warnings
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 from django.db.models import loading, Q
 
 from catalog import settings as catalog_settings
@@ -40,12 +40,13 @@ def get_data_appnames():
             app_label = model_str[0]
             warnings.warn(
                 'CATALOG_MODELS setting should have new format, like: ("defaults.Item", "defaults.Section")',
-                PendingDeprecationWarning
+                DeprecationWarning
             )
         else:
             app_label, _ = model_str.split('.')
         app_labels.update([app_label, ])
     return app_labels
+
 
 def get_q_filters():
     '''
