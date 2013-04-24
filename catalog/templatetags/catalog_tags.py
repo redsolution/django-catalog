@@ -219,8 +219,9 @@ class BreadcrumbTag(InclusionTag):
     def get_context(self, context, **kwargs):
         treeitem = get_treeitem_from_context(context, silent=False)
         if treeitem is not None:
-            ancestors = list(treeitem.get_ancestors())
-            return {'breadcrumbs': ancestors + [treeitem, ] }
+            return {
+                'breadcrumbs': treeitem.get_ancestors(include_self=True)
+            }
         else:
             return {}
 
