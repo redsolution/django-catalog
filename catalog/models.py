@@ -24,6 +24,10 @@ class TreeItemQuerySet(models.query.QuerySet):
 
         return self.filter(tree_q)
 
+    def for_model(self, model_class):
+        content_type = ContentType.objects.get_for_model(model_class)
+        return self.filter(content_type=content_type)
+
 
 class TreeItem(MPTTModel):
     """
