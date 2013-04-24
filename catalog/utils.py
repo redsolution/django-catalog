@@ -79,6 +79,27 @@ def get_q_filters():
     return q_filters
 
 
+def get_content_objects(treeitems, model=None):
+    """
+    Retrieve content objects for tree items in original order.
+
+    :param treeitems: iterable with tree items.
+    :param model: optional content object model filter.
+    :return: List of content object instances.
+    """
+    values = list(treeitems.values_list('content_type', 'object_id'))
+    object_ids = {}
+    for content_type_id, object_id in values:
+        object_ids.setdefault(content_type_id, []).append(object_id)
+    objects = {}
+    for content_type_id, ids in object_ids.iteritems():
+        content_type = ContentType.objects.get_for_id(content_type_id)
+        if model is None or content_type.model_class() == model:
+            for instance in content_type.model_class().objects.filter(id__in=ids):
+                objects[(content_type_id, instance.id)] = instance
+    return [objects[value] for value in values]
+
+
 def get_sorted_content_objects(content_objects):
     """
     Resort content objects in tree order.
