@@ -3,6 +3,7 @@
 import warnings
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import loading, Q
 
@@ -76,6 +77,22 @@ def get_q_filters():
             for key in q_filters.iterkeys():
                 q_filters[key] = Q(**global_filter)
     return q_filters
+
+
+def get_sorted_items(queryset):
+    """
+    Resort content objects in tree order.
+
+    :param queryset: queryset with catalog instances.
+    :return: new list instance.
+    """
+    from catalog.models import TreeItem
+    content_type = ContentType.objects.get_for_model(queryset.model)
+    objects = dict([(instance.id, instance) for instance in queryset])
+    items = TreeItem.tree.get_query_set().filter(
+        content_type=content_type, object_id__in=objects.keys())
+    ids = items.values_list('object_id', flat=True)
+    return [objects[value] for value in ids]
 
 
 def query_set_manager(query_set_class):
