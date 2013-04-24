@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 from catalog.models import TreeItem
 from catalog.utils import get_data_appnames, connected_models, get_q_filters
-from classytags.arguments import Argument, ChoiceArgument
+from classytags.arguments import Argument
 from classytags.core import Tag, Options
 from classytags.helpers import InclusionTag
 from django import template
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import loading
-from django.template import loader, TemplateSyntaxError
+from django.template import TemplateSyntaxError
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
 
 register = template.Library()
 
@@ -19,12 +18,12 @@ TREE_TYPE_DRILLDOWN = 'drilldown'
 
 
 def get_treeitem_from_context(context, silent=True):
-    '''
+    """
     Utility tries to get TreItem from ``context['object']``.
     
     If silent=False, returns TreeItem instance or raises TemplateSyntaxError,
     otherwise returns TreeItem instance or None
-    '''
+    """
     # Try to resolve ``object`` from context
     if 'object' in context and getattr(context['object'], 'tree', None):
         obj = context['object']
@@ -38,10 +37,11 @@ def get_treeitem_from_context(context, silent=True):
     else:
         raise TemplateSyntaxError('No TreeItem instance found in context')
 
+
 class CatalogChildren(Tag):
-    '''
+    """
     Render or get chlidren for given object. Object must be registered in 
-    catalog tree and have the ``tree()`` attribute.
+    catalog tree and have the ``tree.get()`` attribute.
     
     **Usage**::
     
@@ -87,9 +87,7 @@ class CatalogChildren(Tag):
         5. Render children for ``object`` ::
         
             {% catalog_children for 'guess' %}        
-
-
-    '''
+    """
     name = 'catalog_children'
     templates = ['catalog/children_tag.html', ]
 
@@ -103,11 +101,9 @@ class CatalogChildren(Tag):
     )
 
     def render_tag(self, context, instance, children_type, varname):
-#        if instance is not None:
         if instance == 'root':
             treeitem = None
         elif instance == 'guess':
-            # try to guess
             treeitem = get_treeitem_from_context(context)
         elif instance is None:
             treeitem = None
@@ -131,8 +127,10 @@ class CatalogChildren(Tag):
                     queryset = ModelClass.objects.filter(model_filter)
                 else:
                     queryset = ModelClass.objects.all()
-                allowed_ids = TreeItem.objects.published().filter(parent=treeitem,
-                    content_type__model=children_type).values_list('object_id', flat=True)
+                allowed_ids = TreeItem.objects.published().filter(
+                    parent=treeitem,
+                    content_type__model=children_type).values_list(
+                        'object_id', flat=True)
                 queryset = queryset.filter(id__in=allowed_ids)
             else:
                 # Empty
@@ -168,9 +166,10 @@ class BreadcrumbTag(InclusionTag):
 
 register.tag(BreadcrumbTag)
 
+
 class CatalogTree(Tag):
-    '''
-    Render catalog tree menu
+    """
+    Render catalog tree menu.
         
     **Usage**::
     
@@ -178,7 +177,7 @@ class CatalogTree(Tag):
     
     **Parameters**:
         active_treeitem
-            Activate element in tree, highlight or select it
+            Activate element in tree, highlight or select it.
         type
             Menu type. Three types available:
             
@@ -187,7 +186,7 @@ class CatalogTree(Tag):
             * ``collapsed`` - menu will be collapsed only to dislpay root elements
             * ``expanded`` - all menu nodes will be expanded
         current_treeitem
-            Argument for internal usage, for recursion organization
+            Argument for internal usage, for recursion organization.
     
     **Magic "activate" parameter**
     
@@ -222,7 +221,7 @@ class CatalogTree(Tag):
     
         {% render_catalog_tree type 'collapsed' %}
 
-    '''
+    """
     name = 'render_catalog_tree'
     template = 'catalog/tree.html'
 
@@ -230,7 +229,7 @@ class CatalogTree(Tag):
         'activate',
         Argument('active', required=False),
         'type',
-        Argument('tree_type', required=False, resolve=True, default=TREE_TYPE_DRILLDOWN),
+        Argument('tree_type', required=False, default=TREE_TYPE_DRILLDOWN),
         'current',
         Argument('current', required=False),
     )
@@ -265,7 +264,7 @@ register.tag(CatalogTree)
 
 
 class GetTreeitem(Tag):
-    '''
+    """
     Returns TreeItem object by content type and slug or by treeitem's id.
     
     **Usage**::
@@ -305,14 +304,14 @@ class GetTreeitem(Tag):
         {% if special %}
             <a href="{{ special.content_object.get_absolute_url }}">{{ special.content_object }}</a>
         {% endif %}
-    '''
+    """
     name = 'get_treeitem'
 
     options = Options(
         'model',
         Argument('model_str', required=False, resolve=False),
         'slug',
-        Argument('slug', required=False, resolve=True),
+        Argument('slug', required=False),
         'treeid',
         Argument('tree_id', required=False, resolve=False),
         'as',

@@ -60,6 +60,9 @@ class CommonFields(CatalogBase):
             })
         raise NoReverseMatch('No appropriate methods found, take a look in the code')
 
+    def __unicode__(self):
+        return unicode(self.name)
+
 
 class Section(CommonFields, models.Model):
     leaf = False
@@ -67,9 +70,6 @@ class Section(CommonFields, models.Model):
     class Meta:
         verbose_name = _('Catalog section')
         verbose_name_plural = _('Catalog sections')
-
-    def __unicode__(self):
-        return self.name
 
 
 class Item(CommonFields, models.Model):
@@ -87,8 +87,6 @@ class Item(CommonFields, models.Model):
     
     new = models.BooleanField(verbose_name=_('Newest'), default=False)
 
-    def __unicode__(self):
-        return self.name
 
 class CatalogImage(ImageModel):
     class Meta:

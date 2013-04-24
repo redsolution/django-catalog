@@ -10,6 +10,9 @@ from catalog import settings as catalog_settings
 
 
 def connected_models():
+    """
+    Returns list of registered catalog models.
+    """
     for model_str in catalog_settings.CATALOG_MODELS:
         if type(model_str) in (list, tuple):
             applabel = model_str[0]
