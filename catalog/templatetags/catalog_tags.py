@@ -173,11 +173,13 @@ class CatalogTree(Tag):
         
     **Usage**::
     
-        {% render_catalog_tree [activate active_treeitem] [type type] [current current_treeitem] %}
+        {% render_catalog_tree [activate active_treeitem] [model 'app_name.model'] [type 'type'] [current current_treeitem] %}
     
     **Parameters**:
         active_treeitem
             Activate element in tree, highlight or select it.
+        model
+            App label and model name, as they appear in settings.
         type
             Menu type. Three types available:
             
@@ -217,9 +219,9 @@ class CatalogTree(Tag):
 
         {% render_catalog_tree activate object.tree.get type 'drilldown' %}
     
-    3. Render only root nodes::
+    3. Render only root nodes for mysection model::
     
-        {% render_catalog_tree type 'collapsed' %}
+        {% render_catalog_tree model 'custom_catalog.mysection' type 'collapsed' %}
 
     """
     name = 'render_catalog_tree'
@@ -228,18 +230,24 @@ class CatalogTree(Tag):
     options = Options(
         'activate',
         Argument('active', required=False),
+        'model',
+        Argument('model_str', required=False),
         'type',
         Argument('tree_type', required=False, default=TREE_TYPE_DRILLDOWN),
         'current',
         Argument('current', required=False),
     )
 
-    def render_tag(self, context, active, tree_type, current):
+    def render_tag(self, context, active, model_str, tree_type, current):
         context.push()
         if current is not None:
             children = current.children.published()
         else:
             children = TreeItem.objects.published().filter(parent=None)
+
+        if model_str:
+            model_class = loading.cache.get_model(*model_str.split('.'))
+            children = children.for_model(model_class)
 
         if active == 'none':
             active = None
