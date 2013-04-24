@@ -79,20 +79,26 @@ def get_q_filters():
     return q_filters
 
 
-def get_sorted_items(queryset):
+def get_sorted_content_objects(content_objects):
     """
     Resort content objects in tree order.
 
-    :param queryset: queryset with catalog instances.
+    :param content_objects: iterable catalog instances.
     :return: new list instance.
     """
     from catalog.models import TreeItem
-    content_type = ContentType.objects.get_for_model(queryset.model)
-    objects = dict([(instance.id, instance) for instance in queryset])
-    items = TreeItem.tree.get_query_set().filter(
-        content_type=content_type, object_id__in=objects.keys())
-    ids = items.values_list('object_id', flat=True)
-    return [objects[value] for value in ids]
+    objects = {}
+    for instance in content_objects:
+        content_type = ContentType.objects.get_for_model(instance.__class__)
+        objects[(content_type.id, instance.id)] = instance
+    if not objects:
+        return []
+    q = Q()
+    for content_type, object_id in objects.iterkeys():
+        q |= Q(content_type=content_type, object_id=object_id)
+    items = TreeItem.tree.get_query_set().filter(q)
+    values = items.values_list('content_type', 'object_id')
+    return [objects[value] for value in values]
 
 
 def query_set_manager(query_set_class):
