@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import warnings
 from catalog.models import TreeItem
 from catalog.utils import get_data_appnames, connected_models, get_q_filters, get_content_objects
 from classytags.arguments import Argument
@@ -127,6 +128,9 @@ class CatalogChildren(Tag):
                     raise TemplateSyntaxError('Instance argument must have `tree` attribute')
 
         if children_type:
+            warnings.warn(
+                "`Type` argument in `catalog_children` is not recommended. "
+                "Check for `model` argument and `get_content_objects` filter.")
             ModelClass = None
             for model_cls in connected_models():
                 if model_cls._meta.module_name == children_type:
