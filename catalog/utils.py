@@ -3,6 +3,7 @@
 import warnings
 
 from django.conf import settings
+from django.db import models
 from django.db.models import loading, Q
 
 from catalog import settings as catalog_settings
@@ -72,3 +73,24 @@ def get_q_filters():
             for key in q_filters.iterkeys():
                 q_filters[key] = Q(**global_filter)
     return q_filters
+
+
+def query_set_manager(query_set_class):
+    """
+    Creates new QuerySetManager instance based on ``query_set_class``.
+    """
+
+    class QuerySetManager(models.Manager):
+
+        def get_query_set(self):
+            return query_set_class(self.model, using=self._db)
+
+        def __getattr__(self, attr, *args):
+            try:
+                return getattr(self.__class__, attr, *args)
+            except AttributeError, e:
+                if attr.startswith('__') and attr.endswith('__'):
+                    raise e
+                return getattr(self.get_query_set(), attr, *args)
+
+    return type(query_set_class.__name__ + 'Manager', (QuerySetManager,), {})()

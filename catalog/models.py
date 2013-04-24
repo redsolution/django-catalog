@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from catalog.utils import connected_models, get_q_filters
+from catalog.utils import connected_models, get_q_filters, query_set_manager
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from mptt.models import MPTTModel
 
 
-class TreeItemManager(models.Manager):
+class TreeItemQuerySet(models.query.QuerySet):
 
     def published(self):
         tree_q = Q()
@@ -22,7 +22,7 @@ class TreeItemManager(models.Manager):
             else:
                 tree_q |= Q(content_type=ct)
 
-        return self.get_query_set().filter(tree_q)
+        return self.filter(tree_q)
 
 
 class TreeItem(MPTTModel):
@@ -45,7 +45,7 @@ class TreeItem(MPTTModel):
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey()
 
-    objects = TreeItemManager()
+    objects = query_set_manager(TreeItemQuerySet)
 
     def __unicode__(self):
         return unicode(self.content_object)
@@ -76,6 +76,7 @@ def insert_in_tree(sender, instance, **kwargs):
         else:
             tree_item = TreeItem(parent=parent, content_object=instance)
         tree_item.save()
+
 
 for model_cls in connected_models():
     # set post_save signals on connected objects:
