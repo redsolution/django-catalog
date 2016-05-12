@@ -3,7 +3,7 @@
 
 {% block extrastyle %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/css/ext-all.css"/>
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}extjs/release/resources/css/ext-all.css"/>
     <style>
         td, th {
             border: none !important;
@@ -49,17 +49,17 @@
 
 {% block extrahead %}
 {{ block.super }}
-    <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/adapter/ext/ext-base.js"></script>
-    <script type="text/javascript" src="http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/include/ext-all.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}extjs/release/adapter/ext/ext-base.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}extjs/include/ext-all.js"></script>
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.1.min.js"></script>
     <script type="text/javascript" src="direct/provider.js"></script>
     {% if STATIC_URL %}
-    <script type="text/javascript" src="{{ STATIC_URL }}catalog/js/catalog.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}catalog/js/catalog.js"></script>
     {% else %}
-    <script type="text/javascript" src="/media/catalog/js/catalog.js"></script>
+        <script type="text/javascript" src="/media/catalog/js/catalog.js"></script>
     {% endif %}
     <script type="text/javascript">
-        Ext.BLANK_IMAGE_URL = 'http://extjs-public.googlecode.com/svn/tags/extjs-3.3.1/release/resources/images/default/s.gif';
+        Ext.BLANK_IMAGE_URL = '{{ STATIC_URL }}extjs/release/resources/images/default/s.gif';
     </script>
 {% endblock %}
 
